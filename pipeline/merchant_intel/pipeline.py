@@ -711,7 +711,11 @@ class Pipeline:
                 f"[Luna Verification R{self.state.verification_round}] launching {n_agents} agents for {before} tasks",
                 flush=True,
             )
-            chunks = [pending[i::n_agents] for i in range(n_agents)]
+            # Bounded chunks: the per-agent prompt carries every task's text,
+            # and argv elements cap at ~128 KB. The class semaphore still
+            # throttles how many run concurrently.
+            chunk_size = 60
+            chunks = [pending[i : i + chunk_size] for i in range(0, len(pending), chunk_size)]
             results = await self._run_group(
                 [self._luna_one(index, chunk) for index, chunk in enumerate(chunks, start=1) if chunk]
             )
@@ -746,13 +750,17 @@ class Pipeline:
             agent_id = f"luna-{self.state.verification_round}-{index:02d}"
             task_ids = [str(row["id"]) for row in rows]
             mark_tasks_assigned(self.db, task_ids, agent_id, self.state.verification_round)
+            def _clip(value: object, limit: int) -> str:
+                text = str(value or "")
+                return text if len(text) <= limit else text[:limit] + "…"
+
             tasks = [
                 {
                     "task_id": row["id"],
                     "merchant_id": row["merchant_id"],
-                    "title": row["title"],
-                    "instruction": row["instruction"],
-                    "already_used_sources": row["excluded_sources_json"],
+                    "title": _clip(row["title"], 150),
+                    "instruction": _clip(row["instruction"], 400),
+                    "already_used_sources": _clip(row["excluded_sources_json"], 300),
                     "attempt": int(row["attempts"] or 0) + 1,
                 }
                 for row in rows
