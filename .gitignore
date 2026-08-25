@@ -1,0 +1,24 @@
+# Pipeline runtime data (regenerated / private research payloads)
+data/sessions/
+data/workspaces/
+data/raw/
+data/normalized/
+data/rejected/
+data/verified/
+data/agent-runs/
+logs/
+__pycache__/
+*.pyc
+*.db-wal
+*.db-shm
+.venv/
+
+# Webapp build artifacts and deps
+webapp/node_modules/
+webapp/.next/
+webapp/__pycache__/
+
+# Secrets
+.env
+.env.*
+*.key

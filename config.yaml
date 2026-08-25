@@ -1,0 +1,94 @@
+omp:
+  binary: omp
+  session_root: ./data/sessions
+  workspace_root: ./data/workspaces
+  timeout_sec: 900
+  analysis_timeout_sec: 1800
+  kill_grace_sec: 8
+  max_retries: 3
+  retry_base_sec: 2.0
+  retry_max_sec: 60.0
+  json_mode: true
+  persist_sessions: true
+  approve: true
+  no_tools: false
+  exclude_tools:
+    - bash
+    - edit
+    - write
+    - computer
+    - task
+  no_context_files: true
+  thinking: max
+  use_goal_slash: true
+  no_pty: true
+  no_extensions: false
+  no_skills: false
+  no_rules: false
+  require_catalog: true
+
+models:
+  discovery: opencode-go/ox-alpha-free
+  coordinator: opencode-go/ox-alpha-free
+  analyst: opencode-go/ox-alpha-free
+  verifier: opencode-go/ox-alpha-free
+  gemini_provider: opencode-go
+  gpt_provider: opencode-go
+  shared_provider: opencode-go
+  allow_fallback: false
+
+concurrency:
+  max_parallel_agents: 4
+  discovery_agents: 20
+  smoke_discovery_agents: 3
+  min_luna_agents: 2
+  max_luna_agents: 8
+  luna_tasks_per_agent: 4
+
+research:
+  country: Egypt
+  language_hint: "Arabic and English public sources"
+  scope_hint: "Research broadly across Egyptian technology, gaming, mobile, electronics, repair, and online merchants."
+  categories:
+    - technology
+    - gaming
+    - consoles
+    - pc_hardware
+    - laptops
+    - mobile_phones
+    - gaming_accessories
+    - components
+    - used_hardware
+    - repair
+    - electronics
+    - online_electronics
+  max_discovery_rounds: 8
+  analysis_batch_size: 6
+  max_verification_tasks_per_merchant: 6
+  max_verification_tasks_total: 100
+  stale_after_days: 730
+  max_task_attempts: 3
+  diminishing_ratio: 0.15
+  diminishing_streak: 2
+
+quality_gates:
+  min_unique_merchants: 80
+  min_identity_resolution_rate: 0.45
+  min_multi_source_merchant_ratio: 0.30
+  min_positive_evidence_ratio: 0.20
+  min_negative_evidence_ratio: 0.10
+  min_neutral_evidence_ratio: 0.05
+  min_high_or_medium_confidence_ratio: 0.40
+  max_duplicate_rate: 0.45
+  max_stale_evidence_ratio: 0.50
+  min_cities: 4
+  min_categories: 6
+  min_source_platforms: 4
+
+database:
+  path: ./data/merchant_intelligence.db
+logging:
+  dir: ./logs
+  level: INFO
+export:
+  dir: ./data/export

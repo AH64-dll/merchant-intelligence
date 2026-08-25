@@ -1,0 +1,3 @@
+The live smoke overlay intentionally accepts the foundation gate and limits Sol to one
+verification task so the real provider chain can be exercised quickly; this is not production
+quality evidence. Production runs use `config.yaml` thresholds and never inherit that override.

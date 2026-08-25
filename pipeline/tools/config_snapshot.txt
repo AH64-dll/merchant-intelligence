@@ -1,0 +1,253 @@
+"""Typed configuration for the merchant-intelligence controller."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+@dataclass
+class OmpConfig:
+    binary: str = "omp"
+    session_root: str = "./data/sessions"
+    workspace_root: str = "./data/workspaces"
+    timeout_sec: int = 900
+    kill_grace_sec: int = 8
+    max_retries: int = 3
+    retry_base_sec: float = 2.0
+    retry_max_sec: float = 60.0
+    json_mode: bool = True
+    persist_sessions: bool = True
+    # The live v17 CLI uses --auto-approve, not --approve. The adapter probes
+    # before emitting it. Research workspaces are isolated from this repo.
+    approve: bool = True
+    no_tools: bool = False
+    exclude_tools: list[str] = field(default_factory=list)
+    no_context_files: bool = True  # retained for config compatibility; probe-gated
+    thinking: str = "max"
+    use_goal_slash: bool = True
+    no_pty: bool = True
+    no_extensions: bool = False
+    no_skills: bool = False
+    no_rules: bool = False
+    require_catalog: bool = True
+
+
+@dataclass
+class ModelsConfig:
+    # Gemini roles MUST resolve under google-antigravity.
+    discovery: str = "google-antigravity/gemini-3.7-flash"
+    coordinator: str = "google-antigravity/gemini-3.7-flash"
+    # GPT roles MUST resolve under openai-codex.
+    analyst: str = "openai-codex/gpt-5.6-sol"
+    verifier: str = "openai-codex/gpt-5.6-luna"
+    gemini_provider: str = "google-antigravity"
+    gpt_provider: str = "openai-codex"
+    allow_fallback: bool = False
+
+
+@dataclass
+class ConcurrencyConfig:
+    max_parallel_agents: int = 8
+    discovery_agents: int = 20
+    smoke_discovery_agents: int = 3
+    min_luna_agents: int = 2
+    max_luna_agents: int = 20
+    luna_tasks_per_agent: int = 4
+
+
+@dataclass
+class ResearchConfig:
+    country: str = "Egypt"
+    language_hint: str = "Arabic and English public sources"
+    scope_hint: str = "Research broadly within the assigned scope."
+    smoke_accepts_foundation: bool = False
+    analysis_batch_size: int = 24
+    max_verification_tasks_per_merchant: int = 6
+    max_verification_tasks_total: int = 100
+    max_discovery_rounds: int = 8
+    max_verification_rounds: int = 6
+    stale_after_days: int = 730
+    max_task_attempts: int = 3
+    diminishing_ratio: float = 0.15
+    diminishing_streak: int = 2
+
+@dataclass
+class QualityGates:
+    min_unique_merchants: int = 80
+    min_identity_resolution_rate: float = 0.45
+    min_multi_source_merchant_ratio: float = 0.30
+    min_positive_evidence_ratio: float = 0.20
+    min_negative_evidence_ratio: float = 0.10
+    min_neutral_evidence_ratio: float = 0.05
+    min_high_or_medium_confidence_ratio: float = 0.40
+    max_duplicate_rate: float = 0.45
+    max_stale_evidence_ratio: float = 0.50
+    min_cities: int = 4
+    min_categories: int = 6
+    min_source_platforms: int = 4
+
+
+@dataclass
+class AppConfig:
+    omp: OmpConfig = field(default_factory=OmpConfig)
+    models: ModelsConfig = field(default_factory=ModelsConfig)
+    concurrency: ConcurrencyConfig = field(default_factory=ConcurrencyConfig)
+    research: ResearchConfig = field(default_factory=ResearchConfig)
+    quality_gates: QualityGates = field(default_factory=QualityGates)
+    database_path: str = "./data/merchant_intelligence.db"
+    log_dir: str = "./logs"
+    log_level: str = "INFO"
+    export_dir: str = "./data/export"
+    root: Path = field(default_factory=Path.cwd)
+
+    def resolve(self, path: str | Path) -> Path:
+        p = Path(path)
+        if p.is_absolute():
+            return p
+        return (self.root / p).resolve()
+
+    def safe_snapshot(self) -> dict[str, Any]:
+        """Config metadata safe to persist in SQLite (no credentials)."""
+        return {
+            "root": str(self.root),
+            "database_path": self.database_path,
+            "models": {
+                "discovery": self.models.discovery,
+                "coordinator": self.models.coordinator,
+                "analyst": self.models.analyst,
+                "verifier": self.models.verifier,
+                "gemini_provider": self.models.gemini_provider,
+                "gpt_provider": self.models.gpt_provider,
+            },
+            "limits": {
+                "max_parallel_agents": self.concurrency.max_parallel_agents,
+                "discovery_agents": self.concurrency.discovery_agents,
+                "max_luna_agents": self.concurrency.max_luna_agents,
+                "max_discovery_rounds": self.research.max_discovery_rounds,
+                "max_verification_rounds": self.research.max_verification_rounds,
+            },
+        }
+
+
+def _merge(dc: Any, data: dict[str, Any]) -> Any:
+    if not data:
+        return dc
+    kwargs = dict(dc.__dict__)
+    for key, value in data.items():
+        if key not in kwargs:
+            continue
+        current = kwargs[key]
+        if hasattr(current, "__dataclass_fields__") and isinstance(value, dict):
+            kwargs[key] = _merge(current, value)
+        else:
+            kwargs[key] = value
+    return type(dc)(**kwargs)
+
+
+SMOKE_OVERLAY: dict[str, Any] = {
+    "omp": {
+        # Sol can take longer even in a no-tools smoke run; the smoke path is
+        # bounded by one discovery round, one analysis batch, and one Luna round.
+        "timeout_sec": 600,
+        "max_retries": 1,
+        "thinking": "low",
+    },
+    "concurrency": {
+        "discovery_agents": 3,
+        "max_parallel_agents": 3,
+        "min_luna_agents": 1,
+        "max_luna_agents": 2,
+        "luna_tasks_per_agent": 2,
+    },
+    "research": {
+        "max_discovery_rounds": 1,
+        "max_verification_rounds": 1,
+        "scope_hint": "SMOKE TEST: inspect at most one or two merchants and a few public sources; return quickly.",
+        "smoke_accepts_foundation": True,
+        "analysis_batch_size": 100,
+        "max_verification_tasks_per_merchant": 1,
+        "max_verification_tasks_total": 1,
+        "max_task_attempts": 1,
+    },
+    "quality_gates": {
+        "min_unique_merchants": 1,
+        "min_identity_resolution_rate": 0.0,
+        "min_multi_source_merchant_ratio": 0.0,
+        "min_positive_evidence_ratio": 0.0,
+        "min_negative_evidence_ratio": 0.0,
+        "min_neutral_evidence_ratio": 0.0,
+        "min_high_or_medium_confidence_ratio": 0.0,
+        "max_duplicate_rate": 0.95,
+        "max_stale_evidence_ratio": 1.0,
+        "min_cities": 1,
+        "min_categories": 1,
+        "min_source_platforms": 1,
+    },
+}
+
+
+def _apply_raw(cfg: AppConfig, raw: dict[str, Any]) -> AppConfig:
+    cfg.omp = _merge(cfg.omp, raw.get("omp") or {})
+    cfg.models = _merge(cfg.models, raw.get("models") or {})
+    cfg.concurrency = _merge(cfg.concurrency, raw.get("concurrency") or {})
+    # Accept the user's compact `agents:` naming as an alias for concurrency.
+    agents = raw.get("agents") or {}
+    if agents:
+        mapped = {
+            "discovery_count": "discovery_agents",
+            "discovery_agents": "discovery_agents",
+            "max_verification_agents": "max_luna_agents",
+            "max_luna_agents": "max_luna_agents",
+            "min_verification_agents": "min_luna_agents",
+            "max_parallel": "max_parallel_agents",
+        }
+        values = {mapped[k]: v for k, v in agents.items() if k in mapped}
+        cfg.concurrency = _merge(cfg.concurrency, values)
+    cfg.research = _merge(cfg.research, raw.get("research") or {})
+    cfg.quality_gates = _merge(cfg.quality_gates, raw.get("quality_gates") or {})
+    # Friendly alias used in the original objective.
+    model_aliases = raw.get("models") or {}
+    if "discovery_coordinator" in model_aliases:
+        cfg.models.coordinator = model_aliases["discovery_coordinator"]
+    db = raw.get("database") or {}
+    if "path" in db:
+        cfg.database_path = str(db["path"])
+    logging_cfg = raw.get("logging") or {}
+    cfg.log_dir = str(logging_cfg.get("dir", cfg.log_dir))
+    cfg.log_level = str(logging_cfg.get("level", cfg.log_level))
+    export = raw.get("export") or {}
+    cfg.export_dir = str(export.get("dir", cfg.export_dir))
+    return cfg
+
+
+def load_config(path: str | Path | None = None, *, smoke: bool = False) -> AppConfig:
+    """Load explicit config or safe cwd defaults; never silently use the example."""
+    cfg = AppConfig(root=Path.cwd())
+    candidate = Path(path) if path else Path("config.yaml")
+    if not candidate.exists():
+        if path is not None:
+            raise FileNotFoundError(candidate)
+        if smoke:
+            cfg.omp = _merge(cfg.omp, SMOKE_OVERLAY["omp"])
+            cfg.concurrency = _merge(cfg.concurrency, SMOKE_OVERLAY["concurrency"])
+            cfg.research = _merge(cfg.research, SMOKE_OVERLAY["research"])
+            cfg.quality_gates = _merge(cfg.quality_gates, SMOKE_OVERLAY["quality_gates"])
+        return cfg
+    raw = yaml.safe_load(candidate.read_text(encoding="utf-8")) or {}
+    if not isinstance(raw, dict):
+        raise ValueError(f"configuration root must be a mapping: {candidate}")
+    cfg = _apply_raw(cfg, raw)
+    cfg.root = candidate.resolve().parent
+    if smoke:
+        cfg.omp = _merge(cfg.omp, SMOKE_OVERLAY["omp"])
+        cfg.concurrency = _merge(cfg.concurrency, SMOKE_OVERLAY["concurrency"])
+        cfg.research = _merge(cfg.research, SMOKE_OVERLAY["research"])
+        cfg.quality_gates = _merge(cfg.quality_gates, SMOKE_OVERLAY["quality_gates"])
+    return cfg
