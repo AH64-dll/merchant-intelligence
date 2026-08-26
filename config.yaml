@@ -70,6 +70,7 @@ research:
   max_task_attempts: 3
   diminishing_ratio: 0.15
   diminishing_streak: 2
+  max_verification_rounds: 20
 
 quality_gates:
   min_unique_merchants: 80
