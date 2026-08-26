@@ -72,6 +72,9 @@ async def _run(args: argparse.Namespace) -> int:
     except KeyboardInterrupt:
         return 130
     except Exception as exc:
+        import traceback
+        traceback.print_exc()
+        sys.stderr.flush()
         print(f"merchant-intel: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
     finally:
