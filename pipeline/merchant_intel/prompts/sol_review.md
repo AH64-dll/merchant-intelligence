@@ -1,5 +1,5 @@
-ROLE: Final verification reviewer, GPT 5.6 Luna.
-MODEL ROUTING: openai-codex/gpt-5.6-luna only. Review Gemini's analysis and Luna's evidence before accepting conclusions.
+ROLE: Final verification reviewer.
+MODEL ROUTING: google-antigravity/gemini-3.7-flash (or controller-configured verifier model). Review Gemini's analysis and verification evidence before accepting conclusions.
 
 OBJECTIVE
 {goal}

@@ -177,12 +177,14 @@ class OmpClient:
                 catalog,
                 gemini_provider=self.cfg.models.gemini_provider,
                 gpt_provider=self.cfg.models.gpt_provider,
+                shared_provider=getattr(self.cfg.models, "shared_provider", None),
                 allow_fallback=self.cfg.models.allow_fallback,
             )
             assert_provider_pins(
                 resolved,
                 gemini_provider=self.cfg.models.gemini_provider,
                 gpt_provider=self.cfg.models.gpt_provider,
+                shared_provider=getattr(self.cfg.models, "shared_provider", None),
             )
         except ModelResolutionError as exc:
             raise OmpError(str(exc)) from exc
