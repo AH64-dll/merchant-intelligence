@@ -28,22 +28,23 @@ omp:
   require_catalog: true
 
 models:
-  discovery: opencode-go/ox-alpha-free
-  coordinator: opencode-go/ox-alpha-free
-  analyst: opencode-go/ox-alpha-free
-  verifier: opencode-go/ox-alpha-free
-  gemini_provider: opencode-go
-  gpt_provider: opencode-go
-  shared_provider: opencode-go
+  # Gemini handles discovery and fast Sol analysis; Luna reviews and verifies it.
+  discovery: google-antigravity/gemini-3.7-flash
+  coordinator: google-antigravity/gemini-3.7-flash
+  analyst: google-antigravity/gemini-3.7-flash
+  verifier: openai-codex/gpt-5.6-luna
+  gemini_provider: google-antigravity
+  gpt_provider: openai-codex
   allow_fallback: false
 
 concurrency:
-  max_parallel_agents: 4
-  discovery_agents: 20
+  max_parallel_agents: 5
+  discovery_agents: 5
   smoke_discovery_agents: 3
-  min_luna_agents: 2
-  max_luna_agents: 8
-  luna_tasks_per_agent: 4
+  min_luna_agents: 1
+  max_luna_agents: 5
+  luna_tasks_per_agent: 20
+
 
 research:
   country: Egypt

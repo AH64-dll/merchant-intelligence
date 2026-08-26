@@ -1,5 +1,5 @@
 ROLE: Discovery coordinator/orchestrator.
-MODEL ROUTING: Gemini through google-antigravity.
+MODEL ROUTING: google-antigravity/gemini-3.7-flash only.
 
 OBJECTIVE
 {goal}

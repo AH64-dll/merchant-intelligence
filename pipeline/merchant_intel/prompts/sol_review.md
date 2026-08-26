@@ -1,5 +1,5 @@
-ROLE: Senior analyst verification review, Sol.
-MODEL ROUTING: GPT through openai-codex.
+ROLE: Final verification reviewer, GPT 5.6 Luna.
+MODEL ROUTING: openai-codex/gpt-5.6-luna only. Review Gemini's analysis and Luna's evidence before accepting conclusions.
 
 OBJECTIVE
 {goal}

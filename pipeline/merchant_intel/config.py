@@ -42,11 +42,10 @@ class OmpConfig:
 
 @dataclass
 class ModelsConfig:
-    # Gemini roles MUST resolve under google-antigravity.
+    # Gemini handles discovery and fast Sol analysis; Luna reviews and verifies it.
     discovery: str = "google-antigravity/gemini-3.7-flash"
     coordinator: str = "google-antigravity/gemini-3.7-flash"
-    # GPT roles MUST resolve under openai-codex.
-    analyst: str = "openai-codex/gpt-5.6-sol"
+    analyst: str = "google-antigravity/gemini-3.7-flash"
     verifier: str = "openai-codex/gpt-5.6-luna"
     gemini_provider: str = "google-antigravity"
     gpt_provider: str = "openai-codex"
@@ -55,12 +54,12 @@ class ModelsConfig:
 
 @dataclass
 class ConcurrencyConfig:
-    max_parallel_agents: int = 8
-    discovery_agents: int = 20
+    max_parallel_agents: int = 5
+    discovery_agents: int = 5
     smoke_discovery_agents: int = 3
-    min_luna_agents: int = 2
-    max_luna_agents: int = 20
-    luna_tasks_per_agent: int = 4
+    min_luna_agents: int = 1
+    max_luna_agents: int = 5
+    luna_tasks_per_agent: int = 20
 
 
 @dataclass

@@ -3,10 +3,7 @@
 import json
 import re
 from typing import Any
-import re
 
-from merchant_intel.omp.client import AgentRequest, AgentResult, OmpError
-from merchant_intel.omp.events import Usage
 from merchant_intel.omp.client import AgentRequest, AgentResult, OmpError
 from merchant_intel.omp.events import Usage
 from merchant_intel.omp.models import (
@@ -18,10 +15,7 @@ from merchant_intel.omp.probe import OmpCapabilities
 
 MOCK_CATALOG = [
     f"{GEMINI_PROVIDER}/gemini-3.7-flash",
-    f"{CODEX_PROVIDER}/gpt-5.6-sol",
     f"{CODEX_PROVIDER}/gpt-5.6-luna",
-    "opencode-go/hy3",
-    "openai/gpt-4o",
 ]
 
 
@@ -31,6 +25,7 @@ class MockOmpClient:
         hints: dict[str, str] | None = None,
         *,
         fail_names: set[str] | None = None,
+        malformed_names: set[str] | None = None,
         catalog: list[str] | None = None,
         gemini_provider: str = GEMINI_PROVIDER,
         gpt_provider: str = CODEX_PROVIDER,
@@ -40,17 +35,16 @@ class MockOmpClient:
         self.hints = hints or {
             "discovery": f"{GEMINI_PROVIDER}/gemini-3.7-flash",
             "coordinator": f"{GEMINI_PROVIDER}/gemini-3.7-flash",
-            "analyst": f"{CODEX_PROVIDER}/gpt-5.6-sol",
+            "analyst": f"{GEMINI_PROVIDER}/gemini-3.7-flash",
             "verifier": f"{CODEX_PROVIDER}/gpt-5.6-luna",
         }
         self.catalog = list(catalog or MOCK_CATALOG)
         self.fail_names = fail_names or set()
+        self.malformed_names = malformed_names or set()
         self.gemini_provider = gemini_provider
         self.gpt_provider = gpt_provider
         self.shared_provider = shared_provider
         self.allow_fallback = allow_fallback
-        self.allow_fallback = allow_fallback
-        self.resolved_models: dict[str, str] = {}
         self.calls: list[AgentRequest] = []
         self.caps = OmpCapabilities(
             binary="omp-mock",

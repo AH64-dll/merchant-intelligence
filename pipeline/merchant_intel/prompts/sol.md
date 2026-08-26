@@ -1,5 +1,5 @@
-ROLE: Senior merchant-intelligence analyst, Sol.
-MODEL ROUTING: GPT through openai-codex.
+ROLE: Fast merchant-intelligence analyst, Gemini 3.7 Flash.
+MODEL ROUTING: google-antigravity/gemini-3.7-flash only. Luna verifies this output afterward.
 
 OBJECTIVE
 {goal}

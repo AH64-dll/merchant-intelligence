@@ -14,14 +14,14 @@ CODEX_PROVIDER = "openai-codex"
 ROLE_FAMILY = {
     "discovery": "gemini",
     "coordinator": "gemini",
-    "analyst": "gpt",
+    "analyst": "gemini",
     "verifier": "gpt",
 }
 
 DEFAULT_HINTS = {
     "discovery": f"{GEMINI_PROVIDER}/gemini-3.7-flash",
     "coordinator": f"{GEMINI_PROVIDER}/gemini-3.7-flash",
-    "analyst": f"{CODEX_PROVIDER}/gpt-5.6-sol",
+    "analyst": f"{GEMINI_PROVIDER}/gemini-3.7-flash",
     "verifier": f"{CODEX_PROVIDER}/gpt-5.6-luna",
 }
 
@@ -138,7 +138,7 @@ def resolve_role_model(
             scored.append((3, -len(item), item))
         elif name in hay:
             scored.append((1, -len(item), item))
-    if scored:
+    if scored and allow_fallback:
         scored.sort(reverse=True)
         return scored[0][2]
 
@@ -165,17 +165,11 @@ def assert_provider_pins(
                     f"{role} must be {shared_provider}/… in shared-provider mode, got {model}"
                 )
         return
-    for role in ("discovery", "coordinator"):
-        model = resolved[role]
-        if not _in_provider(model, gemini_provider):
+    for role, model in resolved.items():
+        required = gemini_provider if family_for_role(role) == "gemini" else gpt_provider
+        if not _in_provider(model, required):
             raise ModelResolutionError(
-                f"{role} must be {gemini_provider}/…, got {model}"
-            )
-    for role in ("analyst", "verifier"):
-        model = resolved[role]
-        if not _in_provider(model, gpt_provider):
-            raise ModelResolutionError(
-                f"{role} must be {gpt_provider}/…, got {model}"
+                f"{role} must be {required}/…, got {model}"
             )
 
 

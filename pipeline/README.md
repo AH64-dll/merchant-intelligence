@@ -12,12 +12,13 @@ The routing is explicit and fail-closed:
 |---|---|---|
 | Discovery workers | Antigravity (`google-antigravity`) | `google-antigravity/gemini-3.7-flash` |
 | Discovery coordinator | Antigravity (`google-antigravity`) | `google-antigravity/gemini-3.7-flash` |
-| Sol analysis/review | Codex (`openai-codex`) | `openai-codex/gpt-5.6-sol` |
-| Luna verification | Codex (`openai-codex`) | `openai-codex/gpt-5.6-luna` |
+| Fast Sol analysis | Antigravity (`google-antigravity`) | `google-antigravity/gemini-3.7-flash` |
+| Luna verification and review | Codex (`openai-codex`) | `openai-codex/gpt-5.6-luna` |
 
-At startup the adapter probes the installed OMP catalog with `omp models --json`, resolves each
-hint to an installed selector, and rejects a provider mismatch. It will not silently replace
-Gemini with another provider or GPT with another provider.
+At startup the adapter probes the installed OMP catalog with `omp models --json`, resolves these
+exact model selectors, and fails closed if either selected model is unavailable or crosses
+providers. Gemini output is always sent through Luna verification/review before it is treated as
+confirmed.
 
 ## Installation
 
@@ -42,7 +43,7 @@ repository root:
 python main.py verify                         # live CLI probe + exact model selectors
 python main.py run --mock --smoke-test        # complete deterministic pipeline, no quota
 python main.py run --smoke-test               # live 3-agent end-to-end smoke test
-python main.py run                            # configured 20-agent discovery swarm
+python main.py run                            # configured 5-agent Gemini/Luna pipeline
 python main.py --resume                       # resume latest running/incomplete checkpoint
 python main.py run --resume --run-id RUN_ID   # resume a specific run
 python main.py status [--run-id RUN_ID]
@@ -62,18 +63,19 @@ quality evidence. Production runs use `config.yaml` thresholds and never inherit
 
 ## Pipeline
 
-1. **Discovery (Gemini / Antigravity):** 20 partitioned assignments cover electronics, gaming,
+1. **Discovery (Gemini / Antigravity):** 5 partitioned assignments cover electronics, gaming,
    PC hardware, mobile/laptops, complaints, positive recommendations, official sources, and
-   cross-platform identity. The selector stays balanced across all groups rather than taking
-   only the first 20 templates. Each record requires a public URL and structured confidence.
+   cross-platform identity. The selector stays balanced across all groups. Each record requires a
+   public URL and structured confidence.
 2. **Coordinator (Gemini / Antigravity):** measures local quality gates, duplicate/repost rate,
    independent source diversity, geography, category coverage, freshness, and balanced evidence.
    Gap queries target the next round; broad repetition is not automatic.
-3. **Analysis (Sol / Codex):** processes bounded merchant packages instead of dumping the whole
-   database into one context. It creates merchant analyses and narrow verification tasks.
-4. **Verification (Luna / Codex):** computes agent count from queue size, capped at 20 by default,
-   runs narrow tasks in parallel, retains unresolved findings, and sends findings back to Sol for
-   a review pass.
+3. **Fast analysis (Gemini / Antigravity):** processes bounded merchant packages instead of dumping
+   the whole database into one context. It creates merchant analyses and narrow verification
+   tasks; Luna reviews these outputs.
+4. **Verification and review (Luna / Codex):** runs no more than 5 concurrent agents, verifies
+   Gemini's claims against public sources, retains unresolved findings, and performs the final
+   review pass.
 5. **Completion:** only a foundation that passes configured quality gates and has no actionable
    verification queue is marked `complete`. Diminishing returns, maximum rounds, failed gates,
    and unresolved claims produce an explicit `incomplete` state.

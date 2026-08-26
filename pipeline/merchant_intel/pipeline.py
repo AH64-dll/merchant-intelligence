@@ -841,18 +841,18 @@ class Pipeline:
             packages=packages,
             findings=findings_json,
         )
-        name = f"sol-review-r{self.state.verification_round}"
+        name = f"luna-sol-review-r{self.state.verification_round}"
         result = await self.client.run(
             AgentRequest(
                 prompt=prompt,
-                model=self.client.model_for_role("analyst"),
+                model=self.client.model_for_role("verifier"),
                 name=name,
-                role="analyst",
+                role="verifier",
                 goal=GOAL,
                 workspace_id=f"{self.state.run_id}-{name}",
             )
         )
-        self._log_agent("analysis_review", name, result, "Luna findings review", "analyst")
+        self._log_agent("analysis_review", name, result, "Gemini analysis review", "verifier")
         if not result.ok:
             return
         try:

@@ -76,7 +76,7 @@ def test_live_argv_uses_v17_flags_and_real_resume(tmp_path):
     assert "--fork" not in first
     resumed = client.build_argv(
         AgentRequest(
-            prompt="{}", model="openai-codex/gpt-5.6-sol",
+            prompt="{}", model="google-antigravity/gemini-3.7-flash",
             name="worker", role="analyst", session_id="session-1", resume=True,
             workspace_id="worker",
         ), mock.caps,
@@ -270,3 +270,27 @@ def test_rate_limit_event_envelope_is_rejected(tmp_path, monkeypatch):
     assert result.payload is None
     assert result.error == "provider rate limit"
 
+def test_sol_review_is_routed_to_luna(tmp_path):
+    cfg = load_config(smoke=True)
+    cfg.root = Path(tmp_path)
+    db = Database(tmp_path / "mi.db")
+    client = MockOmpClient()
+    client.resolved_models = {
+        "discovery": "google-antigravity/gemini-3.7-flash",
+        "coordinator": "google-antigravity/gemini-3.7-flash",
+        "analyst": "google-antigravity/gemini-3.7-flash",
+        "verifier": "openai-codex/gpt-5.6-luna",
+    }
+    pipe = Pipeline(cfg, client, db)
+    db.upsert_run(pipe.state.run_id, "running", "verification", 0, 0, {})
+    output = LunaAgentOutput(
+        findings=[LunaFinding(task_id="task-1", merchant_id="pending")]
+    )
+
+    asyncio.run(pipe._sol_review([output]))
+
+    call = client.calls[-1]
+    assert call.role == "verifier"
+    assert call.model == "openai-codex/gpt-5.6-luna"
+    assert "Gemini" in call.prompt
+    db.close()

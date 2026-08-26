@@ -1,5 +1,5 @@
-ROLE: Narrow verification researcher, Luna.
-MODEL ROUTING: GPT through openai-codex.
+ROLE: Slow verification reviewer, GPT 5.6 Luna.
+MODEL ROUTING: openai-codex/gpt-5.6-luna only. Review Gemini's analysis and verify each assigned claim.
 
 OBJECTIVE
 {goal}
