@@ -79,7 +79,10 @@ def required_provider(
     gemini_provider: str,
     gpt_provider: str,
     shared_provider: str | None = None,
+    hint_provider: str | None = None,
 ) -> str:
+    if role == "fallback" and hint_provider:
+        return hint_provider
     if shared_provider:
         return shared_provider
     return gemini_provider if family_for_role(role) == "gemini" else gpt_provider
@@ -93,11 +96,13 @@ def resolve_role_model(
     shared_provider: str | None = None,
     allow_fallback: bool = False,
 ) -> str:
+    hint_provider = parse_model_id(hint).provider if "/" in (hint or "") else None
     required = required_provider(
         role,
         gemini_provider=gemini_provider,
         gpt_provider=gpt_provider,
         shared_provider=shared_provider,
+        hint_provider=hint_provider,
     )
     hint = (hint or DEFAULT_HINTS.get(role, "")).strip()
     if not hint:
@@ -160,18 +165,21 @@ def assert_provider_pins(
 ) -> None:
     if shared_provider:
         for role, model in resolved.items():
+            if role == "fallback":
+                continue
             if not _in_provider(model, shared_provider):
                 raise ModelResolutionError(
                     f"{role} must be {shared_provider}/… in shared-provider mode, got {model}"
                 )
         return
     for role, model in resolved.items():
+        if role == "fallback":
+            continue
         required = gemini_provider if family_for_role(role) == "gemini" else gpt_provider
         if not _in_provider(model, required):
             raise ModelResolutionError(
                 f"{role} must be {required}/…, got {model}"
             )
-
 
 def resolve_all_roles(
     hints: dict[str, str],
@@ -182,17 +190,20 @@ def resolve_all_roles(
     shared_provider: str | None = None,
     allow_fallback: bool = False,
 ) -> dict[str, str]:
+    roles = list(ROLE_FAMILY)
+    if "fallback" in hints and hints["fallback"]:
+        roles.append("fallback")
     return {
         role: resolve_role_model(
             role,
-            hints.get(role, DEFAULT_HINTS[role]),
+            hints.get(role, DEFAULT_HINTS.get(role, "")),
             catalog,
             gemini_provider=gemini_provider,
             gpt_provider=gpt_provider,
             shared_provider=shared_provider,
             allow_fallback=allow_fallback,
         )
-        for role in ROLE_FAMILY
+        for role in roles
     }
 
 

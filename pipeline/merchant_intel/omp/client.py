@@ -171,6 +171,8 @@ class OmpClient:
             "analyst": self.cfg.models.analyst,
             "verifier": self.cfg.models.verifier,
         }
+        if getattr(self.cfg.models, "fallback", None):
+            hints["fallback"] = self.cfg.models.fallback
         try:
             resolved = resolve_all_roles(
                 hints,
@@ -309,8 +311,11 @@ class OmpClient:
                 self.omp.retry_base_sec * (2 ** (attempt - 1)),
             )
             if _looks_rate_limited(blob):
-                log.warning("rate limit on %s, backing off %.1fs", req.name, retry_delay)
-                req = replace(req, session_id=None, resume=False, continue_session=False)
+                fallback_model = self.resolved_models.get("fallback")
+                next_model = fallback_model if (fallback_model and req.model != fallback_model) else req.model
+                if next_model != req.model:
+                    log.info("falling back to %s for %s after rate limit", next_model, req.name)
+                req = replace(req, model=next_model, session_id=None, resume=False, continue_session=False)
                 if attempt < self.omp.max_retries:
                     await asyncio.sleep(retry_delay)
                 continue
@@ -330,7 +335,11 @@ class OmpClient:
                     ),
                 )
             else:
-                req = replace(req, session_id=None, resume=False, continue_session=False)
+                fallback_model = self.resolved_models.get("fallback")
+                next_model = fallback_model if (fallback_model and req.model != fallback_model and attempt >= 2) else req.model
+                if next_model != req.model:
+                    log.info("switching to fallback model %s for %s", next_model, req.name)
+                req = replace(req, model=next_model, session_id=None, resume=False, continue_session=False)
             if attempt < self.omp.max_retries:
                 await asyncio.sleep(retry_delay)
 

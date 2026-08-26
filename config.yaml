@@ -33,10 +33,11 @@ models:
   coordinator: google-antigravity/gemini-3.7-flash
   analyst: google-antigravity/gemini-3.7-flash
   verifier: google-antigravity/gemini-3.7-flash
+  fallback: empero/qwen3.8-flash-next-fp8
   gemini_provider: google-antigravity
   gpt_provider: google-antigravity
   shared_provider: google-antigravity
-  allow_fallback: false
+  allow_fallback: true
 
 concurrency:
   max_parallel_agents: 5
