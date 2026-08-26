@@ -714,7 +714,7 @@ class Pipeline:
             # Bounded chunks: the per-agent prompt carries every task's text,
             # and argv elements cap at ~128 KB. The class semaphore still
             # throttles how many run concurrently.
-            chunk_size = 60
+            chunk_size = 20
             chunks = [pending[i : i + chunk_size] for i in range(0, len(pending), chunk_size)]
             results = await self._run_group(
                 [self._luna_one(index, chunk) for index, chunk in enumerate(chunks, start=1) if chunk]
@@ -779,6 +779,9 @@ class Pipeline:
                     role="verifier",
                     goal=GOAL,
                     workspace_id=f"{self.state.run_id}-verification-r{self.state.verification_round}-{index}",
+                    # 20 web-verifications per agent far exceeds the default
+                    # 900s budget; give verifiers the analysis window.
+                    timeout_sec=self.cfg.omp.analysis_timeout_sec,
                 )
             )
             self._log_agent("verification", agent_id, result, f"{len(rows)} narrow tasks", "verifier")
