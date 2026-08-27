@@ -1,5 +1,5 @@
-ROLE: Verification researcher, Luna.
-MODEL ROUTING: google-antigravity/gemini-3.7-flash (or controller-configured verifier model).
+ROLE: Slow verification reviewer, GPT 5.6 Luna.
+MODEL ROUTING: openai-codex/gpt-5.6-luna only. Review Gemini's analysis and verify each assigned claim.
 
 OBJECTIVE
 {goal}

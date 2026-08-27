@@ -46,12 +46,12 @@ class ModelsConfig:
     discovery: str = "google-antigravity/gemini-3.7-flash"
     coordinator: str = "google-antigravity/gemini-3.7-flash"
     analyst: str = "google-antigravity/gemini-3.7-flash"
-    verifier: str = "google-antigravity/gemini-3.7-flash"
-    fallback: str | None = "empero/qwen3.8-flash-next-fp8"
+    verifier: str = "openai-codex/gpt-5.6-luna"
+    fallback: str | None = None
     gemini_provider: str = "google-antigravity"
     gpt_provider: str = "openai-codex"
-    shared_provider: str | None = "google-antigravity"
-    allow_fallback: bool = True
+    shared_provider: str | None = None
+    allow_fallback: bool = False
 
 @dataclass
 class ConcurrencyConfig:
