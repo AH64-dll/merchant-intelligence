@@ -827,9 +827,11 @@ class Pipeline:
             if finding.merchant_id and finding.merchant_id != "pending"
         }
         findings_json = self.db.dumps([output.model_dump() for output in outputs])
-        # Linux caps a single argv element at ~128 KB; the composed prompt is
-        # passed as one argv element, so bound both payloads well under it.
-        max_prompt_part = 80_000
+        # Linux caps a single argv element at MAX_ARG_STRLEN = 128 KiB; the
+        # composed prompt is passed as one argv element. Both payloads share
+        # that budget, so cap each at 55 KB (combined ~110 KB + template
+        # overhead stays under the 131,072-byte ceiling and avoids E2BIG).
+        max_prompt_part = 55_000
         packages = self._merchant_packages_for_ids(merchant_ids)
         if len(packages) > max_prompt_part:
             packages = packages[:max_prompt_part] + "\n…(truncated: dataset exceeds prompt budget)"

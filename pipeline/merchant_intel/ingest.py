@@ -463,7 +463,11 @@ def ingest_sol(
                 task_merchant = merchant_id
             if not db.query_one("SELECT id FROM merchants WHERE id=?", (task_merchant,)):
                 task_merchant = merchant_id
-            now = _now()
+            # Unexecutable guard: a task with neither title nor instruction
+            # defines no claim to verify; ingesting it would poison the
+            # verification queue (agents return NON_EXECUTABLE shells forever).
+            if not (task.title or "").strip() and not (task.instruction or "").strip():
+                continue
             db.execute(
                 """INSERT OR IGNORE INTO verification_tasks
                    (id, run_id, merchant_id, title, instruction, excluded_sources_json,
