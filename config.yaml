@@ -28,15 +28,15 @@ omp:
   require_catalog: true
 
 models:
-  # Gemini handles discovery and analysis; Luna performs verification.
-  discovery: google-antigravity/gemini-3.7-flash
-  coordinator: google-antigravity/gemini-3.7-flash
-  analyst: google-antigravity/gemini-3.7-flash
-  verifier: openai-codex/gpt-5.6-luna
+  # All roles run on GLM 5.3 Flash through the Merge Gateway shared provider.
+  discovery: merge-gateway/glm-5.3-flash
+  coordinator: merge-gateway/glm-5.3-flash
+  analyst: merge-gateway/glm-5.3-flash
+  verifier: merge-gateway/glm-5.3-flash
   fallback: null
-  gemini_provider: google-antigravity
-  gpt_provider: openai-codex
-  shared_provider: null
+  gemini_provider: merge-gateway
+  gpt_provider: merge-gateway
+  shared_provider: merge-gateway
   allow_fallback: false
 
 concurrency:
