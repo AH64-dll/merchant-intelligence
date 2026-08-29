@@ -2,13 +2,34 @@ import type { JSX } from 'react';
 
 import type { Identifier, IdentifierKind } from '@/lib/types';
 import { IDENTIFIER_KIND_LABELS } from '@/lib/labels';
+import { ROLE_LABELS } from '@/lib/labels';
+
+/** Actionable original value rendering for phones/emails/URLs. */
+function IdentifierValue({ identifier }: { identifier: Identifier }): JSX.Element {
+  const { kind, normalizedValue } = identifier;
+  if (kind === 'phone' || kind === 'whatsapp') {
+    return <a href={`tel:${normalizedValue}`} className="underline" dir="ltr">{identifier.value}</a>;
+  }
+  if (kind === 'email') {
+    return <a href={`mailto:${normalizedValue}`} className="underline" dir="ltr">{identifier.value}</a>;
+  }
+  if (kind === 'website' && normalizedValue.startsWith('http')) {
+    return (
+      <a href={normalizedValue} target="_blank" rel="noopener noreferrer" className="underline" dir="ltr">
+        {identifier.value}
+      </a>
+    );
+  }
+  return <span dir="ltr">{identifier.value}</span>;
+}
 
 export function IdentifierList({ identifiers }: { identifiers: Identifier[] }): JSX.Element | null {
-  if (identifiers.length === 0) {
+  const displayable = identifiers.filter((identifier) => identifier.displayable);
+  if (displayable.length === 0) {
     return null;
   }
   const byKind = new Map<IdentifierKind, Identifier[]>();
-  for (const identifier of identifiers) {
+  for (const identifier of displayable) {
     const values = byKind.get(identifier.kind);
     if (values === undefined) {
       byKind.set(identifier.kind, [identifier]);
@@ -27,12 +48,11 @@ export function IdentifierList({ identifiers }: { identifiers: Identifier[] }): 
           <ul className="space-y-1">
             {entries.map((identifier, index) => (
               <li
-                key={`${identifier.value}:${index}`}
-                dir="auto"
+                key={`${identifier.id}:${index}`}
                 className="font-mono text-sm [overflow-wrap:anywhere]"
               >
-                {identifier.value}
-                {identifier.confidence > 0 ? ` (${Math.round(identifier.confidence * 100)}%)` : ''}
+                <IdentifierValue identifier={identifier} />
+                <span dir="auto" className="font-sans"> — {ROLE_LABELS[identifier.role]}</span>
               </li>
             ))}
           </ul>

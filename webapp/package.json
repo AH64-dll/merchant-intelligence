@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",
-    "snapshot": "bash scripts/snapshot-db.sh"
+    "snapshot": "bash scripts/snapshot-db.sh",
+    "snapshot:verify": "node scripts/audit-data.mjs data/merchants.db --strict"
   },
   "engines": {
     "node": ">=22"

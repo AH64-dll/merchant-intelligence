@@ -1,3 +1,6 @@
+import type { IdentifierRole } from './identifier-policy';
+import type { SourceCategory } from './taxonomy';
+
 export type Sentiment = 'positive' | 'negative' | 'neutral';
 
 export type IdentifierKind =
@@ -85,9 +88,17 @@ export interface SearchHit {
 }
 
 export interface Identifier {
-  kind: IdentifierKind;
+  id: number;
+  /** Original stored value, e.g. as typed by the pipeline. */
   value: string;
+  /** Pipeline-normalized value used for matching. */
+  normalizedValue: string;
+  kind: IdentifierKind;
+  /** Stored pipeline confidence. Internal/audit only — never shown as a percentage. */
   confidence: number;
+  role: IdentifierRole;
+  searchable: boolean;
+  displayable: boolean;
 }
 
 export interface EvidenceItem {
@@ -97,13 +108,27 @@ export interface EvidenceItem {
   summary: string;
   quotedExcerpt: string;
   authorType: string;
+  /** Raw pipeline confidence. Internal/audit only — never shown as a percentage. */
   confidence: number;
   reliabilityBand: string;
   language: string;
   publishedAt: string | null;
+  capturedAt: string;
   platform: string;
   url: string;
+  sourceType: string;
+  sourceCategory: SourceCategory;
+  transactionEvidence: boolean;
+  /** Stored review flag: evidence was included in an automated verification round. */
+  verified: boolean;
+  /** Stored duplicate-suppression flag: this row is not marked as a duplicate. */
   independent: boolean;
+  /** Direct duplicate pointer (already root-canonical in schema v3). */
+  duplicateOf: string | null;
+  /** Merchant that owns the duplicate root, when the root lives on another merchant. */
+  duplicateRootMerchantId: string | null;
+  /** Claim this evidence is attributed to, when linked. */
+  claimId: string | null;
 }
 
 export interface ClaimItem {
@@ -113,6 +138,8 @@ export interface ClaimItem {
   summary: string;
   independentSourceCount: number;
   mentionCount: number;
+  /** Evidence ids linked through claim_evidence. */
+  evidenceIds: string[];
 }
 
 export interface AnalysisPayload {
@@ -134,19 +161,48 @@ export interface AnalysisPayload {
   consumerSatisfactionNotes: string;
 }
 
-export interface SentimentCounts {
-  positive: number;
-  negative: number;
-  neutral: number;
-}
-
-export interface MerchantDetail {
+/** Detail view payload without the snapshot manifest. */
+export interface MerchantDetailBase {
   merchant: Merchant;
   identifiers: Identifier[];
   aliases: string[];
   evidence: EvidenceItem[];
   claims: ClaimItem[];
   analysis: AnalysisPayload | null;
+  /** Sentiment counts computed over non-duplicate evidence only. */
   sentiment: SentimentCounts;
-  related: { id: string; name: string; relation: string; confidence: number }[];
+  /** Count of duplicate evidence rows excluded from `sentiment`. */
+  duplicateEvidenceCount: number;
+  related: RelatedMerchant[];
+}
+
+export interface SentimentCounts {
+  positive: number;
+  negative: number;
+  neutral: number;
+}
+
+/** MerchantLinks projection with rationale; confidence is internal/audit only. */
+export interface RelatedMerchant {
+  id: string;
+  name: string;
+  relation: string;
+  rationale: string;
+  /** Raw pipeline link confidence. Internal/audit only — never shown as a percentage. */
+  confidence: number;
+}
+
+/**
+ * One-row snapshot manifest written by snapshot-db.sh. MerchantDb validates it
+ * against the actual tables at startup — no legacy fallback.
+ */
+export interface SnapshotInfo {
+  generatedAt: string;
+  sourceSchemaVersion: number;
+  appSchemaVersion: number;
+  counts: Record<string, number>;
+}
+
+export interface MerchantDetail extends MerchantDetailBase {
+  snapshot: SnapshotInfo;
 }

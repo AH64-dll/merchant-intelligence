@@ -42,10 +42,6 @@ export function AnalysisSection({ analysis }: { analysis: AnalysisPayload | null
         </section>
       )}
 
-      <p>
-        تنوع المصادر: <span dir="ltr">{analysis.sourceDiversity}</span> · مستوى
-        ثقة الأدلة: <span dir="ltr">{Math.round(analysis.evidenceConfidence * 100)}%</span>
-      </p>
 
       {hasClaims && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

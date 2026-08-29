@@ -1,24 +1,23 @@
 import type { JSX } from 'react';
 
-import type { MerchantDetail } from '@/lib/types';
+import type { RelatedMerchant } from '@/lib/types';
+import { relationLabel } from '@/lib/taxonomy';
 
-const RELATION_LABELS: Record<string, string> = {
-  identifier_collision: 'تطابق معرفات',
-  name_identifier_conflict: 'تعارض اسم/معرف',
-};
-
-export function RelatedMerchants({ related }: { related: MerchantDetail['related'] }): JSX.Element | null {
+export function RelatedMerchants({ related }: { related: RelatedMerchant[] }): JSX.Element | null {
   if (related.length === 0) {
     return null;
   }
   return (
     <ul className="space-y-1">
       {related.map((entry) => (
-        <li key={entry.id}>
+        <li key={`${entry.id}:${entry.relation}`}>
           <a href={`/merchant/${entry.id}`} className="underline">
             <span dir="auto">{entry.name}</span>
           </a>{' '}
-          — {RELATION_LABELS[entry.relation] ?? entry.relation} ({Math.round(entry.confidence * 100)}%)
+          — <span dir="auto">{relationLabel(entry.relation)}</span>
+          {entry.rationale.trim().length > 0 ? (
+            <span dir="auto"> — {entry.rationale}</span>
+          ) : null}
         </li>
       ))}
     </ul>

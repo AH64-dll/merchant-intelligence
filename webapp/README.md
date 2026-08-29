@@ -14,13 +14,22 @@ pnpm dev                      # http://localhost:3000
 
 ## لقطات قاعدة البيانات (Snapshot)
 
-التطبيق لا يفتح قاعدة بيانات خط المعالجة مباشرة أبدًا؛ يقرأ نسخة مضغوطة بلا WAL في `data/merchants.db` أنشأها السكربت عبر `VACUUM INTO`:
+`data/merchant_intelligence.db` (في جذر المستودع) هو المصدر الوحيد للحقيقة؛ التطبيق لا يفتحه أبدًا. ما يقرأه التطبيق هو نسخة مشتقة مُدقَّقة في `webapp/data/merchants.db` تبنيها `scripts/snapshot-db.sh` هكذا:
+
+1. فتح المصدر للقراءة فقط وأخذ نسخة متسقة عبر `VACUUM INTO` في ملف مؤقت داخل مجلد الوجهة.
+2. التحقق من أن مخطط المصدر `schema_version = 3`، ومراقبة تعديل المصدر أثناء النسخ عبر `PRAGMA data_version` + مقارنة أعداد الجداول التسعة، مع إعادة المحاولة حتى ثلاث مرات.
+3. تشغيل التدقيق الصارم `scripts/audit-data.mjs --strict` على النسخة المؤقتة؛ أي خطأ قاتل يُلغي العملية.
+4. كتابة جدول `snapshot_meta` (صف واحد: `app_schema_version=1`, `source_schema_version=3`, وقت التوليد UTC، أحدث `captured_at`/`updated_at` في المصدر، وأعداد تسع جداول) داخل النسخة المؤقتة فقط.
+5. الاستبدال الذري عبر `mv`؛ أي فشل يترك النسخة السابقة كما هي بايت ببايت. قفل `flock` غير حاجب يمنع تشغيلين متزامنين.
 
 ```bash
-bash scripts/snapshot-db.sh          # المسار الافتراضي للمصدر
+pnpm snapshot          # بناء نسخة جديدة من المصدر الافتراضي
+pnpm snapshot:verify   # تدقيق صارم للنسخة الحالية (يُشغَّل داخل بناء Docker أيضًا)
 SRC_DB=/path/to/other.db bash scripts/snapshot-db.sh   # مصدر بديل
-# أو: pnpm snapshot
+DEST_DB=/path/to/out.db bash scripts/snapshot-db.sh    # وجهة بديلة
 ```
+
+عند بدء التشغيل يتحقق `MerchantDb` من `snapshot_meta` (الإصداران 1/3 وتطابق الأعداد) ويفشل بوضوح إن كانت النسخة قديمة أو ناقصة؛ لا يوجد تراجع إلى صيغة قديمة. تصديرات `data/export/*.json|csv|jsonl` تشخيصية تاريخية فقط ولا يقرؤها التطبيق أبدًا.
 
 ## الاختبارات والفحوص
 
@@ -37,12 +46,14 @@ docker build -t seller-search .
 docker run -p 3000:3000 seller-search
 ```
 
-تُنسخ `data/merchants.db` داخل الصورة وتُقرأ من `MERCHANTS_DB=/app/data/merchants.db` (readonly).
+مرحلة البناء (`builder`) تشغّل `pnpm snapshot:verify` قبل `pnpm build`؛ يفشل البناء فورًا إن كانت `data/merchants.db` المضمَّنة ناقصة أو قديمة أو غير متوافقة مع عقد `snapshot_meta`. تُنسخ النسخة داخل الصورة وتُقرأ من `MERCHANTS_DB=/app/data/merchants.db` (readonly) في مرحلة التشغيل.
 
 ## متغيرات البيئة
 
 | المتغير | الافتراضي | الوصف |
 | --- | --- | --- |
+| `SRC_DB` | `../data/merchant_intelligence.db` | قاعدة بيانات خط المعالجة (لـ `snapshot-db.sh`) |
+| `DEST_DB` | `webapp/data/merchants.db` | وجهة النسخة المشتقة (لـ `snapshot-db.sh`) |
 | `MERCHANTS_DB` | `./data/merchants.db` | مسار نسخة قاعدة البيانات |
 
 ## واجهة API

@@ -1,39 +1,60 @@
 import type { ReactNode } from 'react';
 
 import type { ClaimItem } from '@/lib/types';
+import { claimTypeLabel } from '@/lib/taxonomy';
+import { SENTIMENT_LABELS } from '@/lib/labels';
 
-const CLAIM_SENTIMENT_LABELS: Record<ClaimItem['sentiment'], string> = {
-  positive: 'إيجابي',
-  negative: 'سلبي',
-  neutral: 'محايد',
-};
-
-export function ClaimsTable({ claims }: { claims: ClaimItem[] }): ReactNode {
+export function ClaimsTable({ claims }: { claims: ClaimItem[] }): ReactNode | null {
   if (claims.length === 0) {
     return null;
   }
   return (
-    <table className="border-collapse w-full text-sm [overflow-wrap:anywhere]">
-      <thead>
-        <tr>
-          <th scope="col" className="border border-black p-1 text-right">النوع</th>
-          <th scope="col" className="border border-black p-1 text-right">التوجه</th>
-          <th scope="col" className="border border-black p-1 text-right">الملخص</th>
-          <th scope="col" className="border border-black p-1 text-right">مصادر مستقلة</th>
-          <th scope="col" className="border border-black p-1 text-right">مرات الذكر</th>
-        </tr>
-      </thead>
-      <tbody>
-        {claims.map((claim) => (
-          <tr key={claim.id}>
-            <td dir="auto" className="border border-black p-1">{claim.claimType}</td>
-            <td className="border border-black p-1">{CLAIM_SENTIMENT_LABELS[claim.sentiment]}</td>
-            <td dir="auto" className="border border-black p-1">{claim.summary}</td>
-            <td className="border border-black p-1">{claim.independentSourceCount}</td>
-            <td className="border border-black p-1">{claim.mentionCount}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="space-y-3">
+      {claims.map((claim) => (
+        <article key={claim.id} className="border border-black p-2 space-y-1">
+          <dl className="space-y-1">
+            <div>
+              <dt className="font-bold">النوع</dt>
+              <dd dir="auto">{claimTypeLabel(claim.claimType)}</dd>
+            </div>
+            <div>
+              <dt className="font-bold">التوجه</dt>
+              <dd>{SENTIMENT_LABELS[claim.sentiment]}</dd>
+            </div>
+            {claim.summary.trim().length > 0 ? (
+              <div>
+                <dt className="font-bold">الملخص</dt>
+                <dd dir="auto">{claim.summary}</dd>
+              </div>
+            ) : null}
+            <div>
+              <dt className="font-bold">المصادر غير المكررة</dt>
+              <dd>
+                <span dir="ltr">{claim.independentSourceCount}</span>
+              </dd>
+            </div>
+            <div>
+              <dt className="font-bold">إجمالي الملاحظات</dt>
+              <dd>
+                <span dir="ltr">{claim.mentionCount}</span>
+              </dd>
+            </div>
+          </dl>
+          {claim.evidenceIds.length > 0 ? (
+            <p>
+              الأدلة المرتبطة:{' '}
+              {claim.evidenceIds.slice(0, 5).map((evidenceId, index) => (
+                <span key={evidenceId}>
+                  {index > 0 ? ' · ' : ''}
+                  <a href={`#evidence-${evidenceId}`} className="underline" dir="ltr">
+                    {evidenceId}
+                  </a>
+                </span>
+              ))}
+            </p>
+          ) : null}
+        </article>
+      ))}
+    </div>
   );
 }

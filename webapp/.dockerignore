@@ -9,4 +9,3 @@ README.md
 *.md
 data/*.db-shm
 data/*.db-wal
-scripts
