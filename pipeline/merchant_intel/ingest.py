@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 from typing import Any, Iterable
 
 from merchant_intel.database import Database
@@ -22,6 +23,16 @@ from merchant_intel.schemas import (
     SolRoundOutput,
     utcnow,
 )
+
+
+def _utc_iso(value: datetime | None) -> str | None:
+    """Serialize a datetime as UTC ISO-8601 with an explicit +00:00 offset.
+    Naive datetimes are treated as UTC; aware datetimes are converted."""
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc).isoformat()
 
 
 def _now() -> str:
@@ -134,20 +145,24 @@ def _add_candidate_details(
                 (merchant_id, alias.strip(), normalized),
             )
     for kind, raw, normalized in _identifier_pairs(candidate):
-        existing = db.query_one(
-            "SELECT merchant_id FROM merchant_identifiers WHERE kind=? AND normalized_value=?",
-            (kind, normalized),
-        )
-        if existing and existing["merchant_id"] != merchant_id:
+        other_owners = [
+            r["merchant_id"]
+            for r in db.query(
+                """SELECT merchant_id FROM merchant_identifiers
+                   WHERE kind=? AND normalized_value=?""",
+                (kind, normalized),
+            )
+            if r["merchant_id"] != merchant_id
+        ]
+        for other in other_owners:
             _link_merchants(
                 db,
                 merchant_id,
-                existing["merchant_id"],
+                other,
                 relation="identifier_collision",
                 confidence=0.15,
-                rationale=f"same {kind} identifier appeared on two candidate merchants",
+                rationale=f"same {kind} identifier appeared on multiple candidate merchants",
             )
-            continue
         db.execute(
             """INSERT OR IGNORE INTO merchant_identifiers
                (merchant_id, kind, value, normalized_value, confidence)
@@ -155,18 +170,17 @@ def _add_candidate_details(
             (merchant_id, kind, raw, normalized, 0.7 if kind in _STRONG_IDENTIFIER_KINDS else 0.35),
         )
 
-
 def resolve_merchant(db: Database, candidate: MerchantCandidate, round_no: int) -> str:
     pairs = _identifier_pairs(candidate)
     matched_ids: set[str] = set()
     for kind, _raw, normalized in pairs:
         if kind not in _STRONG_IDENTIFIER_KINDS:
             continue
-        row = db.query_one(
+        rows = db.query(
             "SELECT merchant_id FROM merchant_identifiers WHERE kind=? AND normalized_value=?",
             (kind, normalized),
         )
-        if row:
+        for row in rows:
             matched_ids.add(row["merchant_id"])
 
     # Merge only when strong identifiers agree on one merchant. Conflicting
@@ -175,7 +189,6 @@ def resolve_merchant(db: Database, candidate: MerchantCandidate, round_no: int) 
         merchant_id = next(iter(matched_ids))
         _add_candidate_details(db, merchant_id, candidate)
         return merchant_id
-
     normalized_name = canonicalize_name(candidate.canonical_name)
     city = _plain(candidate.city)
     if normalized_name and city:
@@ -187,7 +200,7 @@ def resolve_merchant(db: Database, candidate: MerchantCandidate, round_no: int) 
         if row:
             merchant_id = row["id"]
             _add_candidate_details(db, merchant_id, candidate)
-            for other in matched_ids:
+            for other in matched_ids - {merchant_id}:
                 _link_merchants(
                     db,
                     merchant_id,
@@ -325,9 +338,29 @@ def ingest_evidence(
         name, evidence.claim_type.value, evidence.summary, evidence.raw_quote
     )
     duplicate = db.query_one(
-        "SELECT id FROM evidence WHERE fingerprint=? OR content_fingerprint=? ORDER BY id LIMIT 1",
+        """SELECT id FROM evidence
+           WHERE fingerprint=? OR content_fingerprint=? ORDER BY id LIMIT 1""",
         (exact_fp, content_fp),
     )
+    # Duplicate pointers always reference the canonical root of a chain:
+    # if the matched row is itself a duplicate, walk to its root so chains
+    # stay flat and root-canonical.
+    duplicate_root_id: str | None = None
+    if duplicate is not None:
+        duplicate_root_id = duplicate["id"]
+        seen: set[str] = set()
+        while True:
+            parent = db.query_one(
+                "SELECT duplicate_of FROM evidence WHERE id=?", (duplicate_root_id,)
+            )
+            if parent is None or parent["duplicate_of"] is None:
+                break
+            if duplicate_root_id in seen:
+                # Defensive: a cycle at write time is corrupt input; do not
+                # follow it further.
+                break
+            seen.add(duplicate_root_id)
+            duplicate_root_id = parent["duplicate_of"]
     source_id = _upsert_source(db, evidence)
     claim_id = _upsert_claim(db, merchant_id, evidence, name)
     evidence_id = str(uuid.uuid4())
@@ -353,12 +386,12 @@ def ingest_evidence(
             evidence.confidence,
             evidence.reliability_band.value,
             evidence.language,
-            evidence.published_at.isoformat() if evidence.published_at else None,
-            (evidence.captured_at or utcnow()).isoformat(),
+            _utc_iso(evidence.published_at),
+            _utc_iso(evidence.captured_at or utcnow()),
             exact_fp,
             content_fp,
             int(independent),
-            duplicate["id"] if duplicate else None,
+            duplicate_root_id,
             agent_run_id,
             round_no,
             int(verified),

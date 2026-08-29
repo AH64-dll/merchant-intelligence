@@ -1,11 +1,16 @@
 import asyncio
+import json
+import sqlite3
 from pathlib import Path
+
+import pytest
 
 from merchant_intel.assignments import default_assignments
 from merchant_intel.config import load_config
 from merchant_intel.database import Database
 from merchant_intel.export import export_dataset
-from merchant_intel.ingest import ingest_evidence, ingest_luna, resolve_merchant
+from merchant_intel.ingest import ingest_evidence, ingest_sol, ingest_luna, resolve_merchant
+from merchant_intel.normalize import canonicalize_eg_phone
 from merchant_intel.omp.client import AgentRequest, OmpClient
 from merchant_intel.omp.mock import MockOmpClient
 from merchant_intel.pipeline import Pipeline
@@ -293,4 +298,97 @@ def test_sol_review_is_routed_to_luna(tmp_path):
     assert call.role == "verifier"
     assert call.model == "openai-codex/gpt-5.6-luna"
     assert "Gemini" in call.prompt
+    db.close()
+
+
+def test_shared_phone_two_merchants_and_unique_per_merchant(tmp_path):
+    db = Database(tmp_path / "mi.db")
+    phone = "+201222333444"
+    first = resolve_merchant(
+        db,
+        MerchantCandidate(canonical_name="Alpha Tech", city="Cairo", identifiers={"phones": [phone]}),
+        1,
+    )
+    second = resolve_merchant(
+        db,
+        MerchantCandidate(canonical_name="BetaMart", city="Giza", identifiers={"websites": ["https://betamart.test"]}),
+        1,
+    )
+    # A candidate matching both merchants' identifiers (no name/city match)
+    # creates a separate merchant; the phone now has two owners.
+    third = resolve_merchant(
+        db,
+        MerchantCandidate(
+            canonical_name="Gamma Shop",
+            city="Alex",
+            identifiers={"phones": [phone], "websites": ["https://betamart.test"]},
+        ),
+        1,
+    )
+    assert len({first, second, third}) == 3
+    owners = sorted(
+        row["merchant_id"]
+        for row in db.query(
+            "SELECT merchant_id FROM merchant_identifiers WHERE kind='phone' AND normalized_value=?",
+            (phone,),
+        )
+    )
+    assert owners == sorted([first, third])
+    with pytest.raises(sqlite3.IntegrityError):
+        db.execute(
+            """INSERT INTO merchant_identifiers
+               (merchant_id, kind, value, normalized_value, confidence)
+               VALUES (?, 'phone', ?, ?, 0.5)""",
+            (first, phone, phone),
+        )
+    db.close()
+
+
+def test_canonicalize_eg_phone_rejects_foreign_numbers():
+    assert canonicalize_eg_phone("+971501234567") is None
+    assert canonicalize_eg_phone("+14155551234") is None
+    assert canonicalize_eg_phone("4915112345678") is None
+    assert canonicalize_eg_phone("12345678") is None
+    assert canonicalize_eg_phone("+2010012345678") is None
+    assert canonicalize_eg_phone("0100123456") is None
+    assert canonicalize_eg_phone("+201001234567") == "+201001234567"
+    assert canonicalize_eg_phone("0223456789") == "+20223456789"
+
+
+def test_evidence_captured_at_normalized_to_utc_offset(tmp_path):
+    db = Database(tmp_path / "mi.db")
+    merchant_id = resolve_merchant(db, _candidate(), 1)
+    ingest_evidence(
+        db,
+        merchant_id,
+        _evidence("https://utc.test/post", "A timestamp normalization case."),
+        agent_run_id="a1",
+        round_no=1,
+    )
+    row = db.query_one("SELECT captured_at FROM evidence")
+    assert row["captured_at"].endswith("+00:00")
+    db.close()
+
+
+def test_ingest_sol_writes_payload_version_one(tmp_path):
+    db = Database(tmp_path / "mi.db")
+    merchant_id = resolve_merchant(db, _candidate(), 1)
+    db.upsert_run("run-1", "running", "analysis", 0, 0, {})
+    output = SolRoundOutput.model_validate(
+        {
+            "merchants": [
+                {
+                    "merchant_id": merchant_id,
+                    "name": "Example Store",
+                    "identity_confidence": 0.8,
+                    "internal_state": "mixed",
+                }
+            ]
+        }
+    )
+    ingest_sol(db, "run-1", output, 1)
+    payload = json.loads(
+        db.query_one("SELECT payload_json FROM merchant_analyses")["payload_json"]
+    )
+    assert payload["payload_version"] == 1
     db.close()

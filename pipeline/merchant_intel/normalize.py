@@ -51,16 +51,33 @@ def canonicalize_url(url: str) -> str:
 
 
 def canonicalize_eg_phone(value: str) -> str | None:
+    """Canonicalize an Egyptian phone number to ``+20XXXXXXXXXX``.
+
+    Accepts only valid +20 mobile (1[0125]xxxxxxxx after the country code)
+    or landline ([2-9]xxxxxxxx after the country code) shapes. Never
+    fabricates a +20 prefix for an arbitrary foreign number: anything that
+    does not carry an explicit Egyptian country code or national leading
+    zero is rejected, and invalid shapes return None.
+    """
     digits = _NON_DIGIT.sub("", value or "")
     if not digits:
         return None
+    had_country = False
     if digits.startswith("0020"):
         digits = digits[4:]
+        had_country = True
     elif digits.startswith("20") and len(digits) >= 11:
         digits = digits[2:]
+        had_country = True
     if digits.startswith("0"):
         digits = digits[1:]
-    if len(digits) >= 9:
+    elif not had_country:
+        # No Egyptian country code and no national leading zero: refusing to
+        # guess +20 keeps foreign numbers and raw local fragments quarantined.
+        return None
+    mobile = len(digits) == 10 and digits[0] == "1" and digits[1] in "0125"
+    landline = len(digits) == 9 and digits[0] in "23456789"
+    if mobile or landline:
         return "+20" + digits
     return None
 

@@ -1,255 +1,538 @@
 import type { IndexData, MerchantDb } from './db';
-import { detectInputKind, levenshtein, normalizeName, normalizePhone, normalizeQueryUrl, nameTokens } from './normalize';
-import type { InputKind, MatchedOn, SearchHit, Merchant, IdentifierKind } from './types';
+import {
+  conjunctionVariants,
+  detectInputKind,
+  levenshtein,
+  nameTokens,
+  normalizeNameLoose,
+  normalizeNameStrict,
+  normalizePhone,
+  normalizeQueryUrl,
+  trigrams,
+} from './normalize';
+import { isSearchableIdentifier } from './identifier-policy';
+import type {
+  IdentifierKind,
+  InputKind,
+  MatchedOn,
+  Merchant,
+  SearchDiagnostic,
+  SearchHit,
+  SearchResult,
+  SearchTier,
+} from './types';
+import { SEARCH_PAGE_SIZE } from './types';
+
+/** Quality metrics used to order hits inside one ordinal tier. */
+interface HitQuality {
+  /** Query tokens not covered exactly (typo-rescued count). Ascending = better. */
+  fuzzyTokens: number;
+  /** Candidate name tokens left uncovered by the query (verbosity penalty). Ascending = better. */
+  extraTokens: number;
+  /** Total edit distance across typo-rescued tokens. Ascending = better. */
+  editDistance: number;
+}
+
+const PERFECT: HitQuality = { fuzzyTokens: 0, extraTokens: 0, editDistance: 0 };
+
+interface BestHit {
+  tier: SearchTier;
+  matchedOn: MatchedOn;
+  matchedValue: string;
+  quality: HitQuality;
+}
+
+type Consider = (merchantId: string, hit: BestHit) => void;
 
 interface CandidateTokens {
   merchantId: string;
-  tokens: string[];
+  looseTokens: string[];
   display: string;
 }
 
-const SCORE_IDENTIFIER_EXACT = 1.0;
-const SCORE_HOST_FALLBACK = 0.9;
-const SCORE_NAME_EXACT = 0.95;
-const SCORE_PATH_MATCH = 0.95;
-const SCORE_FUZZY_BASE = 0.8;
-const SCORE_FUZZY_STEP = 0.02;
-const SCORE_FUZZY_FLOOR = 0.6;
-const SCORE_TYPO = 0.55;
-const MIN_SCORE = 0.5;
-const TYPO_MAX_TOKEN_LENGTH = 64;
-const TYPO_MAX_DISTANCE = 2;
-const TYPO_MIN_TOKEN_LENGTH = 5;
+const TIER_ORDER: Record<SearchTier, number> = {
+  exact_identifier: 0,
+  exact_name: 1,
+  exact_alias: 2,
+  normalized_variant: 3,
+  partial_name: 4,
+  typo: 5,
+};
 
-interface BestHit {
-  score: number;
-  matchedOn: MatchedOn;
-  matchedValue: string;
-}
+const MATCH_LABELS: Record<MatchedOn, string> = {
+  commercial_register: 'سجل تجاري',
+  address: 'عنوان',
+  phone: 'هاتف',
+  whatsapp: 'واتساب',
+  email: 'بريد إلكتروني',
+  facebook: 'صفحة فيسبوك',
+  instagram: 'حساب إنستغرام',
+  tiktok: 'حساب تيك توك',
+  website: 'الموقع الرسمي',
+  marketplace: 'متجر إلكتروني',
+  google_maps: 'موقع على الخرائط',
+  'website-host': 'تطابق نطاق الموقع',
+  'marketplace-host': 'تطابق نطاق متجر إلكتروني',
+  exact_name: 'تطابق اسم تام',
+  exact_alias: 'تطابق اسم بديل',
+  normalized_variant: 'صيغة قريبة من الاسم',
+  partial_name: 'تطابق جزئي في الاسم',
+  typo: 'تشابه تقريبي في الاسم',
+};
 
 export class SearchIndex {
   private readonly merchantsById: Map<string, Merchant>;
-  private readonly identifierExact: Map<string, { merchantId: string; normalized: string }>;
-  private readonly hostIndex: Map<string, Set<string>>;
-  private readonly pathKeyIndex: Map<string, { merchantId: string; normalized: string }>;
+  /** `${kind}\u0000${normalized}` → every owner of that exact identifier value. */
+  private readonly identifierExact: Map<string, Map<string, string>>;
+  /**
+   * Scheme-free URL keys (platform account keys, full subpaths, first-party
+   * origins) → every owner. Built symmetrically from stored values and queries
+   * through normalizeQueryUrl, so http/https/www variants never split owners.
+   */
+  private readonly urlIndex: Map<string, Map<string, string>>;
+  /** Strict canonical name key → merchantId → raw canonical name. */
   private readonly nameExact: Map<string, Map<string, string>>;
+  /** Strict alias key → merchantId → raw alias. */
   private readonly aliasExact: Map<string, Map<string, string>>;
+  /** Loose key → merchantId → raw display value (names + aliases; recall-only tier). */
+  private readonly looseKeyOwners: Map<string, Map<string, string>>;
   private readonly candidates: CandidateTokens[];
+  private readonly candidatesByMerchant: Map<string, CandidateTokens[]>;
+  /** Loose token → merchant ids containing it (posting lists; no corpus scans). */
+  private readonly tokenPostings: Map<string, Set<string>>;
+  /** Trigram → merchant ids sharing it (typo-rescue pre-filter pool). */
+  private readonly trigramPostings: Map<string, Set<string>>;
+
   constructor(data: IndexData) {
-    this.merchantsById = new Map(data.merchants.map((merchant) => [merchant.id, merchant]));
+    this.merchantsById = new Map(data.merchants.map((m) => [m.id, m]));
     this.identifierExact = new Map();
-    this.hostIndex = new Map();
-    this.pathKeyIndex = new Map();
+    this.urlIndex = new Map();
     for (const identifier of data.identifiers) {
-      const key = `${identifier.kind}\u0000${identifier.normalized}`;
-      if (!this.identifierExact.has(key)) {
-        this.identifierExact.set(key, { merchantId: identifier.merchantId, normalized: identifier.normalized });
-      }
-      const hostKey = extractHostKey(identifier.kind, identifier.normalized);
-      if (hostKey !== null) {
-        const hostBucket = this.hostIndex.get(`${identifier.kind}\u0000${hostKey}`) ?? new Set<string>();
-        hostBucket.add(identifier.merchantId);
-        this.hostIndex.set(`${identifier.kind}\u0000${hostKey}`, hostBucket);
-      }
-      const pathKey = extractPathKey(identifier.kind, identifier.normalized);
-      if (pathKey !== null && !this.pathKeyIndex.has(pathKey)) {
-        this.pathKeyIndex.set(pathKey, { merchantId: identifier.merchantId, normalized: identifier.normalized });
-      }
+      if (!isSearchableIdentifier(identifier.kind, identifier.normalized)) continue;
+      this.addToOwners(
+        this.identifierExact,
+        `${identifier.kind}\u0000${identifier.normalized.toLowerCase()}`,
+        identifier.merchantId,
+        identifier.normalized,
+      );
+      this.indexIdentifierUrl(identifier.kind, identifier.normalized, identifier.merchantId);
     }
     this.nameExact = new Map();
     this.aliasExact = new Map();
+    this.looseKeyOwners = new Map();
     this.candidates = [];
     for (const merchant of data.merchants) {
-      this.addCandidate(this.nameExact, merchant.id, merchant.canonicalName);
+      this.addName(merchant.id, merchant.canonicalName);
     }
     for (const alias of data.aliases) {
-      this.addCandidate(this.aliasExact, alias.merchantId, alias.alias);
+      this.addAlias(alias.merchantId, alias.alias);
     }
-  }
-
-  private addCandidate(map: Map<string, Map<string, string>>, merchantId: string, raw: string): void {
-    const normalized = normalizeName(raw);
-    const tokens = nameTokens(normalized);
-    if (tokens.length === 0) {
-      return;
+    this.candidatesByMerchant = new Map();
+    for (const candidate of this.candidates) {
+      const list = this.candidatesByMerchant.get(candidate.merchantId);
+      if (list !== undefined) {
+        list.push(candidate);
+      } else {
+        this.candidatesByMerchant.set(candidate.merchantId, [candidate]);
+      }
     }
-    const bucket = map.get(normalized) ?? new Map<string, string>();
-    if (!bucket.has(merchantId)) {
-      bucket.set(merchantId, raw);
+    this.tokenPostings = new Map();
+    this.trigramPostings = new Map();
+    for (const candidate of this.candidates) {
+      for (const token of new Set(candidate.looseTokens)) {
+        const bucket = this.tokenPostings.get(token);
+        if (bucket !== undefined) {
+          bucket.add(candidate.merchantId);
+        } else {
+          this.tokenPostings.set(token, new Set([candidate.merchantId]));
+        }
+        for (const gram of trigrams(token)) {
+          const gramBucket = this.trigramPostings.get(gram);
+          if (gramBucket !== undefined) {
+            gramBucket.add(candidate.merchantId);
+          } else {
+            this.trigramPostings.set(gram, new Set([candidate.merchantId]));
+          }
+        }
+      }
     }
-    map.set(normalized, bucket);
-    this.candidates.push({ merchantId, tokens, display: raw });
   }
 
   static fromDb(db: MerchantDb): SearchIndex {
     return new SearchIndex(db.getIndexData());
   }
 
-  search(query: string, limit: number = 10): { detectedType: InputKind; hits: SearchHit[] } {
-    const detectedType = detectInputKind(query);
+  private addToOwners(map: Map<string, Map<string, string>>, key: string, merchantId: string, value: string): void {
+    const bucket = map.get(key);
+    if (bucket !== undefined) {
+      if (!bucket.has(merchantId)) bucket.set(merchantId, value);
+    } else {
+      map.set(key, new Map([[merchantId, value]]));
+    }
+  }
+
+  private indexIdentifierUrl(kind: IdentifierKind, normalized: string, merchantId: string): void {
+    const parsed = normalizeQueryUrl(normalized);
+    if (parsed === null || parsed.externalReference) return;
+    for (const pathKey of parsed.pathKeys) {
+      // Only first-party websites may claim a bare-origin key; marketplace,
+      // directory, social and maps hosts must carry a full path key.
+      if (pathKey === parsed.originKey && kind !== 'website') continue;
+      this.addToOwners(this.urlIndex, pathKey, merchantId, normalized);
+    }
+    // First-party websites additionally index their bare origin for host
+    // lookup. Marketplace/app-store/directory/social hosts never get a bare
+    // origin key: the host alone must not identify a merchant.
+    if (kind === 'website' && parsed.originKey !== null) {
+      this.addToOwners(this.urlIndex, parsed.originKey, merchantId, normalized);
+    }
+  }
+
+  private addName(merchantId: string, raw: string): void {
+    const strict = normalizeNameStrict(raw);
+    if (nameTokens(strict).length === 0) return;
+    const bucket = this.nameExact.get(strict) ?? new Map<string, string>();
+    if (!bucket.has(merchantId)) bucket.set(merchantId, raw);
+    this.nameExact.set(strict, bucket);
+    this.registerCandidate(merchantId, raw, strict);
+  }
+
+  private addAlias(merchantId: string, raw: string): void {
+    const strict = normalizeNameStrict(raw);
+    if (nameTokens(strict).length === 0) return;
+    const bucket = this.aliasExact.get(strict) ?? new Map<string, string>();
+    if (!bucket.has(merchantId)) bucket.set(merchantId, raw);
+    this.aliasExact.set(strict, bucket);
+    this.registerCandidate(merchantId, raw, strict);
+  }
+
+  private registerCandidate(merchantId: string, raw: string, strict: string): void {
+    const loose = normalizeNameLoose(raw);
+    if (nameTokens(loose).length === 0) return;
+    this.addToOwners(this.looseKeyOwners, loose, merchantId, raw);
+    this.candidates.push({ merchantId, looseTokens: nameTokens(loose), display: raw });
+    // The strict form itself participates in posting lists so exact-token
+    // containment works even when loose and strict differ.
+    if (loose !== strict) {
+      this.candidates[this.candidates.length - 1]!.looseTokens = [
+        ...new Set([...nameTokens(loose), ...nameTokens(strict)]),
+      ];
+    }
+  }
+
+  /**
+   * Deterministic, collision-safe retrieval. Identifier/phone/email/URL
+   * queries never fall through to name matching; a phone-shaped query that is
+   * not a valid Egyptian number returns diagnostic `invalid_egyptian_phone`
+   * with zero hits. No numeric scores: hits are ordered by ordinal tier and
+   * explainable quality metrics.
+   */
+  search(query: string, page = 1, pageSize: number = SEARCH_PAGE_SIZE): SearchResult {
+    const inputKind = detectInputKind(query);
     const best = new Map<string, BestHit>();
-    const consider = (merchantId: string, hit: BestHit): void => {
-      const existing = best.get(merchantId);
-      if (existing === undefined || hit.score > existing.score) {
-        best.set(merchantId, hit);
-      }
+    const diagnostic = this.collect(inputKind, query, (merchantId, hit) => {
+      mergeHit(best, merchantId, hit);
+    });
+
+    const ranked = [...best.entries()]
+      .map(([merchantId, hit]) => ({ merchantId, hit }))
+      .sort((a, b) => {
+        const tierDelta = TIER_ORDER[a.hit.tier] - TIER_ORDER[b.hit.tier];
+        if (tierDelta !== 0) return tierDelta;
+        const q = compareQuality(a.hit.quality, b.hit.quality);
+        if (q !== 0) return q;
+        const ca = this.merchantsById.get(a.merchantId);
+        const cb = this.merchantsById.get(b.merchantId);
+        const confidenceDelta = (cb?.identityConfidence ?? 0) - (ca?.identityConfidence ?? 0);
+        if (confidenceDelta !== 0) return confidenceDelta;
+        return a.merchantId.localeCompare(b.merchantId);
+      });
+
+    const allHits: SearchHit[] = [];
+    for (const { merchantId, hit } of ranked) {
+      const merchant = this.merchantsById.get(merchantId);
+      if (merchant === undefined) continue;
+      allHits.push({
+        merchant,
+        match: { kind: hit.matchedOn, value: hit.matchedValue, label: MATCH_LABELS[hit.matchedOn] },
+      });
+    }
+
+    const boundedPage = Math.max(1, Math.floor(page));
+    const boundedSize = Math.max(1, Math.floor(pageSize));
+    const start = (boundedPage - 1) * boundedSize;
+    const topTier = allHits[0]?.match.kind;
+    const ambiguous = topTier !== undefined && allHits.filter((h) => h.match.kind === topTier).length > 1;
+
+    return {
+      query,
+      inputKind,
+      total: allHits.length,
+      page: boundedPage,
+      pageSize: boundedSize,
+      ambiguous,
+      diagnostic,
+      hits: allHits.slice(start, start + boundedSize),
     };
+  }
 
-    this.matchIdentifiers(query, consider);
+  private collect(inputKind: InputKind, query: string, consider: Consider): SearchDiagnostic | null {
+    if (inputKind === 'phone') {
+      const phone = normalizePhone(query);
+      if (phone === null) return 'invalid_egyptian_phone';
+      this.matchPhone(phone, consider);
+      return null;
+    }
+    if (inputKind === 'email') {
+      this.matchEmail(query, consider);
+      return null;
+    }
+    if (inputKind === 'url') {
+      this.matchUrl(query, consider);
+      return null;
+    }
     this.matchNames(query, consider);
-
-    const merchants = this.merchantsById;
-    const hits: SearchHit[] = [];
-    for (const [merchantId, hit] of best) {
-      if (hit.score < MIN_SCORE) {
-        continue;
-      }
-      const merchant = merchants.get(merchantId);
-      if (merchant === undefined) {
-        continue;
-      }
-      hits.push({ merchant, score: hit.score, matchedOn: hit.matchedOn, matchedValue: hit.matchedValue });
-    }
-    hits.sort((a, b) =>
-      b.score - a.score
-      || b.merchant.identityConfidence - a.merchant.identityConfidence
-      || a.merchant.id.localeCompare(b.merchant.id),
-    );
-    return { detectedType, hits: hits.slice(0, Math.max(0, limit)) };
+    return null;
   }
 
-  private matchIdentifiers(query: string, consider: (merchantId: string, hit: BestHit) => void): void {
-    const phone = normalizePhone(query);
-    if (phone !== null) {
-      for (const kind of ['phone', 'whatsapp'] as const) {
-        const found = this.identifierExact.get(`${kind}\u0000${phone}`);
-        if (found !== undefined) {
-          consider(found.merchantId, { score: SCORE_IDENTIFIER_EXACT, matchedOn: kind, matchedValue: found.normalized });
-        }
+  private matchPhone(phone: string, consider: Consider): void {
+    for (const kind of ['phone', 'whatsapp'] as const) {
+      const bucket = this.identifierExact.get(`${kind}\u0000${phone}`);
+      if (bucket === undefined) continue;
+      for (const [merchantId, normalized] of bucket) {
+        consider(merchantId, { tier: 'exact_identifier', matchedOn: kind, matchedValue: normalized, quality: PERFECT });
       }
     }
+  }
 
-    const url = normalizeQueryUrl(query);
-    if (url !== null) {
-      const exact = this.identifierExact.get(`${url.kind}\u0000${url.normalized}`);
-      if (exact !== undefined) {
-        consider(exact.merchantId, { score: SCORE_IDENTIFIER_EXACT, matchedOn: url.kind, matchedValue: exact.normalized });
-      }
-      // Scheme/case-insensitive page match for handle-bearing hosts: a user
-      // pasting https://www.facebook.com/{handle}/ must resolve to that page's
-      // owner, not tie every facebook merchant together via host equality.
-      const pathKey = extractPathKey(url.kind, url.normalized);
-      if (pathKey !== null) {
-        const byPath = this.pathKeyIndex.get(pathKey);
-        if (byPath !== undefined) {
-          consider(byPath.merchantId, {
-            score: SCORE_PATH_MATCH,
-            matchedOn: url.kind,
-            matchedValue: byPath.normalized,
-          });
-        }
-      }
-      // Host fallback only where the domain itself identifies the merchant
-      // (own websites / marketplaces). Shared-host kinds (facebook.com etc.)
-      // would otherwise match every merchant on the platform at once.
-      const hostMatchedOn: MatchedOn | null =
-        url.kind === 'website' ? 'website-host'
-        : url.kind === 'marketplace' ? 'marketplace-host'
-        : null;
-      if (hostMatchedOn !== null) {
-        const bucket = this.hostIndex.get(`${url.kind}\u0000${url.hostKey}`);
-        if (bucket !== undefined) {
-          for (const merchantId of bucket) {
-            consider(merchantId, {
-              score: SCORE_HOST_FALLBACK,
-              matchedOn: hostMatchedOn,
-              matchedValue: url.hostKey,
-            });
-          }
-        }
-      }
-    }
-
+  private matchEmail(query: string, consider: Consider): void {
     const email = query.trim().toLowerCase();
-    const emailHit = this.identifierExact.get(`email\u0000${email}`);
-    if (emailHit !== undefined) {
-      consider(emailHit.merchantId, { score: SCORE_IDENTIFIER_EXACT, matchedOn: 'email', matchedValue: emailHit.normalized });
+    const bucket = this.identifierExact.get(`email\u0000${email}`);
+    if (bucket === undefined) return;
+    for (const [merchantId, normalized] of bucket) {
+      consider(merchantId, { tier: 'exact_identifier', matchedOn: 'email', matchedValue: normalized, quality: PERFECT });
     }
   }
 
-  private matchNames(query: string, consider: (merchantId: string, hit: BestHit) => void): void {
-    const normalizedQuery = normalizeName(query);
-    const queryTokens = [...new Set(nameTokens(normalizedQuery))];
-    if (queryTokens.length === 0) {
+  private matchUrl(query: string, consider: Consider): void {
+    const url = normalizeQueryUrl(query);
+    if (url === null || url.externalReference) return;
+
+    // Full path/account keys: all owners of an identical key surface.
+    for (const pathKey of url.pathKeys) {
+      if (url.originKey !== null && pathKey === url.originKey) continue;
+      const bucket = this.urlIndex.get(pathKey);
+      if (bucket === undefined) continue;
+      for (const [merchantId, normalized] of bucket) {
+        consider(merchantId, { tier: 'exact_identifier', matchedOn: url.kind, matchedValue: normalized, quality: PERFECT });
+      }
+    }
+
+    // Bare-origin fallback exists only for first-party website hosts, and
+    // only for one owner or owners sharing a strict canonical/alias key.
+    if (url.originKey !== null) {
+      this.matchOriginFallback(url.originKey, consider);
+    }
+  }
+
+  private matchOriginFallback(hostKey: string, consider: Consider): void {
+    const bucket = this.urlIndex.get(hostKey);
+    if (bucket === undefined) return;
+    if (bucket.size === 1) {
+      const [merchantId, normalized] = [...bucket.entries()][0]!;
+      consider(merchantId, { tier: 'exact_identifier', matchedOn: 'website', matchedValue: normalized, quality: PERFECT });
       return;
     }
+    if (this.ownersShareBrandFamily([...bucket.keys()])) {
+      for (const [merchantId, normalized] of bucket) {
+        consider(merchantId, { tier: 'exact_identifier', matchedOn: 'website-host', matchedValue: normalized, quality: PERFECT });
+      }
+    }
+  }
 
-    for (const [map, matchedOn] of [
-      [this.nameExact, 'name_exact'],
-      [this.aliasExact, 'alias_exact'],
-    ] as const) {
-      const bucket = map.get(normalizedQuery);
-      if (bucket !== undefined) {
-        for (const [merchantId, raw] of bucket) {
-          const display = matchedOn === 'name_exact'
-            ? this.merchantsById.get(merchantId)?.canonicalName ?? raw
-            : raw;
-          consider(merchantId, { score: SCORE_NAME_EXACT, matchedOn, matchedValue: display });
+  /** True when every owner shares at least one strict canonical/alias key. */
+  private ownersShareBrandFamily(merchantIds: string[]): boolean {
+    if (merchantIds.length < 2) return true;
+    const [first, ...rest] = merchantIds;
+    const firstKeys = this.brandFamilyKeys(first!);
+    if (firstKeys.length === 0) return false;
+    return rest.every((id) => this.brandFamilyKeys(id).some((key) => firstKeys.includes(key)));
+  }
+
+  private brandFamilyKeys(merchantId: string): string[] {
+    const keys: string[] = [];
+    const canonical = this.merchantsById.get(merchantId);
+    if (canonical !== undefined) {
+      const strict = normalizeNameStrict(canonical.canonicalName);
+      if (nameTokens(strict).length > 0) keys.push(strict);
+    }
+    for (const [key, owners] of this.aliasExact) {
+      if (owners.has(merchantId)) keys.push(key);
+    }
+    return keys;
+  }
+
+  private matchNames(query: string, consider: Consider): void {
+    const strictQuery = normalizeNameStrict(query);
+    const looseQuery = normalizeNameLoose(query);
+    const queryTokens = [...new Set(nameTokens(looseQuery))];
+    if (queryTokens.length === 0) return;
+
+    const strictBucket = this.nameExact.get(strictQuery);
+    if (strictBucket !== undefined) {
+      for (const [merchantId, raw] of strictBucket) {
+        consider(merchantId, {
+          tier: 'exact_name',
+          matchedOn: 'exact_name',
+          matchedValue: this.merchantsById.get(merchantId)?.canonicalName ?? raw,
+          quality: PERFECT,
+        });
+      }
+    }
+    const aliasBucket = this.aliasExact.get(strictQuery);
+    if (aliasBucket !== undefined) {
+      for (const [merchantId, raw] of aliasBucket) {
+        consider(merchantId, { tier: 'exact_alias', matchedOn: 'exact_alias', matchedValue: raw, quality: PERFECT });
+      }
+    }
+
+    // Recall: loose keys return EVERY owner as a lower tier. Query-only
+    // conjunction variants (وبي تك → بي تك) extend recall, never exact maps.
+    const looseQueries = [
+      looseQuery,
+      ...conjunctionVariants(looseQuery, (token) => this.tokenPostings.has(token)),
+    ];
+    for (const variant of looseQueries) {
+      const owners = this.looseKeyOwners.get(variant);
+      if (owners === undefined) continue;
+      for (const [merchantId, raw] of owners) {
+        consider(merchantId, { tier: 'normalized_variant', matchedOn: 'normalized_variant', matchedValue: raw, quality: PERFECT });
+      }
+    }
+
+    this.matchPartial(queryTokens, consider);
+    this.matchTypo(queryTokens, consider);
+  }
+
+  private matchPartial(queryTokens: string[], consider: Consider): void {
+    for (const merchantId of this.candidatePool(queryTokens)) {
+      for (const candidate of this.candidatesByMerchant.get(merchantId) ?? []) {
+        if (!queryTokens.every((token) => candidate.looseTokens.includes(token))) continue;
+        consider(merchantId, {
+          tier: 'partial_name',
+          matchedOn: 'partial_name',
+          matchedValue: candidate.display,
+          quality: { fuzzyTokens: 0, extraTokens: candidate.looseTokens.length - queryTokens.length, editDistance: 0 },
+        });
+        break;
+      }
+    }
+  }
+
+  private matchTypo(queryTokens: string[], consider: Consider): void {
+    const maxFuzzyTokens = queryTokens.length >= 3 ? 2 : 1;
+    for (const merchantId of this.typoPool(queryTokens)) {
+      for (const candidate of this.candidatesByMerchant.get(merchantId) ?? []) {
+        const quality = this.candidateTypoQuality(candidate, queryTokens, maxFuzzyTokens);
+        if (quality !== null) {
+          consider(merchantId, { tier: 'typo', matchedOn: 'typo', matchedValue: candidate.display, quality });
         }
       }
     }
+  }
 
-    for (const candidate of this.candidates) {
-      if (queryTokens.every((token) => candidate.tokens.includes(token))) {
-        const spread = candidate.tokens.length - queryTokens.length;
-        const score = Math.max(SCORE_FUZZY_FLOOR, SCORE_FUZZY_BASE - SCORE_FUZZY_STEP * spread);
-        consider(candidate.merchantId, { score, matchedOn: 'name_fuzzy', matchedValue: candidate.display });
-      }
-    }
-
-    if (queryTokens.length === 1 && queryTokens[0].length <= TYPO_MAX_TOKEN_LENGTH) {
-      const token = queryTokens[0];
-      for (const candidate of this.candidates) {
-        for (const candidateToken of candidate.tokens) {
-          if (
-            candidateToken.length >= TYPO_MIN_TOKEN_LENGTH
-            && token !== candidateToken
-            && Math.abs(token.length - candidateToken.length) <= TYPO_MAX_DISTANCE
-            && levenshtein(token, candidateToken) <= TYPO_MAX_DISTANCE
-          ) {
-            consider(candidate.merchantId, { score: SCORE_TYPO, matchedOn: 'name_fuzzy', matchedValue: candidate.display });
-            break;
-          }
+  /**
+   * Bounded typo pool: merchants sharing a trigram with any query token.
+   * Pre-filtered at the trigram level so whole-corpus scans never happen.
+   */
+  private typoPool(queryTokens: string[]): Set<string> {
+    const pool = new Set<string>();
+    for (const token of queryTokens) {
+      for (const gram of trigrams(token)) {
+        const bucket = this.trigramPostings.get(gram);
+        if (bucket === undefined) continue;
+        for (const merchantId of bucket) {
+          if ((this.candidatesByMerchant.get(merchantId)?.length ?? 0) > 0) pool.add(merchantId);
         }
       }
     }
+    return pool;
   }
-}
 
-function extractPathKey(kind: IdentifierKind, normalized: string): string | null {
-  if (kind !== 'facebook' && kind !== 'instagram' && kind !== 'tiktok' && kind !== 'google_maps') {
-    return null;
-  }
-  try {
-    const url = new URL(normalized);
-    const host = url.hostname.toLowerCase().replace(/^www\./, '');
-    const path = url.pathname.replace(/\/+$/, '');
-    if (path === '') {
-      return null; // bare-host queries must not tie every merchant on the platform
+  private candidateTypoQuality(
+    candidate: CandidateTokens,
+    queryTokens: string[],
+    maxFuzzyTokens: number,
+  ): HitQuality | null {
+    const unmatched = queryTokens.filter((token) => !candidate.looseTokens.includes(token));
+    if (unmatched.length === 0 || unmatched.length > maxFuzzyTokens) return null;
+    // Every non-fuzzy query token must exact-match a candidate token.
+    const coveredQueryTokens = queryTokens.length - unmatched.length;
+    if (coveredQueryTokens < queryTokens.length - maxFuzzyTokens) return null;
+    let editDistance = 0;
+    for (const token of unmatched) {
+      const distance = this.bestTypoDistance(token, candidate.looseTokens);
+      if (distance === null) return null;
+      editDistance += distance;
     }
-    return `${host}${path}`.toLowerCase();
-  } catch {
-    return null;
+    const coveredCandidateTokens = candidate.looseTokens.filter((t) => queryTokens.includes(t)).length;
+    return {
+      fuzzyTokens: unmatched.length,
+      extraTokens: candidate.looseTokens.length - coveredCandidateTokens,
+      editDistance,
+    };
+  }
+  private bestTypoDistance(token: string, candidateTokens: string[]): number | null {
+    const grams = trigrams(token);
+    const allowed = token.length >= 8 ? 2 : 1;
+    let best: number | null = null;
+    for (const candidateToken of candidateTokens) {
+      // 4-char minimum keeps short tokens out of fuzzy rescue while still
+      // reaching real brand tokens like "tech".
+      if (candidateToken === token || candidateToken.length < 4) continue;
+      if (Math.abs(candidateToken.length - token.length) > 2) continue;
+      if (!sharesTrigram(grams, candidateToken)) continue;
+      const distance = levenshtein(token, candidateToken);
+      if (distance <= allowed && (best === null || distance < best)) {
+        best = distance;
+      }
+    }
+    return best;
+  }
+
+  /** Posting-list intersection: merchants holding any informative query token. */
+  private candidatePool(queryTokens: string[]): Set<string> {
+    const pool = new Set<string>();
+    for (const token of queryTokens) {
+      const bucket = this.tokenPostings.get(token);
+      if (bucket === undefined) continue;
+      for (const merchantId of bucket) {
+        if ((this.candidatesByMerchant.get(merchantId)?.length ?? 0) > 0) pool.add(merchantId);
+      }
+    }
+    return pool;
   }
 }
 
-function extractHostKey(kind: IdentifierKind, normalized: string): string | null {
-  if (kind !== 'facebook' && kind !== 'website' && kind !== 'marketplace' && kind !== 'instagram' && kind !== 'tiktok' && kind !== 'google_maps') {
-    return null;
+function mergeHit(best: Map<string, BestHit>, merchantId: string, hit: BestHit): void {
+  const existing = best.get(merchantId);
+  if (existing === undefined) {
+    best.set(merchantId, hit);
+    return;
   }
-  try {
-    return new URL(normalized).hostname.toLowerCase().replace(/^www\./, '');
-  } catch {
-    return null;
+  const tierDelta = TIER_ORDER[hit.tier] - TIER_ORDER[existing.tier];
+  if (tierDelta < 0 || (tierDelta === 0 && compareQuality(hit.quality, existing.quality) < 0)) {
+    best.set(merchantId, hit);
   }
+}
+
+function compareQuality(a: HitQuality, b: HitQuality): number {
+  return a.fuzzyTokens - b.fuzzyTokens || a.extraTokens - b.extraTokens || a.editDistance - b.editDistance;
+}
+
+function sharesTrigram(grams: Set<string>, candidateToken: string): boolean {
+  for (const gram of trigrams(candidateToken)) {
+    if (grams.has(gram)) return true;
+  }
+  return false;
 }

@@ -23,16 +23,51 @@ export type MerchantState =
   | 'IDENTITY_UNCERTAIN'
   | 'INSUFFICIENT_DATA';
 
-export type InputKind = 'phone' | 'url' | 'name';
+export type InputKind = 'phone' | 'email' | 'url' | 'name';
 
+/**
+ * Match tiers and match kinds. `MatchedOn` pairs each tier with the identifier
+ * kind or name map that produced the hit; ordering by tier is defined in
+ * search.ts.
+ */
 export type MatchedOn =
   | IdentifierKind
-  | 'facebook-host'
   | 'website-host'
   | 'marketplace-host'
-  | 'name_exact'
-  | 'alias_exact'
-  | 'name_fuzzy';
+  | 'exact_name'
+  | 'exact_alias'
+  | 'normalized_variant'
+  | 'partial_name'
+  | 'typo';
+
+export type SearchDiagnostic = 'invalid_egyptian_phone';
+
+export interface SearchMatch {
+  kind: MatchedOn;
+  value: string;
+  label: string;
+}
+
+export interface SearchResult {
+  query: string;
+  inputKind: InputKind;
+  total: number;
+  page: number;
+  pageSize: number;
+  ambiguous: boolean;
+  diagnostic: SearchDiagnostic | null;
+  hits: SearchHit[];
+}
+
+export const SEARCH_PAGE_SIZE = 20;
+
+export type SearchTier =
+  | 'exact_identifier'
+  | 'exact_name'
+  | 'exact_alias'
+  | 'normalized_variant'
+  | 'partial_name'
+  | 'typo';
 
 export interface Merchant {
   id: string;
@@ -46,9 +81,7 @@ export interface Merchant {
 
 export interface SearchHit {
   merchant: Merchant;
-  score: number;
-  matchedOn: MatchedOn;
-  matchedValue: string;
+  match: SearchMatch;
 }
 
 export interface Identifier {

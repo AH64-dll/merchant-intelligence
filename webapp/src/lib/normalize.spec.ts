@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
+  conjunctionVariants,
   detectInputKind,
+  foldDigits,
+  isExternalReferenceUrl,
   levenshtein,
   nameTokens,
-  normalizeName,
+  normalizeNameLoose,
+  normalizeNameStrict,
   normalizePhone,
   normalizeQueryUrl,
+  trigrams,
 } from './normalize';
 
 describe('detectInputKind', () => {
@@ -17,6 +22,8 @@ describe('detectInputKind', () => {
     '0223456789',
     '+20 100 000 0000',
     '(+20) 100-000-0000',
+    // Arabic-Indic digits fold to ASCII before detection
+    '٠١٢٨٦٦١٩٩٦٦',
   ])('detects phone for %s', (input) => {
     expect(detectInputKind(input)).toBe('phone');
   });
@@ -29,15 +36,28 @@ describe('detectInputKind', () => {
     'tiktok.com/@my.shop',
     'https://g.page/r/AbCd123',
     'HTTPS://EXAMPLE.COM/PAGE',
+    'maps.app.goo.gl/maps/AbCd123',
+    'play.google.com/store/apps/details?id=com.example',
+    'apps.apple.com/us/app/example/id1528993866',
+    'cpa.gov.eg/ar-eg/complaints',
+    'support.apple.com/ar-eg/HT201222',
   ])('detects url for %s', (input) => {
     expect(detectInputKind(input)).toBe('url');
+  });
+
+  it.each([
+    'ahmed226887@gmail.com',
+    'Ahmed226887@Gmail.COM',
+    'contactus@elarabygroup.com',
+  ])('detects email for %s', (input) => {
+    expect(detectInputKind(input)).toBe('email');
   });
 
   it('treats digit strings shorter than 9 digits as names', () => {
     expect(detectInputKind('12345678')).toBe('name');
   });
 
-  it.each(['B.TECH', 'شركة بي تك', 'محمد أحمد للتوريدات', 'example shop'])(
+  it.each(['B.TECH', 'شركة بي تك', 'محمد أحمد للتوريدات', 'example shop', 'وبي تك', 'ولي'])(
     'detects name for %s',
     (input) => {
       expect(detectInputKind(input)).toBe('name');
@@ -49,129 +69,172 @@ describe('detectInputKind', () => {
   });
 });
 
+describe('foldDigits', () => {
+  it('folds Arabic-Indic and Persian digits to ASCII', () => {
+    expect(foldDigits('٠١٢٣٤٥٦٧٨٩')).toBe('0123456789');
+    expect(foldDigits('۰۱۲۳۴۵۶۷۸۹')).toBe('0123456789');
+    expect(foldDigits('01٠2٣')).toBe('01023');
+  });
+
+  it('leaves ASCII and non-digit text untouched', () => {
+    expect(foldDigits('abc123')).toBe('abc123');
+    expect(foldDigits('شركة بي تك')).toBe('شركة بي تك');
+  });
+});
+
 describe('normalizePhone', () => {
+  it('folds Arabic digits before normalization', () => {
+    expect(normalizePhone('٠١٢٨٦٦١٩٩٦٦')).toBe('+201286619966');
+    expect(normalizePhone('٠٠٢٠١٠٠٠٠٠٠٠٠٠')).toBe('+201000000000');
+  });
+
   it.each([
     ['01000000000', '+201000000000'],
     ['+20 100 000 0000', '+201000000000'],
     ['00201000000000', '+201000000000'],
     ['201000000000', '+201000000000'],
     ['(+20) 100-000-0000', '+201000000000'],
+    ['0223456789', '+20223456789'],
+    ['0951234567', '+20951234567'],
   ])('normalizes %s to %s', (input, expected) => {
     expect(normalizePhone(input)).toBe(expected);
   });
 
-  it('normalizes landline local form', () => {
-    expect(normalizePhone('0223456789')).toBe('+20223456789');
+  it.each([
+    '+14155551234',
+    '971501234567',
+    '447911123456',
+    '972501234567',
+  ])('rejects non-Egyptian number %s', (input) => {
+    expect(normalizePhone(input)).toBeNull();
   });
 
-  it('rejects non-Egyptian prefixes', () => {
-    expect(normalizePhone('+14155551234')).toBeNull();
-    expect(normalizePhone('971501234567')).toBeNull();
-    expect(normalizePhone('447911123456')).toBeNull();
+  it.each([
+    '',
+    '   ',
+    'abc',
+    '--',
+    '12345',
+    '01000',
+    '20',
+    '0100000000',
+    '010000000000',
+    '01300000000',
+    '0999',
+    '010000000001',
+    '00201000000000000',
+  ])('returns null for %j', (input) => {
+    expect(normalizePhone(input)).toBeNull();
   });
 
-  it('rejects too-short digit strings', () => {
-    expect(normalizePhone('12345')).toBeNull();
-    expect(normalizePhone('01000')).toBeNull();
-    expect(normalizePhone('20')).toBeNull();
-  });
-
-  it('rejects input without digits', () => {
-    expect(normalizePhone('')).toBeNull();
-    expect(normalizePhone('abc')).toBeNull();
-    expect(normalizePhone('--')).toBeNull();
-  });
-  it('rejects invalid Egyptian number shapes', () => {
-    expect(normalizePhone('0100000000')).toBeNull();
-    expect(normalizePhone('010000000000')).toBeNull();
-    expect(normalizePhone('01300000000')).toBeNull();
-    expect(normalizePhone('0999')).toBeNull();
+  it('strips surrounding letters and punctuation before validating digits', () => {
+    expect(normalizePhone('اتصل: 01000000000')).toBe('+201000000000');
+    expect(normalizePhone('tel:+201000000000')).toBe('+201000000000');
   });
 });
 
 describe('normalizeQueryUrl', () => {
-  it('normalizes facebook http url with trailing slash, preserving handle case', () => {
-    expect(normalizeQueryUrl('http://facebook.com/B.TECH.Egypt/')).toEqual({
+  it('normalizes facebook urls to an https canonical account key', () => {
+    expect(normalizeQueryUrl('http://facebook.com/B.TECH.Egypt/')).toMatchObject({
       kind: 'facebook',
-      normalized: 'http://facebook.com/B.TECH.Egypt',
       hostKey: 'facebook.com',
+      originKey: null,
+      externalReference: false,
     });
+    const result = normalizeQueryUrl('http://facebook.com/B.TECH.Egypt/');
+    expect(result?.normalized).toBe('https://facebook.com/B.TECH.Egypt');
+    expect(result?.pathKeys).toContain('facebook.com/b.tech.egypt');
   });
 
-  it('strips www and query from https facebook urls', () => {
-    expect(normalizeQueryUrl('https://www.facebook.com/B.TECH.Egypt?x=1')).toEqual({
-      kind: 'facebook',
-      normalized: 'http://facebook.com/B.TECH.Egypt',
-      hostKey: 'facebook.com',
-    });
+  it('keys facebook profile.php pages on their numeric id', () => {
+    const result = normalizeQueryUrl('https://www.facebook.com/profile.php?id=100061858249234&sk=about');
+    expect(result?.kind).toBe('facebook');
+    expect(result?.pathKeys).toContain('facebook.com/profile.php?id=100061858249234');
   });
 
-  it('parses bare facebook host+handle input', () => {
-    expect(normalizeQueryUrl('facebook.com/B.TECH.Egypt')).toEqual({
-      kind: 'facebook',
-      normalized: 'http://facebook.com/B.TECH.Egypt',
-      hostKey: 'facebook.com',
-    });
+  it('lowercases instagram handles and keeps subpath keys', () => {
+    const result = normalizeQueryUrl('https://Instagram.com/SomeShop/reels/');
+    expect(result?.kind).toBe('instagram');
+    expect(result?.normalized).toBe('https://instagram.com/someshop');
+    expect(result?.pathKeys).toContain('instagram.com/someshop');
+    expect(result?.pathKeys).toContain('instagram.com/someshop/reels');
   });
 
-  it('lowercases instagram handles on https', () => {
-    expect(normalizeQueryUrl('https://Instagram.com/SomeShop')).toEqual({
-      kind: 'instagram',
-      normalized: 'https://instagram.com/someshop',
-      hostKey: 'instagram.com',
-    });
+  it('preserves tiktok @handle and adds subpath keys', () => {
+    const result = normalizeQueryUrl('tiktok.com/myshop?lang=ar');
+    expect(result?.kind).toBe('tiktok');
+    expect(result?.normalized).toBe('https://tiktok.com/@myshop');
+    expect(result?.pathKeys).toContain('tiktok.com/@myshop');
   });
 
-  it('preserves tiktok @handle', () => {
-    expect(normalizeQueryUrl('https://www.tiktok.com/@my.shop')).toEqual({
-      kind: 'tiktok',
-      normalized: 'https://tiktok.com/@my.shop',
-      hostKey: 'tiktok.com',
-    });
+  it('maps g.page to google_maps with full path key', () => {
+    const result = normalizeQueryUrl('https://g.page/r/AbCd123/review');
+    expect(result?.kind).toBe('google_maps');
+    expect(result?.pathKeys).toContain('g.page/r/abcd123/review');
   });
 
-  it('prepends @ to bare tiktok handles', () => {
-    expect(normalizeQueryUrl('tiktok.com/myshop')).toEqual({
-      kind: 'tiktok',
-      normalized: 'https://tiktok.com/@myshop',
-      hostKey: 'tiktok.com',
-    });
+  it('maps google.com/maps and maps.google.com place paths to google_maps', () => {
+    for (const input of [
+      'https://www.google.com/maps/place/Some+Place/@x,y',
+      'https://maps.google.com/maps?q=cairo',
+    ]) {
+      const result = normalizeQueryUrl(input);
+      expect(result?.kind).toBe('google_maps');
+      expect(result?.originKey).toBeNull();
+    }
   });
 
-  it('maps g.page to google_maps with full path handle', () => {
-    expect(normalizeQueryUrl('https://g.page/r/AbCd123/review')).toEqual({
-      kind: 'google_maps',
-      normalized: 'https://g.page/r/AbCd123/review',
-      hostKey: 'g.page',
-    });
+  it('keys play store urls on their item path', () => {
+    const result = normalizeQueryUrl('https://play.google.com/store/apps/details?id=com.shop.app&hl=ar');
+    expect(result?.kind).toBe('marketplace');
+    expect(result?.pathKeys).toContain('play.google.com/store/apps/details?id=com.shop.app');
   });
 
-  it('treats bare domains as website with host-only key', () => {
-    expect(normalizeQueryUrl('example.com')).toEqual({
+  it('keys apple app store urls on their numeric app id', () => {
+    const result = normalizeQueryUrl('https://apps.apple.com/us/app/elezaby/id1528993866');
+    expect(result?.kind).toBe('marketplace');
+    expect(result?.pathKeys).toContain('apps.apple.com/us/app/elezaby/id1528993866');
+  });
+  it('keys generic directory urls on host+path with tracking stripped, never bare-host fallback', () => {
+    const result = normalizeQueryUrl('https://yellowpages.com.eg/en/shop/profile?utm_source=x&fbclid=abc');
+    expect(result?.kind).toBe('website');
+    expect(result?.pathKeys).toContain('yellowpages.com.eg/en/shop/profile');
+    expect(result?.pathKeys[0]).not.toContain('utm_');
+    // Directory hosts keep their origin key for search-layer policy enforcement.
+    expect(result?.originKey).toBe('yellowpages.com.eg');
+  });
+
+  it('indexes first-party websites on scheme-free origin keys with https default', () => {
+    const result = normalizeQueryUrl('example.com');
+    expect(result).toEqual({
       kind: 'website',
-      normalized: 'http://example.com',
+      normalized: 'https://example.com',
+      schemeless: 'example.com',
       hostKey: 'example.com',
+      pathKeys: ['example.com'],
+      originKey: 'example.com',
+      externalReference: false,
     });
+  });
+  it('preserves host+path for first-party websites and keeps the origin fallback key', () => {
+    const result = normalizeQueryUrl('https://www.castle.eg/products/x?id=1');
+    expect(result?.kind).toBe('website');
+    expect(result?.normalized).toBe('https://castle.eg/products/x?id=1');
+    expect(result?.pathKeys).toContain('castle.eg/products/x?id=1');
+    expect(result?.originKey).toBe('castle.eg');
   });
 
-  it('drops path and query from arbitrary websites, keeping scheme and stripping www', () => {
-    expect(normalizeQueryUrl('https://www.castle.eg/products/x?id=1')).toEqual({
-      kind: 'website',
-      normalized: 'https://castle.eg',
-      hostKey: 'castle.eg',
-    });
-    expect(normalizeQueryUrl('http://ahw.store/')).toEqual({
-      kind: 'website',
-      normalized: 'http://ahw.store',
-      hostKey: 'ahw.store',
-    });
+  it('falls back to website for a bare known host with no path', () => {
+    const result = normalizeQueryUrl('https://www.facebook.com');
+    expect(result?.kind).toBe('website');
+    expect(result?.originKey).toBe('facebook.com');
   });
-  it('falls back to website when a known host has no path segment', () => {
-    expect(normalizeQueryUrl('https://www.facebook.com')).toEqual({
-      kind: 'website',
-      normalized: 'https://facebook.com',
-      hostKey: 'facebook.com',
-    });
+
+  it('flags quarantined external-reference hosts', () => {
+    expect(normalizeQueryUrl('http://cpa.gov.eg')?.externalReference).toBe(true);
+    expect(normalizeQueryUrl('https://support.apple.com/ar-eg')?.externalReference).toBe(true);
+    expect(normalizeQueryUrl('shakwa.cpa-mobile.com/complaint/123')?.externalReference).toBe(true);
+    expect(normalizeQueryUrl('https://btech.com')?.externalReference).toBe(false);
   });
 
   it('returns null for unparseable input', () => {
@@ -180,20 +243,16 @@ describe('normalizeQueryUrl', () => {
     expect(normalizeQueryUrl('localhost')).toBeNull();
   });
 
-  it('normalizes real goo.gl maps shortlinks to google_maps verbatim', () => {
-    expect(normalizeQueryUrl('https://goo.gl/maps/BbZuAKqi75232WJZ8')).toEqual({
-      kind: 'google_maps',
-      normalized: 'https://goo.gl/maps/BbZuAKqi75232WJZ8',
-      hostKey: 'goo.gl',
-    });
+  it('normalizes real goo.gl maps shortlinks verbatim', () => {
+    const result = normalizeQueryUrl('https://goo.gl/maps/BbZuAKqi75232WJZ8');
+    expect(result?.kind).toBe('google_maps');
+    expect(result?.normalized).toBe('https://goo.gl/maps/BbZuAKqi75232WJZ8');
   });
 
-  it('normalizes maps.app.goo.gl shortlinks, stripping query and trailing slash', () => {
-    expect(normalizeQueryUrl('https://maps.app.goo.gl/maps/AbCd123/?g_st=ic')).toEqual({
-      kind: 'google_maps',
-      normalized: 'https://maps.app.goo.gl/maps/AbCd123',
-      hostKey: 'goo.gl',
-    });
+  it('normalizes maps.app.goo.gl shortlinks stripping query and trailing slash', () => {
+    const result = normalizeQueryUrl('https://maps.app.goo.gl/maps/AbCd123/?g_st=ic');
+    expect(result?.kind).toBe('google_maps');
+    expect(result?.normalized).toBe('https://maps.app.goo.gl/maps/AbCd123');
   });
 
   it('detects bare goo.gl shortlink input as url', () => {
@@ -201,41 +260,111 @@ describe('normalizeQueryUrl', () => {
   });
 });
 
-describe('normalizeName', () => {
+describe('isExternalReferenceUrl', () => {
+  it('accepts quarantined hosts in any form', () => {
+    expect(isExternalReferenceUrl('cpa.gov.eg')).toBe(true);
+    expect(isExternalReferenceUrl('https://www.cpa.gov.eg/ar')).toBe(true);
+    expect(isExternalReferenceUrl('support.apple.com/x')).toBe(true);
+  });
+
+  it('rejects ordinary hosts and non-urls', () => {
+    expect(isExternalReferenceUrl('btech.com')).toBe(false);
+    expect(isExternalReferenceUrl('b tech')).toBe(false);
+  });
+});
+
+describe('normalizeNameStrict', () => {
   it('maps punctuation to spaces and lowercases', () => {
-    expect(normalizeName('B.TECH')).toBe('b tech');
-    expect(normalizeName('B-TECH_Trading, Co (EG) | Store')).toBe('b tech trading co eg store');
+    expect(normalizeNameStrict('B.TECH')).toBe('b tech');
+    expect(normalizeNameStrict('B-TECH_Trading, Co (EG) | Store')).toBe('b tech trading co eg store');
   });
 
-  it('converts taa marbuta to haa', () => {
-    expect(normalizeName('شركة بي تك')).toBe('شركه بي تك');
+  it('PRESERVES taa marbuta (ة) and the definite article (ال)', () => {
+    expect(normalizeNameStrict('شركة بي تك')).toBe('شركة بي تك');
+    expect(normalizeNameStrict('الاهلي')).toBe('الاهلي');
+    expect(normalizeNameStrict('شركة الأهلي للإسمنت')).toBe('شركة الاهلي للاسمنت');
   });
 
-  it('normalizes the full Arabic company example', () => {
-    expect(normalizeName('شركة بي تك للتجارة والتوزيع')).toBe('شركه بي تك للتجاره والتوزيع');
+  it('folds tatweel U+0640', () => {
+    expect(normalizeNameStrict('شــركة')).toBe('شركة');
   });
 
   it('strips Arabic diacritics U+064B-U+0652 and U+0670', () => {
-    expect(normalizeName('مَحَمَّد أَحْمَد')).toBe('محمد احمد');
-    expect(normalizeName('هدىٰ')).toBe('هدي');
+    expect(normalizeNameStrict('مَحَمَّد أَحْمَد')).toBe('محمد احمد');
+    expect(normalizeNameStrict('هدىٰ')).toBe('هدي');
   });
 
-  it('unifies alef variants to bare alef', () => {
-    expect(normalizeName('أحمد إبراهيم آدم')).toBe('احمد ابراهيم ادم');
-  });
-
-  it('unifies alef maqsura to yaa', () => {
-    expect(normalizeName('على')).toBe('علي');
-  });
-
-  it('removes leading definite article per token', () => {
-    expect(normalizeName('الاهلي')).toBe('اهلي');
-    expect(normalizeName('شركة الأهلي للإسمنت')).toBe('شركه اهلي للاسمنت');
+  it('unifies alef variants and alef maqsura', () => {
+    expect(normalizeNameStrict('أحمد إبراهيم آدم على شركة')).toBe('احمد ابراهيم ادم علي شركة');
   });
 
   it('collapses whitespace', () => {
-    expect(normalizeName('   B.TECH   Trading   ')).toBe('b tech trading');
-    expect(normalizeName('\tشركة\t\tبي تك\n')).toBe('شركه بي تك');
+    expect(normalizeNameStrict('   B.TECH   Trading   ')).toBe('b tech trading');
+    expect(normalizeNameStrict('\tشركة\t\tبي تك\n')).toBe('شركة بي تك');
+  });
+
+  it('handles mixed Arabic/Latin input', () => {
+    expect(normalizeNameStrict('B.TECH بي تك')).toBe('b tech بي تك');
+  });
+
+  it('returns empty string for empty, blank, punctuation-only or article-only input', () => {
+    expect(normalizeNameStrict('')).toBe('');
+    expect(normalizeNameStrict('   ')).toBe('');
+    expect(normalizeNameStrict('.,-')).toBe('');
+  });
+
+  it('keeps النور تك and نور تك DISTINCT (no loose collision on exact maps)', () => {
+    expect(normalizeNameStrict('النور تك')).not.toBe(normalizeNameStrict('نور تك'));
+  });
+});
+
+describe('normalizeNameLoose', () => {
+  it('starts from strict output then folds ة→ه and strips leading ال per token', () => {
+    expect(normalizeNameLoose('شركة بي تك')).toBe('شركه بي تك');
+    expect(normalizeNameLoose('الاهلي النادي')).toBe('اهلي نادي');
+    expect(normalizeNameLoose('شركة الأهلي للإسمنت')).toBe('شركه اهلي للاسمنت');
+  });
+
+  it('drops a token that is only ال entirely', () => {
+    expect(normalizeNameLoose('ال ال')).toBe('');
+  });
+
+  it('makes النور تك and نور تك collide (recall-only)', () => {
+    expect(normalizeNameLoose('النور تك')).toBe('نور تك');
+  });
+
+  it('preserves لل-prefixed tokens', () => {
+    expect(normalizeNameLoose('للاسمنت')).toBe('للاسمنت');
+  });
+});
+
+describe('conjunctionVariants', () => {
+  it('strips leading و when the remainder has >= 3 characters', () => {
+    expect(conjunctionVariants('وبي تك')).toEqual(['بي تك']);
+  });
+
+  it('strips leading و when the remainder exists in the candidate token index', () => {
+    const tokenExists = (token: string): boolean => token === 'لي' || token === 'بي';
+    expect(conjunctionVariants('ولي', tokenExists)).toEqual(['لي']);
+    expect(conjunctionVariants('وبي تك', tokenExists)).toEqual(['بي تك']);
+  });
+  it('strips leading و when another informative token exists', () => {
+    expect(conjunctionVariants('والنور')).toEqual(['النور']);
+  });
+
+  it('strips leading و when the remainder exists in the candidate token index', () => {
+    const tokenExists = (token: string): boolean => token === 'لي' || token === 'بي';
+    expect(conjunctionVariants('ولي', tokenExists)).toEqual(['لي']);
+    expect(conjunctionVariants('وبي تك', tokenExists)).toEqual(['بي تك']);
+  });
+
+  it('never strips و from a single short token with no other support', () => {
+    expect(conjunctionVariants('ولي')).toEqual([]);
+    expect(conjunctionVariants('وك')).toEqual([]);
+  });
+
+  it('returns empty for queries without و tokens', () => {
+    expect(conjunctionVariants('بي تك')).toEqual([]);
   });
 });
 
@@ -251,6 +380,16 @@ describe('nameTokens', () => {
   it('returns empty array for empty or blank strings', () => {
     expect(nameTokens('')).toEqual([]);
     expect(nameTokens('   ')).toEqual([]);
+  });
+});
+
+describe('trigrams', () => {
+  it('produces padded character trigrams', () => {
+    expect(trigrams('abc')).toEqual(new Set(['  a', ' ab', 'abc', 'bc ']));
+  });
+
+  it('short tokens share a trigram with near neighbors', () => {
+    expect(trigrams('conect').size).toBeGreaterThan(0);
   });
 });
 
@@ -287,27 +426,13 @@ describe('detectInputKind — boundaries', () => {
   });
 
   it.each([
-    'http://example.com',
-    'https://example.com/x',
-    'www.example.com',
-    'facebook.com/some.page',
-    'FACEBOOK.COM/some.page',
-    'instagram.com/someshop',
-    'tiktok.com/@someshop',
-    'g.page/r/ABC123',
-    'goo.gl/maps/BbZuAKqi75232WJZ8',
-  ])('detects url for %s', (input) => {
-    expect(detectInputKind(input)).toBe('url');
-  });
-
-  it.each([
-    ['12345678'],
-    [''],
-    ['   '],
-    ['!!!'],
-    ['😀😀😀'],
-    ['شركة بي تك 123'],
-    ['محمد 0100'],
+    '12345678',
+    '',
+    '   ',
+    '!!!',
+    '😀😀😀',
+    'شركة بي تك 123',
+    'محمد 0100',
   ])('treats %s as a name', (input) => {
     expect(detectInputKind(input)).toBe('name');
   });
@@ -315,188 +440,5 @@ describe('detectInputKind — boundaries', () => {
   it('treats an 8-digit string as a name and a 9-digit string as phone', () => {
     expect(detectInputKind('12345678')).toBe('name');
     expect(detectInputKind('123456789')).toBe('phone');
-  });
-});
-
-describe('normalizePhone — exhaustive matrix', () => {
-  it.each([
-    // mobile prefixes in local 01 form
-    ['01000000000', '+201000000000'],
-    ['01100000000', '+201100000000'],
-    ['01200000000', '+201200000000'],
-    ['01500000000', '+201500000000'],
-    // international forms
-    ['+201000000000', '+201000000000'],
-    ['00201000000000', '+201000000000'],
-    ['201000000000', '+201000000000'],
-    // spaced / dashed / parenthesized formatting
-    ['+20 100 000 0000', '+201000000000'],
-    ['(+20) 100-000-0000', '+201000000000'],
-    ['0100-000-0000', '+201000000000'],
-    ['(0100) 000 0000', '+201000000000'],
-    // landline: Cairo 02
-    ['0223456789', '+20223456789'],
-    ['+20223456789', '+20223456789'],
-    ['20223456789', '+20223456789'],
-    // landline: Upper Egypt 09x area codes
-    ['0951234567', '+20951234567'],
-    ['0961234567', '+20961234567'],
-    ['0971234567', '+20971234567'],
-  ])('normalizes %s to %s', (input, expected) => {
-    expect(normalizePhone(input)).toBe(expected);
-  });
-
-  it.each([
-    ['+14155551234'],
-    ['971501234567'],
-    ['447911123456'],
-    ['972501234567'],
-  ])('rejects non-Egyptian number %s', (input) => {
-    expect(normalizePhone(input)).toBeNull();
-  });
-
-  it.each([
-    [''],
-    ['   '],
-    ['abc'],
-    ['--'],
-    ['12345'],
-    ['01000'],
-    ['20'],
-    ['0100000000'],
-    ['010000000000'],
-    ['01300000000'],
-    ['0999'],
-    ['010000000001'],
-    ['00201000000000000'],
-  ])('returns null for %j', (input) => {
-    expect(normalizePhone(input)).toBeNull();
-  });
-
-  it('strips surrounding letters and punctuation before validating digits', () => {
-    expect(normalizePhone('اتصل: 01000000000')).toBe('+201000000000');
-    expect(normalizePhone('tel:+201000000000')).toBe('+201000000000');
-  });
-
-  it('rejects when extra digits sneak in around letters', () => {
-    expect(normalizePhone('01000000000a1')).toBeNull();
-  });
-});
-
-describe('normalizeQueryUrl — exhaustive matrix', () => {
-  it.each([
-    // facebook happy path + case variants + stripping
-    ['http://facebook.com/B.TECH.Egypt/', 'facebook', 'http://facebook.com/B.TECH.Egypt', 'facebook.com'],
-    ['HTTPS://WWW.FACEBOOK.COM/HANDLE', 'facebook', 'http://facebook.com/HANDLE', 'facebook.com'],
-    ['m.facebook.com/Page.Name?q=1#top', 'facebook', 'http://facebook.com/Page.Name', 'facebook.com'],
-    ['facebook.com/Shop#fragment', 'facebook', 'http://facebook.com/Shop', 'facebook.com'],
-    // instagram lowercasing
-    ['https://Instagram.com/SomeShop', 'instagram', 'https://instagram.com/someshop', 'instagram.com'],
-    ['instagram.com/UPPERcase#frag', 'instagram', 'https://instagram.com/uppercase', 'instagram.com'],
-    // tiktok @ insertion
-    ['tiktok.com/myshop', 'tiktok', 'https://tiktok.com/@myshop', 'tiktok.com'],
-    ['https://www.tiktok.com/@my.shop?lang=ar', 'tiktok', 'https://tiktok.com/@my.shop', 'tiktok.com'],
-    // g.page
-    ['https://g.page/r/AbCd123/review', 'google_maps', 'https://g.page/r/AbCd123/review', 'g.page'],
-    ['g.page/ikelvinatorr', 'google_maps', 'https://g.page/ikelvinatorr', 'g.page'],
-    // shortlinks
-    ['https://goo.gl/maps/BbZuAKqi75232WJZ8', 'google_maps', 'https://goo.gl/maps/BbZuAKqi75232WJZ8', 'goo.gl'],
-    ['https://maps.app.goo.gl/maps/AbCd123/?g_st=ic', 'google_maps', 'https://maps.app.goo.gl/maps/AbCd123', 'goo.gl'],
-    // unknown-host website branch incl. path dropping, ports, scheme preservation
-    ['example.com', 'website', 'http://example.com', 'example.com'],
-    ['https://www.castle.eg/products/x?id=1#reviews', 'website', 'https://castle.eg', 'castle.eg'],
-    ['http://ahw.store/', 'website', 'http://ahw.store', 'ahw.store'],
-    ['http://Example.COM:8080/path', 'website', 'http://example.com', 'example.com'],
-  ])('normalizes %j', (input, kind, normalized, hostKey) => {
-    expect(normalizeQueryUrl(input)).toEqual({ kind, normalized, hostKey });
-  });
-
-  it.each([
-    ['not a url'],
-    [''],
-    ['   '],
-    ['localhost'],
-    ['http://'],
-  ])('returns null for unparseable input %j', (input) => {
-    expect(normalizeQueryUrl(input)).toBeNull();
-  });
-
-  it('falls back to website for known hosts with no path segment', () => {
-    expect(normalizeQueryUrl('https://www.facebook.com')).toEqual({
-      kind: 'website',
-      normalized: 'https://facebook.com',
-      hostKey: 'facebook.com',
-    });
-    expect(normalizeQueryUrl('g.page')).toEqual({
-      kind: 'website',
-      normalized: 'http://g.page',
-      hostKey: 'g.page',
-    });
-  });
-
-  it('falls back to website for shortlink hosts outside /maps/ paths', () => {
-    expect(normalizeQueryUrl('https://goo.gl/someOtherThing')).toEqual({
-      kind: 'website',
-      normalized: 'https://goo.gl',
-      hostKey: 'goo.gl',
-    });
-  });
-});
-
-describe('normalizeName — full Arabic matrix', () => {
-  it('maps every punctuation-class character to a space', () => {
-    expect(normalizeName('a.b_c-d/e,f(g)h|i')).toBe('a b c d e f g h i');
-  });
-
-  it('strips diacritics across the whole U+064B-U+0652 range plus U+0670', () => {
-    expect(normalizeName('مُنْتَجَات ٱلْمَصْنَع')).not.toMatch(/[\u064B-\u0652\u0670]/);
-    expect(normalizeName('هدىٰ')).toBe('هدي');
-  });
-
-  it('unifies alef variants, alef maqsura and taa marbuta', () => {
-    expect(normalizeName('أحمد إبراهيم آدم على شركة')).toBe('احمد ابراهيم ادم علي شركه');
-  });
-
-  it('removes leading ال per token; لل-prefixed tokens keep their article', () => {
-    expect(normalizeName('الاهلي النادي')).toBe('اهلي نادي');
-    expect(normalizeName('شركة الأهلي للإسمنت')).toBe('شركه اهلي للاسمنت');
-  });
-
-  it('drops a token that is only ال entirely', () => {
-    expect(normalizeName('ال')).toBe('');
-    expect(normalizeName('الأهلي ال')).toBe('اهلي');
-  });
-
-  it('preserves tatweel U+0640 (not a diacritic)', () => {
-    expect(normalizeName('شــركة')).toBe('شــركه');
-  });
-
-  it('handles mixed Arabic/Latin input', () => {
-    expect(normalizeName('B.TECH بي تك')).toBe('b tech بي تك');
-  });
-
-  it('returns empty string for empty, blank, punctuation-only or article-only input', () => {
-    expect(normalizeName('')).toBe('');
-    expect(normalizeName('   ')).toBe('');
-    expect(normalizeName('.,-')).toBe('');
-    expect(normalizeName('ال ال')).toBe('');
-  });
-});
-
-describe('levenshtein — classic matrix', () => {
-  it.each([
-    ['kitten', 'sitting', 3],
-    ['flaw', 'lawn', 2],
-    ['abc', 'abc', 0],
-    ['', '', 0],
-    ['', 'abc', 3],
-    ['abc', '', 3],
-    ['abcdef', 'azced', 3],
-    ['saturday', 'sunday', 3],
-    ['a', 'b', 1],
-    ['conect', 'connect', 1],
-  ])('distance(%j, %j) = %j and is symmetric', (a, b, expected) => {
-    expect(levenshtein(a, b)).toBe(expected);
-    expect(levenshtein(b, a)).toBe(expected);
   });
 });

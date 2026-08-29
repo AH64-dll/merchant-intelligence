@@ -353,6 +353,7 @@ class VerificationTask(BaseModel):
         return [_stringify(item) for item in value]
 
 class MerchantAnalysis(BaseModel):
+    payload_version: Literal[1] = 1
     merchant_id: str = "pending"
     merchant_name: str = ""
     identity_confidence: float = Field(ge=0.0, le=1.0, default=0.0)

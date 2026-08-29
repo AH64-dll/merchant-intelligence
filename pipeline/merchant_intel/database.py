@@ -6,6 +6,7 @@ import json
 import sqlite3
 import threading
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Iterator
 
@@ -96,10 +97,11 @@ CREATE TABLE IF NOT EXISTS merchant_identifiers (
     value TEXT NOT NULL,
     normalized_value TEXT NOT NULL,
     confidence REAL NOT NULL DEFAULT 0.5,
-    UNIQUE(kind, normalized_value),
+    UNIQUE(merchant_id, kind, normalized_value),
     FOREIGN KEY (merchant_id) REFERENCES merchants(id)
 );
 CREATE INDEX IF NOT EXISTS idx_identifier_lookup ON merchant_identifiers(kind, normalized_value);
+CREATE INDEX IF NOT EXISTS idx_identifier_merchant ON merchant_identifiers(merchant_id);
 
 CREATE TABLE IF NOT EXISTS merchant_links (
     id TEXT PRIMARY KEY,
@@ -113,6 +115,8 @@ CREATE TABLE IF NOT EXISTS merchant_links (
     FOREIGN KEY (left_merchant_id) REFERENCES merchants(id),
     FOREIGN KEY (right_merchant_id) REFERENCES merchants(id)
 );
+CREATE INDEX IF NOT EXISTS idx_links_left ON merchant_links(left_merchant_id);
+CREATE INDEX IF NOT EXISTS idx_links_right ON merchant_links(right_merchant_id);
 
 CREATE TABLE IF NOT EXISTS sources (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -169,6 +173,7 @@ CREATE TABLE IF NOT EXISTS evidence (
     FOREIGN KEY (claim_id) REFERENCES claims(id),
     FOREIGN KEY (duplicate_of) REFERENCES evidence(id)
 );
+CREATE INDEX IF NOT EXISTS idx_evidence_merchant_dates ON evidence(merchant_id, published_at DESC, captured_at DESC);
 CREATE INDEX IF NOT EXISTS idx_evidence_merchant ON evidence(merchant_id);
 
 CREATE TABLE IF NOT EXISTS claim_evidence (
@@ -220,6 +225,7 @@ CREATE TABLE IF NOT EXISTS merchant_analyses (
     FOREIGN KEY (run_id) REFERENCES pipeline_runs(id),
     FOREIGN KEY (merchant_id) REFERENCES merchants(id)
 );
+CREATE INDEX IF NOT EXISTS idx_analyses_merchant_round ON merchant_analyses(merchant_id, round_no DESC, id DESC);
 CREATE INDEX IF NOT EXISTS idx_analyses_run_merchant ON merchant_analyses(run_id, merchant_id);
 
 CREATE TABLE IF NOT EXISTS quality_metrics (
@@ -233,7 +239,26 @@ CREATE TABLE IF NOT EXISTS quality_metrics (
 );
 """
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
+
+
+def _to_utc_iso(value: str | None) -> str | None:
+    """Normalize a stored timestamp to UTC ISO-8601 with an explicit +00:00
+    offset. Offset-less values are treated as UTC because every pipeline clock
+    helper writes UTC. Unparseable values are returned unchanged so the audit
+    layer, not the migration, reports them."""
+    if value is None or value == "":
+        return value
+    text = value.strip()
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return value
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc).isoformat()
 
 
 class Database:
@@ -265,37 +290,15 @@ class Database:
                 self._conn.execute("INSERT INTO schema_version(version) VALUES (?)", (1,))
                 current = 1
             if current < 2:
-                self._ensure_column("sources", "last_seen_at", "TEXT")
-                self._ensure_column(
-                    "evidence", "content_fingerprint", "TEXT NOT NULL DEFAULT ''"
-                )
-                self._ensure_column("evidence", "claim_id", "TEXT")
-                for name, definition in (
-                    ("attempts", "INTEGER NOT NULL DEFAULT 0"),
-                    ("last_attempt_round", "INTEGER NOT NULL DEFAULT 0"),
-                    ("last_error", "TEXT NOT NULL DEFAULT ''"),
-                    ("created_at", "TEXT NOT NULL DEFAULT ''"),
-                    ("updated_at", "TEXT NOT NULL DEFAULT ''"),
-                ):
-                    self._ensure_column("verification_tasks", name, definition)
-                now = utcnow().isoformat()
-                self._conn.execute(
-                    "UPDATE sources SET last_seen_at=COALESCE(last_seen_at, first_seen_at)"
-                )
-                self._conn.execute(
-                    "UPDATE evidence SET content_fingerprint="
-                    "COALESCE(content_fingerprint, fingerprint)"
-                )
-                self._conn.execute(
-                    "UPDATE verification_tasks SET "
-                    "created_at=COALESCE(NULLIF(created_at,''), ?), "
-                    "updated_at=COALESCE(NULLIF(updated_at,''), ?)",
-                    (now, now),
-                )
-                self._conn.execute("DELETE FROM schema_version")
-                self._conn.execute(
-                    "INSERT INTO schema_version(version) VALUES (?)", (SCHEMA_VERSION,)
-                )
+                self._migrate_v1_to_v2()
+                current = 2
+            if current < 3:
+                self._migrate_v2_to_v3()
+                current = 3
+            self._conn.execute("DELETE FROM schema_version")
+            self._conn.execute(
+                "INSERT INTO schema_version(version) VALUES (?)", (SCHEMA_VERSION,)
+            )
             self._conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_evidence_content_fingerprint "
                 "ON evidence(content_fingerprint)"
@@ -304,6 +307,169 @@ class Database:
                 "CREATE INDEX IF NOT EXISTS idx_tasks_run_status "
                 "ON verification_tasks(run_id, status, attempts)"
             )
+
+    def _migrate_v1_to_v2(self) -> None:
+        self._ensure_column("sources", "last_seen_at", "TEXT")
+        self._ensure_column(
+            "evidence", "content_fingerprint", "TEXT NOT NULL DEFAULT ''"
+        )
+        self._ensure_column("evidence", "claim_id", "TEXT")
+        for name, definition in (
+            ("attempts", "INTEGER NOT NULL DEFAULT 0"),
+            ("last_attempt_round", "INTEGER NOT NULL DEFAULT 0"),
+            ("last_error", "TEXT NOT NULL DEFAULT ''"),
+            ("created_at", "TEXT NOT NULL DEFAULT ''"),
+            ("updated_at", "TEXT NOT NULL DEFAULT ''"),
+        ):
+            self._ensure_column("verification_tasks", name, definition)
+        now = utcnow().isoformat()
+        self._conn.execute(
+            "UPDATE sources SET last_seen_at=COALESCE(last_seen_at, first_seen_at)"
+        )
+        self._conn.execute(
+            "UPDATE evidence SET content_fingerprint="
+            "COALESCE(content_fingerprint, fingerprint)"
+        )
+        self._conn.execute(
+            "UPDATE verification_tasks SET "
+            "created_at=COALESCE(NULLIF(created_at,''), ?), "
+            "updated_at=COALESCE(NULLIF(updated_at,''), ?)",
+            (now, now),
+        )
+
+    def _migrate_v2_to_v3(self) -> None:
+        """Rebuild merchant_identifiers for many-owner identifiers and backfill
+        payload versions, UTC timestamps, and root-canonical duplicate pointers.
+
+        Runs in one transaction: a cycle or missing parent aborts and rolls
+        back the entire migration, leaving the v2 database byte-for-byte
+        intact. Cross-merchant duplicate roots are preserved as-is.
+        """
+        with self.transaction() as conn:
+            # executescript() commits implicitly, so all DDL/DML here is
+            # issued through execute() to keep the transaction intact.
+            conn.execute(
+                """CREATE TABLE merchant_identifiers_v3 (
+                       id INTEGER PRIMARY KEY AUTOINCREMENT,
+                       merchant_id TEXT NOT NULL,
+                       kind TEXT NOT NULL,
+                       value TEXT NOT NULL,
+                       normalized_value TEXT NOT NULL,
+                       confidence REAL NOT NULL DEFAULT 0.5,
+                       UNIQUE(merchant_id, kind, normalized_value),
+                       FOREIGN KEY (merchant_id) REFERENCES merchants(id)
+                   )"""
+            )
+            conn.execute(
+                """INSERT INTO merchant_identifiers_v3
+                       (id, merchant_id, kind, value, normalized_value, confidence)
+                   SELECT id, merchant_id, kind, value, normalized_value, confidence
+                   FROM merchant_identifiers
+                   ORDER BY id"""
+            )
+            conn.execute("DROP TABLE merchant_identifiers")
+            conn.execute(
+                "ALTER TABLE merchant_identifiers_v3 RENAME TO merchant_identifiers"
+            )
+            conn.execute(
+                """CREATE INDEX IF NOT EXISTS idx_identifier_lookup
+                   ON merchant_identifiers(kind, normalized_value)"""
+            )
+            conn.execute(
+                """CREATE INDEX IF NOT EXISTS idx_identifier_merchant
+                   ON merchant_identifiers(merchant_id)"""
+            )
+            conn.execute(
+                """CREATE INDEX IF NOT EXISTS idx_analyses_merchant_round
+                   ON merchant_analyses(merchant_id, round_no DESC, id DESC)"""
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_links_left "
+                "ON merchant_links(left_merchant_id)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_links_right "
+                "ON merchant_links(right_merchant_id)"
+            )
+            conn.execute(
+                """CREATE INDEX IF NOT EXISTS idx_evidence_merchant_dates
+                   ON evidence(merchant_id, published_at DESC, captured_at DESC)"""
+            )
+
+            # Backfill payload_version=1 into every analysis payload.
+            rows = conn.execute(
+                "SELECT id, payload_json FROM merchant_analyses"
+            ).fetchall()
+            for row in rows:
+                try:
+                    payload = json.loads(row["payload_json"])
+                except (json.JSONDecodeError, TypeError):
+                    raise sqlite3.DatabaseError(
+                        f"merchant_analyses id={row['id']} payload is not valid JSON"
+                    )
+                if isinstance(payload, dict) and "payload_version" not in payload:
+                    payload["payload_version"] = 1
+                    conn.execute(
+                        "UPDATE merchant_analyses SET payload_json=? WHERE id=?",
+                        (
+                            json.dumps(payload, ensure_ascii=False, sort_keys=True),
+                            row["id"],
+                        ),
+                    )
+
+            # Normalize evidence timestamps to explicit UTC ISO-8601.
+            # Offset-less stored values are treated as UTC: pipeline clock
+            # helpers and captured-at defaults are UTC.
+            rows = conn.execute(
+                "SELECT id, published_at, captured_at FROM evidence"
+            ).fetchall()
+            for row in rows:
+                new_published = _to_utc_iso(row["published_at"])
+                new_captured = _to_utc_iso(row["captured_at"])
+                if (
+                    new_published != row["published_at"]
+                    or new_captured != row["captured_at"]
+                ):
+                    conn.execute(
+                        "UPDATE evidence SET published_at=?, captured_at=? WHERE id=?",
+                        (new_published, new_captured, row["id"]),
+                    )
+
+            # Canonicalize duplicate_of chains to their root id.
+            parent_of: dict[str, str] = {}
+            for row in conn.execute(
+                "SELECT id, duplicate_of FROM evidence WHERE duplicate_of IS NOT NULL"
+            ).fetchall():
+                if conn.execute(
+                    "SELECT 1 FROM evidence WHERE id=?", (row["duplicate_of"],)
+                ).fetchone() is None:
+                    raise sqlite3.DatabaseError(
+                        f"evidence {row['id']} duplicate_of parent "
+                        f"{row['duplicate_of']} is missing"
+                    )
+                parent_of[row["id"]] = row["duplicate_of"]
+            for child_id in parent_of:
+                seen: set[str] = {child_id}
+                cursor_id = parent_of[child_id]
+                while cursor_id in parent_of:
+                    if cursor_id in seen:
+                        raise sqlite3.DatabaseError(
+                            f"duplicate_of cycle detected at evidence {cursor_id}"
+                        )
+                    seen.add(cursor_id)
+                    cursor_id = parent_of[cursor_id]
+            updates: list[tuple[str, str]] = []
+            for child_id in parent_of:
+                root = child_id
+                while root in parent_of:
+                    root = parent_of[root]
+                if root != child_id:
+                    updates.append((root, child_id))
+            if updates:
+                conn.executemany(
+                    "UPDATE evidence SET duplicate_of=? WHERE id=?", updates
+                )
+
     def _ensure_column(self, table: str, column: str, definition: str) -> None:
         columns = {
             row["name"] for row in self._conn.execute(f"PRAGMA table_info({table})")
