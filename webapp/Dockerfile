@@ -23,7 +23,7 @@ RUN addgroup --system --gid 1001 nodejs \
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY data/merchants.db /app/data/merchants.db
+COPY --chown=nextjs:nodejs data/merchants.db /app/data/merchants.db
 
 USER nextjs
 
