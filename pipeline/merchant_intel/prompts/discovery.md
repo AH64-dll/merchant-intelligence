@@ -21,8 +21,9 @@ KNOWN EXCLUSIONS
 Do not repeat an excluded merchant/source unless you found a genuinely independent source.
 
 COMPLIANCE
-Use only public, permitted information. Do not bypass authentication or access controls,
-private groups, CAPTCHAs, private messages, or impersonation. Do not collect unrelated
+Use only public, permitted information and Facebook groups the account legitimately belongs to,
+READ-ONLY (never post, like, comment, join, message, or interact; never record commenter names or
+IDs). Do not bypass CAPTCHAs or access controls; do not impersonate. Do not collect unrelated
 personal information. Research commercial entities and merchant activity only.
 
 Scope hint: {scope_hint}

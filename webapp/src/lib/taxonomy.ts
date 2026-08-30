@@ -322,7 +322,7 @@ const SOURCE_TYPE_KEYWORDS: ReadonlyArray<readonly [SourceCategory, readonly str
     'app reviews', 'play store',
   ]],
   ['directory', ['directory']],
-  ['forum_community', ['forum', 'reddit', 'community', 'thread']],
+  ['forum_community', ['forum', 'reddit', 'community', 'thread', 'facebook_group', 'group']],
   ['social', ['social', 'facebook', 'instagram', 'tiktok', 'youtube', 'twitter', 'video']],
   ['news', ['news', 'press', 'journalistic', 'journalism', 'journal', 'investigative', 'publication', 'outlet', 'article']],
 ];
@@ -339,18 +339,21 @@ export interface SourceCategoryInput {
   url: string;
   sourceType: string;
   authorType: string;
+  sourcePlatform?: string;
 }
 
 /**
  * Derives the application source category with the exact precedence:
- * `whois://` URL → technical registry; author regulator/registry → public
- * authority; merchant → merchant-owned; customer → customer report;
- * journalist → news; then raw `source_type` keywords in the ordered list
- * above; otherwise `other`. The raw `source_type` is always preserved by the
- * caller — this derivation never replaces it.
+ * `whois://` URL → technical registry; platform `facebook_group` → forum
+ * community; author regulator/registry → public authority; merchant →
+ * merchant-owned; customer → customer report; journalist → news; then raw
+ * `source_type` keywords in the ordered list above; otherwise `other`. The
+ * raw `source_type` is always preserved by the caller — this derivation
+ * never replaces it.
  */
 export function deriveSourceCategory(input: SourceCategoryInput): SourceCategory {
   if (input.url.trim().toLowerCase().startsWith('whois://')) return 'technical_registry';
+  if (input.sourcePlatform === 'facebook_group') return 'forum_community';
   switch (input.authorType) {
     case 'regulator':
     case 'registry':

@@ -536,7 +536,9 @@ describe('deriveSourceCategory — exact precedence', () => {
     expect(src('reddit_thread')).toBe('forum_community');
     expect(src('forum_post')).toBe('forum_community');
     expect(src('social_media_post')).toBe('social');
-    expect(src('facebook_group_post')).toBe('social');
+    expect(src('facebook_group_post')).toBe('forum_community');
+    expect(src('facebook_group')).toBe('forum_community');
+    expect(src('group_discussion')).toBe('forum_community');
     expect(src('news_article')).toBe('news');
     expect(src('technology_publication')).toBe('news');
     expect(src('completely_unknown_value')).toBe('other');

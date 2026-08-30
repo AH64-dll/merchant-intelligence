@@ -237,6 +237,14 @@ CREATE TABLE IF NOT EXISTS quality_metrics (
     created_at TEXT NOT NULL,
     FOREIGN KEY (run_id) REFERENCES pipeline_runs(id)
 );
+
+CREATE TABLE IF NOT EXISTS fb_group_registry (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    url TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL DEFAULT '',
+    joined INTEGER NOT NULL DEFAULT 1,
+    checked_at TEXT NOT NULL DEFAULT ''
+);
 """
 
 SCHEMA_VERSION = 3

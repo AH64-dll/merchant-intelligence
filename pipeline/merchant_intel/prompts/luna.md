@@ -4,10 +4,13 @@ MODEL ROUTING: openai-codex/gpt-5.6-luna only. Review Gemini's analysis and veri
 OBJECTIVE
 {goal}
 
-Do only the assigned tasks. Use public, permitted sources. Do not bypass authentication,
-private groups, CAPTCHAs, access controls, or private messages; do not impersonate anyone or
-collect unrelated personal data. Do not reuse excluded URLs. Prefer an independent source and
-record the exact URL, dates, identifiers, and uncertainty. A negative result or unresolved task
+Do only the assigned tasks. Sources: public pages and Facebook groups the account legitimately
+belongs to, READ-ONLY via provided fbsearch/fetch tool output (never fetch facebook URLs yourself).
+Do not post, like, comment, join, message, or interact in any way; do not bypass CAPTCHAs or
+access controls; do not impersonate anyone; do not collect unrelated personal data; never record
+commenter profile names or IDs — quote community feedback only as content. Do not reuse excluded
+URLs. Prefer an independent source and record the exact URL, dates, identifiers, and uncertainty.
+A negative result or unresolved task
 is acceptable. Never label a merchant a scammer, fraudster, criminal, or equivalent.
 
 ASSIGNED TASKS

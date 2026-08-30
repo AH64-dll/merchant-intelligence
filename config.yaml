@@ -28,15 +28,15 @@ omp:
   require_catalog: true
 
 models:
-  # All roles run on GLM 5.3 Flash through the Merge Gateway shared provider.
-  discovery: merge-gateway/glm-5.3-flash
-  coordinator: merge-gateway/glm-5.3-flash
-  analyst: merge-gateway/glm-5.3-flash
-  verifier: merge-gateway/glm-5.3-flash
+  # Analysts run Gemini 3.7 Flash via Antigravity; verifiers run GPT 5.6
+  # Luna via Codex. Fail closed on provider pins (allow_fallback false).
+  discovery: google-antigravity/gemini-3.7-flash
+  coordinator: google-antigravity/gemini-3.7-flash
+  analyst: google-antigravity/gemini-3.7-flash
+  verifier: openai-codex/gpt-5.6-luna
   fallback: null
-  gemini_provider: merge-gateway
-  gpt_provider: merge-gateway
-  shared_provider: merge-gateway
+  gemini_provider: google-antigravity
+  gpt_provider: openai-codex
   allow_fallback: false
 
 concurrency:

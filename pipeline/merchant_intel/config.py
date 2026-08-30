@@ -77,6 +77,7 @@ class ResearchConfig:
     stale_after_days: int = 730
     max_task_attempts: int = 3
     diminishing_ratio: float = 0.15
+    fb_groups: list[str] = field(default_factory=list)
     diminishing_streak: int = 2
 
 @dataclass

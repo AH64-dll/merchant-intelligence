@@ -478,6 +478,7 @@ export class MerchantDb {
         url: row.url,
         sourceType: row.source_type,
         authorType: row.author_type,
+        sourcePlatform: row.platform,
       }),
       transactionEvidence: row.transaction_evidence !== 0,
       verified: row.verified !== 0,

@@ -13,6 +13,9 @@ evidence confidence, document support and contradictions, and preserve unresolve
 Do not produce a public trust score or defamatory verdict. Create a new, narrow verification task
 only when a material uncertainty remains and the task is not already resolved by the supplied
 findings. Use exact merchant IDs and source URLs.
+Facebook group content may appear in supplied evidence: treat it as community anecdote
+(confidence <= 0.8, reliability <= medium), never record commenter names or IDs, and do not
+post, like, or interact with Facebook in any way.
 
 MERCHANT PACKAGES
 {packages}

@@ -161,6 +161,54 @@ def cmd_export(args: argparse.Namespace) -> int:
         db.close()
 
 
+def cmd_fb_seed_groups(args: argparse.Namespace) -> int:
+    from merchant_intel.fbgroups import ensure_group_registry, resolve_group_list
+
+    cfg = load_config(getattr(args, "config", None))
+    db = _db(cfg)
+    try:
+        groups = resolve_group_list(cfg.research.fb_groups)
+        if not groups:
+            print("no groups configured: add research.fb_groups in config.yaml")
+            return 1
+        inserted = ensure_group_registry(db, groups)
+        total = int(db.query_one("SELECT COUNT(*) AS n FROM fb_group_registry")["n"])
+        print(f"groups resolved: {len(groups)}; newly registered: {inserted}; registry total: {total}")
+        for row in db.query("SELECT url, name FROM fb_group_registry"):
+            print(f"  - {row['url']} ({row['name']})")
+        return 0
+    finally:
+        pass
+
+
+def cmd_fb_gen_tasks(args: argparse.Namespace) -> int:
+    from merchant_intel.fbgroups import build_fb_tasks
+
+    cfg = load_config(getattr(args, "config", None))
+    db = _db(cfg)
+    inserted = build_fb_tasks(db, args.run_id, cfg_groups=cfg.research.fb_groups)
+    total = int(
+        db.query_one(
+            "SELECT COUNT(*) AS n FROM verification_tasks WHERE title LIKE 'FB community feedback:%'"
+        )["n"]
+    )
+    print(f"fb tasks inserted: {inserted}; total fb tasks: {total}")
+    return 0
+
+
+async def cmd_fb_swarm(args: argparse.Namespace) -> int:
+    from merchant_intel.fb_swarm import run_fb_swarm
+
+    return await run_fb_swarm(
+        getattr(args, "config", None),
+        luna_agents=args.luna_agents,
+        gemini_agents=args.gemini_agents,
+        tasks_per_agent=args.tasks_per_agent,
+    )
+
+
+
+
 async def cmd_verify(args: argparse.Namespace) -> int:
     cfg = load_config(getattr(args, "config", None))
     client = OmpClient(cfg)
@@ -210,11 +258,20 @@ def build_parser() -> argparse.ArgumentParser:
     _add_config(metrics)
     metrics.add_argument("--run-id")
     export = sub.add_parser("export")
-    _add_config(export)
     export.add_argument("--format", choices=["json", "jsonl", "csv"], default="json")
     export.add_argument("--include-raw", action="store_true")
     verify = sub.add_parser("verify")
 
+    fb_seed = sub.add_parser("fb-seed-groups")
+    _add_config(fb_seed)
+    fb_gen = sub.add_parser("fb-gen-tasks")
+    _add_config(fb_gen)
+    fb_gen.add_argument("--run-id", required=True)
+    fb_swarm = sub.add_parser("fb-swarm")
+    _add_config(fb_swarm)
+    fb_swarm.add_argument("--luna-agents", type=int, default=10)
+    fb_swarm.add_argument("--gemini-agents", type=int, default=10)
+    fb_swarm.add_argument("--tasks-per-agent", type=int, default=3)
     return parser
 
 
@@ -234,6 +291,12 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_export(args)
     if args.cmd == "verify":
         return asyncio.run(cmd_verify(args))
+    if args.cmd == "fb-seed-groups":
+        return cmd_fb_seed_groups(args)
+    if args.cmd == "fb-gen-tasks":
+        return cmd_fb_gen_tasks(args)
+    if args.cmd == "fb-swarm":
+        return asyncio.run(cmd_fb_swarm(args))
     parser.print_help()
     return 2
 
