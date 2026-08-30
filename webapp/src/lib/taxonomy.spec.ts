@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { Governorate, SourceCategory } from './taxonomy';
 import {
   AUTHOR_TYPE_LABELS,
   CATEGORY_TAG_PRIORITY,
@@ -17,7 +18,6 @@ import {
   relationLabel,
   splitCityDisplay,
 } from './taxonomy';
-import type { CategoryTag, Governorate, SourceCategory } from './taxonomy';
 
 // ---------------------------------------------------------------------------
 // Fixtures pinned against the live master DB (2026-08-29 read-only audit).

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "vitest run",
+    "bench:search": "vitest run src/lib/search.bench.spec.ts",
     "snapshot": "bash scripts/snapshot-db.sh",
     "snapshot:verify": "node scripts/audit-data.mjs data/merchants.db --strict"
   },

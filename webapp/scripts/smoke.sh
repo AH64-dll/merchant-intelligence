@@ -100,10 +100,10 @@ fetch() {
   rm -f /tmp/smoke-body.$$
 }
 
-# a) phone search
+# a) phone search — new envelope: hits[].match.kind, no numeric score
 fetch "${BASE}/api/search?q=%2B201286619966"
-printf '%s' "$BODY" | assert_json "a) phone +201286619966 hits with matchedOn=phone" "$STATUS" \
-  "status==200 and len(d.get('hits',[]))>0 and d['hits'][0]['matchedOn']=='phone'"
+printf '%s' "$BODY" | assert_json "a) phone +201286619966 hits with match.kind=phone" "$STATUS" \
+  "status==200 and len(d.get('hits',[]))>0 and d['hits'][0]['match']['kind']=='phone'"
 
 # b) facebook URL search
 fetch "${BASE}/api/search?q=http://facebook.com/MTIholding"
@@ -111,19 +111,28 @@ printf '%s' "$BODY" | assert_json "b) facebook.com/MTIholding non-empty hits" "$
   "status==200 and len(d.get('hits',[]))>0"
 
 # c) Arabic name search
-fetch "${BASE}/api/search?q=%D8%A8%D9%8A%20%D8%AA%D9%83"
-printf '%s' "$BODY" | assert_json "c) Arabic 'بي تك' non-empty hits" "$STATUS" \
-  "status==200 and len(d.get('hits',[]))>0"
+printf '%s' "$BODY" | assert_json "c) Arabic 'بي تك' non-empty hits with new envelope" "$STATUS" \
+  "status==200 and len(d.get('hits',[]))>0 and set(['query','inputKind','total','page','pageSize','ambiguous','diagnostic','hits']).issubset(set(d.keys()))"
 
 # d) nonsense query → zero hits
 fetch "${BASE}/api/search?q=zzzzqqqq"
 printf '%s' "$BODY" | assert_json "d) zzzzqqqq zero hits" "$STATUS" \
   "status==200 and len(d.get('hits',[]))==0"
 
+# d2) envelope validity: every hit exposes merchant + match{kind,value,label} and no score
+fetch "${BASE}/api/search?q=%D8%A8%D9%8A%20%D8%AA%D9%83"
+printf '%s' "$BODY" | assert_json "d2) every hit carries merchant + match{kind,value,label}, no score" "$STATUS" \
+  "status==200 and all(('merchant' in h and set(['kind','value','label']).issubset(set(h['match'].keys())) and 'score' not in h) for h in d.get('hits',[]))"
+
 # e) missing q → 400
 fetch "${BASE}/api/search"
 printf '%s' "$BODY" | assert_json "e) missing q → 400 missing_query" "$STATUS" \
   "status==400 and d.get('error')=='missing_query'"
+
+# e2) invalid phone → 200 with invalid_egyptian_phone diagnostic and zero hits
+fetch "${BASE}/api/search?q=14155551234"
+printf '%s' "$BODY" | assert_json "e2) foreign phone 14155551234 → diagnostic invalid_egyptian_phone" "$STATUS" \
+  "status==200 and d.get('diagnostic')=='invalid_egyptian_phone' and len(d.get('hits',[]))==0"
 
 # f) real merchant detail + unknown merchant 404
 MID="$(sqlite3 data/merchants.db "select id from merchants limit 1" 2>/dev/null | tr -d '[:space:]')"

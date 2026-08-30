@@ -25,6 +25,11 @@ const NAME_QUERIES = [
   'ستار',
 ];
 
+// Plan Phase 6 step 5 expansion: ambiguity + invalid-phone diagnostic probes
+// are part of the load mix, not just happy-path queries.
+const AMBIGUOUS_QUERIES = ['B.TECH', 'b.tech', 'B.Tech Egypt', 'Games 2 Egypt'];
+const DIAGNOSTIC_QUERIES = ['14155551234', '+20128661996'];
+
 const latencies = []; // ms per completed request
 let failures = 0;
 let total = 0;
@@ -65,14 +70,16 @@ async function userLoop(id) {
   while (Date.now() < stopAt) {
     const roll = rng();
     try {
-      if (roll < 0.15) await timed(`/api/search?q=${encodeURIComponent(pick(NAME_QUERIES))}`);
-      else if (roll < 0.3) await timed('/api/search?q=' + encodeURIComponent('+201286619966'));
-      else if (roll < 0.4) await timed('/api/search?q=' + encodeURIComponent('http://facebook.com/MTIholding'));
-      else if (roll < 0.45) await timed('/api/search?q=zzzzqqqq');
-      else if (roll < 0.6 && seedDetailId) await timed(`/api/merchants/${seedDetailId}`);
-      else if (roll < 0.7 && seedDetailId) await timed(`/merchant/${seedDetailId}`);
-      else if (roll < 0.8) await timed('/');
-      else if (roll < 0.9) await timed(`/search?q=${encodeURIComponent(pick(NAME_QUERIES))}`);
+      if (roll < 0.10) await timed(`/api/search?q=${encodeURIComponent(pick(AMBIGUOUS_QUERIES))}`);
+      else if (roll < 0.15) await timed(`/api/search?q=${encodeURIComponent(pick(DIAGNOSTIC_QUERIES))}`);
+      else if (roll < 0.25) await timed(`/api/search?q=${encodeURIComponent(pick(NAME_QUERIES))}`);
+      else if (roll < 0.35) await timed('/api/search?q=' + encodeURIComponent('+201286619966'));
+      else if (roll < 0.42) await timed('/api/search?q=' + encodeURIComponent('http://facebook.com/MTIholding'));
+      else if (roll < 0.47) await timed('/api/search?q=zzzzqqqq');
+      else if (roll < 0.60 && seedDetailId) await timed(`/api/merchants/${seedDetailId}`);
+      else if (roll < 0.70 && seedDetailId) await timed(`/merchant/${seedDetailId}`);
+      else if (roll < 0.80) await timed('/');
+      else if (roll < 0.90) await timed(`/search?q=${encodeURIComponent(pick(NAME_QUERIES))}`);
       else await timed('/api/search?q=b%20tech');
     } catch {
       failures += 1; // network-level abort counts as failure
@@ -153,8 +160,8 @@ console.log(`hostile 299-char query: HTTP ${dos.underCap.status}, ${dos.underCap
 console.log(`co-located traffic p95 during hostile window: ${dosP95} ms`);
 
 const gatesOk =
-  failures === 0 &&
-  Number(p95) < 1000 && // single Node process, shared dev laptop; p50 ~24 ms proves headroom
+  failures === 0 && // plan gate: zero 5xx / network failures
+  Number(p95) < 1000 && // plan gate: p95 <1000ms at 50 concurrent users (default argv[4])
   dos.overCap.status === 400 &&
   dos.overCap.ms < 500 &&
   dos.underCap.status === 200 &&

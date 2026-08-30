@@ -1,8 +1,52 @@
 @import "tailwindcss";
 
-@layer base {
-  html {
-    font-family: 'Noto Naskh Arabic', 'Noto Sans Arabic', 'Segoe UI', Tahoma,
-      sans-serif;
-  }
+/*
+ * Plain black/white text system. Tokens only — no animation, gradients,
+ * colored risk states, or decorative styling. All risk/sentiment meaning is
+ * carried by text, never by color or shape alone.
+ */
+@theme {
+  --color-ink: #000000;
+  --color-paper: #ffffff;
+  --color-line: #000000;
+  --color-muted-ink: #000000;
+
+  --font-sans: "Segoe UI", Tahoma, Arial, sans-serif;
+
+  --spacing-section: 2rem;
+  --spacing-card: 0.75rem;
+
+  --text-base--line-height: 1.7;
+  --text-sm--line-height: 1.6;
+
+  --radius-card: 0px;
+  --border-card: 1px solid #000000;
+}
+
+html {
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  line-height: 1.7;
+  color: #000000;
+  background: #ffffff;
+}
+
+/* Explicit, high-contrast focus outline on every interactive element. */
+:focus-visible {
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+
+/* No low-contrast opacity anywhere; muted text stays full-contrast. */
+.opacity-70 {
+  opacity: 1;
+}
+
+/* Bidi safety: raw identifiers never break surrounding RTL layout. */
+.ltr-isolate {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.wrap-anywhere {
+  overflow-wrap: anywhere;
 }

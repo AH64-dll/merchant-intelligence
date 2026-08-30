@@ -1,58 +1,78 @@
 import type { JSX } from 'react';
 
-import type { Identifier, IdentifierKind } from '@/lib/types';
-import { IDENTIFIER_KIND_LABELS } from '@/lib/labels';
-import { ROLE_LABELS } from '@/lib/labels';
+import type { Identifier } from '@/lib/types';
+import { IDENTIFIER_KIND_LABELS, ROLE_LABELS } from '@/lib/labels';
+import type { IdentifierKind } from '@/lib/types';
 
-/** Actionable original value rendering for phones/emails/URLs. */
+/**
+ * Actionable value for contact identifiers. The anchor target uses the
+ * normalized value; the visible text is always the original stored value,
+ * isolated ltr so mixed-direction raw text cannot corrupt the layout.
+ */
 function IdentifierValue({ identifier }: { identifier: Identifier }): JSX.Element {
-  const { kind, normalizedValue } = identifier;
+  const { kind, value, normalizedValue } = identifier;
   if (kind === 'phone' || kind === 'whatsapp') {
-    return <a href={`tel:${normalizedValue}`} className="underline" dir="ltr">{identifier.value}</a>;
-  }
-  if (kind === 'email') {
-    return <a href={`mailto:${normalizedValue}`} className="underline" dir="ltr">{identifier.value}</a>;
-  }
-  if (kind === 'website' && normalizedValue.startsWith('http')) {
     return (
-      <a href={normalizedValue} target="_blank" rel="noopener noreferrer" className="underline" dir="ltr">
-        {identifier.value}
+      <a href={`tel:${normalizedValue}`} className="underline" dir="ltr">
+        {value}
       </a>
     );
   }
-  return <span dir="ltr">{identifier.value}</span>;
+  if (kind === 'email') {
+    return (
+      <a href={`mailto:${normalizedValue}`} className="underline" dir="ltr">
+        {value}
+      </a>
+    );
+  }
+  if (kind === 'website' && normalizedValue.startsWith('http')) {
+    return (
+      <a
+        href={normalizedValue}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline"
+        dir="ltr"
+      >
+        {value}
+      </a>
+    );
+  }
+  return (
+    <span dir="ltr" className="ltr-isolate wrap-anywhere">
+      <bdi>{value}</bdi>
+    </span>
+  );
 }
 
+/**
+ * Identifier list grouped by kind. Quarantined / non-displayable values are
+ * hidden (identifier-policy); raw originals are shown with role labels —
+ * never normalized values or confidence percentages.
+ */
 export function IdentifierList({ identifiers }: { identifiers: Identifier[] }): JSX.Element | null {
   const displayable = identifiers.filter((identifier) => identifier.displayable);
-  if (displayable.length === 0) {
-    return null;
-  }
-  const byKind = new Map<IdentifierKind, Identifier[]>();
+  if (displayable.length === 0) return null;
+  const byKind: Partial<Record<IdentifierKind, Identifier[]>> = {};
   for (const identifier of displayable) {
-    const values = byKind.get(identifier.kind);
-    if (values === undefined) {
-      byKind.set(identifier.kind, [identifier]);
-    } else {
-      values.push(identifier);
-    }
+    (byKind[identifier.kind] ??= []).push(identifier);
   }
-  const groups = [...byKind.entries()].sort((a, b) =>
-    IDENTIFIER_KIND_LABELS[a[0]].localeCompare(IDENTIFIER_KIND_LABELS[b[0]], 'ar'),
+  const kinds = (Object.keys(byKind) as IdentifierKind[]).sort((a, b) =>
+    IDENTIFIER_KIND_LABELS[a].localeCompare(IDENTIFIER_KIND_LABELS[b], 'ar'),
   );
   return (
-    <div className="space-y-3">
-      {groups.map(([kind, entries]) => (
+    <div className="space-y-4">
+      {kinds.map((kind) => (
         <section key={kind}>
           <h3 className="font-bold">{IDENTIFIER_KIND_LABELS[kind]}</h3>
-          <ul className="space-y-1">
-            {entries.map((identifier, index) => (
+          <ul className="mt-1 space-y-1">
+            {byKind[kind]!.map((identifier) => (
               <li
-                key={`${identifier.id}:${index}`}
-                className="font-mono text-sm [overflow-wrap:anywhere]"
+                key={identifier.id}
+                className="text-sm [overflow-wrap:anywhere]"
               >
                 <IdentifierValue identifier={identifier} />
-                <span dir="auto" className="font-sans"> — {ROLE_LABELS[identifier.role]}</span>
+                <span dir="auto"> — {ROLE_LABELS[identifier.role]}</span>
               </li>
             ))}
           </ul>

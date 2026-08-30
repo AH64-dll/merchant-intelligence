@@ -102,6 +102,10 @@ export class SearchIndex {
   private readonly tokenPostings: Map<string, Set<string>>;
   /** Trigram → merchant ids sharing it (typo-rescue pre-filter pool). */
   private readonly trigramPostings: Map<string, Set<string>>;
+  /** Trigram → loose tokens holding it (typo token candidates, pre-intersection). */
+  private readonly trigramTokenPostings: Map<string, Set<string>>;
+  /** Loose token → levenshtein-ready normalized form cache. */
+  private readonly tokenList: string[];
 
   constructor(data: IndexData) {
     this.merchantsById = new Map(data.merchants.map((m) => [m.id, m]));
@@ -138,8 +142,11 @@ export class SearchIndex {
     }
     this.tokenPostings = new Map();
     this.trigramPostings = new Map();
+    this.trigramTokenPostings = new Map();
+    const tokenSet = new Set<string>();
     for (const candidate of this.candidates) {
-      for (const token of new Set(candidate.looseTokens)) {
+      for (const token of candidate.looseTokens) {
+        tokenSet.add(token);
         const bucket = this.tokenPostings.get(token);
         if (bucket !== undefined) {
           bucket.add(candidate.merchantId);
@@ -153,9 +160,16 @@ export class SearchIndex {
           } else {
             this.trigramPostings.set(gram, new Set([candidate.merchantId]));
           }
+          const tokBucket = this.trigramTokenPostings.get(gram);
+          if (tokBucket !== undefined) {
+            tokBucket.add(token);
+          } else {
+            this.trigramTokenPostings.set(gram, new Set([token]));
+          }
         }
       }
     }
+    this.tokenList = [...tokenSet];
   }
 
   static fromDb(db: MerchantDb): SearchIndex {
@@ -442,23 +456,25 @@ export class SearchIndex {
   }
 
   /**
-   * Bounded typo pool: merchants sharing a trigram with any query token.
-   * Pre-filtered at the trigram level so whole-corpus scans never happen.
+   * Bounded typo pool: merchants owning any candidate token that shares a
+   * trigram with a query token. Token-level postings keep the pool the union
+   * of real token owners instead of every merchant sharing a hot gram.
    */
   private typoPool(queryTokens: string[]): Set<string> {
     const pool = new Set<string>();
     for (const token of queryTokens) {
       for (const gram of trigrams(token)) {
-        const bucket = this.trigramPostings.get(gram);
-        if (bucket === undefined) continue;
-        for (const merchantId of bucket) {
-          if ((this.candidatesByMerchant.get(merchantId)?.length ?? 0) > 0) pool.add(merchantId);
+        const tokBucket = this.trigramTokenPostings.get(gram);
+        if (tokBucket === undefined) continue;
+        for (const tok of tokBucket) {
+          const owners = this.tokenPostings.get(tok);
+          if (owners === undefined) continue;
+          for (const merchantId of owners) pool.add(merchantId);
         }
       }
     }
     return pool;
   }
-
   private candidateTypoQuality(
     candidate: CandidateTokens,
     queryTokens: string[],
@@ -483,15 +499,16 @@ export class SearchIndex {
     };
   }
   private bestTypoDistance(token: string, candidateTokens: string[]): number | null {
-    const grams = trigrams(token);
     const allowed = token.length >= 8 ? 2 : 1;
     let best: number | null = null;
+    // Length window narrows before any trigram or DP work.
+    const minLen = token.length - allowed;
+    const maxLen = token.length + allowed;
     for (const candidateToken of candidateTokens) {
       // 4-char minimum keeps short tokens out of fuzzy rescue while still
       // reaching real brand tokens like "tech".
       if (candidateToken === token || candidateToken.length < 4) continue;
-      if (Math.abs(candidateToken.length - token.length) > 2) continue;
-      if (!sharesTrigram(grams, candidateToken)) continue;
+      if (candidateToken.length < minLen || candidateToken.length > maxLen) continue;
       const distance = levenshtein(token, candidateToken);
       if (distance <= allowed && (best === null || distance < best)) {
         best = distance;
@@ -528,11 +545,4 @@ function mergeHit(best: Map<string, BestHit>, merchantId: string, hit: BestHit):
 
 function compareQuality(a: HitQuality, b: HitQuality): number {
   return a.fuzzyTokens - b.fuzzyTokens || a.extraTokens - b.extraTokens || a.editDistance - b.editDistance;
-}
-
-function sharesTrigram(grams: Set<string>, candidateToken: string): boolean {
-  for (const gram of trigrams(candidateToken)) {
-    if (grams.has(gram)) return true;
-  }
-  return false;
 }

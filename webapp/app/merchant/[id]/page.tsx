@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { AnalysisSection } from '@/components/AnalysisSection';
 import { EvidenceCard } from '@/components/EvidenceCard';
-import { ClaimsTable } from '@/components/ClaimsTable';
+import { ClaimCards } from '@/components/ClaimCards';
 import { IdentifierList } from '@/components/IdentifierList';
 import { RelatedMerchants } from '@/components/RelatedMerchants';
 import { SentimentBar } from '@/components/SentimentBar';
@@ -143,7 +143,7 @@ export default async function MerchantPage({ params }: MerchantPageProps) {
       {detail.claims.length > 0 ? (
         <>
           <h2>الادعاءات</h2>
-          <ClaimsTable claims={detail.claims} />
+          <ClaimCards claims={detail.claims} />
         </>
       ) : null}
 

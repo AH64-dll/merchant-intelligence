@@ -10,7 +10,7 @@ function SignalList({ title, items }: { title: string; items: string[] }) {
       <ul>
         {items.map((item, i) => (
           <li key={i} dir="auto">
-            - {item}
+            {item}
           </li>
         ))}
       </ul>
@@ -18,22 +18,26 @@ function SignalList({ title, items }: { title: string; items: string[] }) {
   );
 }
 
+/**
+ * The stored automated analysis, framed as model output to verify — never as
+ * a verdict, and never with confidence percentages.
+ */
 export function AnalysisSection({ analysis }: { analysis: AnalysisPayload | null }): JSX.Element {
   if (analysis === null) {
     return <p>لا يوجد تحليل كافٍ لهذا التاجر بعد.</p>;
   }
 
-  const hasClaims =
-    analysis.verifiedClaims.length > 0 || analysis.unverifiedClaims.length > 0;
+  const hasClaims = analysis.verifiedClaims.length > 0 || analysis.unverifiedClaims.length > 0;
 
   return (
     <section aria-labelledby="analysis-heading">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 id="analysis-heading">تحليل التاجر</h2>
-        {analysis.requiresMoreResearch && (
-          <span>[يتطلب بحثًا إضافيًا]</span>
-        )}
+        <h2 id="analysis-heading">ما يشير إليه التحليل الآلي</h2>
+        {analysis.requiresMoreResearch && <span>[يتطلب بحثًا إضافيًا]</span>}
       </div>
+      <p className="text-sm">
+        ما يلي مخرجات تحليل آلي لقائمة الأدلة، وليست حكمًا نهائيًا — راجع الأدلة والمصادر بنفسك.
+      </p>
 
       {analysis.evidenceSummary.trim().length > 0 && (
         <section>
@@ -41,7 +45,6 @@ export function AnalysisSection({ analysis }: { analysis: AnalysisPayload | null
           <p dir="auto">{analysis.evidenceSummary}</p>
         </section>
       )}
-
 
       {hasClaims && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -51,7 +54,7 @@ export function AnalysisSection({ analysis }: { analysis: AnalysisPayload | null
               <ul>
                 {analysis.verifiedClaims.map((claim, i) => (
                   <li key={i} dir="auto">
-                    - {claim}
+                    {claim}
                   </li>
                 ))}
               </ul>
@@ -63,7 +66,7 @@ export function AnalysisSection({ analysis }: { analysis: AnalysisPayload | null
               <ul>
                 {analysis.unverifiedClaims.map((claim, i) => (
                   <li key={i} dir="auto">
-                    - {claim}
+                    {claim}
                   </li>
                 ))}
               </ul>
@@ -71,16 +74,16 @@ export function AnalysisSection({ analysis }: { analysis: AnalysisPayload | null
           )}
         </div>
       )}
-      <SignalList title="إشارات خطورة" items={analysis.riskSignals} />
-      <SignalList title="نقاط إيجابية" items={analysis.positiveSignals} />
+      <SignalList title="إشارات تتطلب تحققًا" items={analysis.riskSignals} />
+      <SignalList title="إشارات إيجابية" items={analysis.positiveSignals} />
       <SignalList title="تناقضات" items={analysis.contradictions} />
       <SignalList title="معلومات ناقصة" items={analysis.missingInformation} />
 
       {(
         [
           { title: 'ملاحظات السمعة', note: analysis.reputationNotes },
-          { title: 'ملاحظات المخاطر الاحتيالية', note: analysis.fraudRiskNotes },
-          { title: 'رضا المستهلكين', note: analysis.consumerSatisfactionNotes },
+          { title: 'ملاحظات المخاطر', note: analysis.fraudRiskNotes },
+          { title: 'ملاحظات رضا المستهلكين', note: analysis.consumerSatisfactionNotes },
         ] as const
       ).map(({ title, note }) => {
         const text = note.trim();

@@ -80,6 +80,8 @@ export interface Merchant {
   governorate: string;
   identityConfidence: number;
   state: MerchantState;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface SearchHit {

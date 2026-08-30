@@ -385,6 +385,8 @@ export class MerchantDb {
       governorate: row.governorate,
       identityConfidence: row.identity_confidence,
       state: row.state,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
     }));
     const identifierRows = this.stmtIndexIdentifiers.all(...SEARCHABLE_KINDS) as IndexIdentifierRow[];
     const identifiers = identifierRows.map((row) => ({
@@ -545,6 +547,8 @@ export class MerchantDb {
         governorate: merchantRow.governorate,
         identityConfidence: merchantRow.identity_confidence,
         state: merchantRow.state,
+        createdAt: merchantRow.created_at,
+        updatedAt: merchantRow.updated_at,
       },
       identifiers,
       aliases,

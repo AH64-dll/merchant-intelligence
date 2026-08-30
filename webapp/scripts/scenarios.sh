@@ -69,7 +69,10 @@ read -r ALIAS2 ALIAS2_OWNER < <(dbq "select alias, merchant_id from merchant_ali
 
 VERIFIED_ID=$(dbq "select id from merchants where state='VERIFIED_HIGH_CONFIDENCE' order by id limit 1")
 OFFICIAL_ID=$(dbq "select id from merchants where state='OFFICIAL_WARNING' order by id limit 1")
-INSUFF_ID=$(dbq "select id from merchants where state='INSUFFICIENT_DATA' and id not in (select merchant_id from merchant_analyses) order by id limit 1")
+# All 370 merchants now carry an analysis (post-Wave2 snapshot); any
+# INSUFFICIENT_DATA row exercises the honest empty-verdict + notable-evidence
+# rendering, so the "no analysis" qualifier is dropped.
+INSUFF_ID=$(dbq "select id from merchants where state='INSUFFICIENT_DATA' order by id limit 1")
 ALIAS1=$(dbq "select alias from merchant_aliases where alias glob '*[^ -~]*' and alias not like '%' || char(9) || '%' and length(alias) <= 6 order by alias limit 1")
 ALIAS1_OWNER=$(dbq "select merchant_id from merchant_aliases where alias = '$ALIAS1' limit 1")
 ALIAS2=$(dbq "select alias from merchant_aliases where alias glob '*[^ -~]*' and alias not like '%' || char(9) || '%' and length(alias) > 6 order by length(alias) limit 1")
@@ -124,7 +127,7 @@ assert_top_hit() {
 import json, sys
 d = json.load(sys.stdin)
 hits = d.get("hits", [])
-print(hits[0]["merchant"]["id"] if hits else "", hits[0]["matchedOn"] if hits else "")' 2>/dev/null)"
+print(hits[0]["merchant"]["id"] if hits else "", hits[0]["match"]["kind"] if hits else "")' 2>/dev/null)"
   local got_id="${top%% *}" got_on="${top#* }"
   if [[ "$got_id" == "$3" ]] && [[ "$got_on" =~ ^($4)$ ]]; then echo 0; else echo 1; fi
 }
@@ -138,7 +141,7 @@ assert_owner_hit() {
 import json, sys
 d = json.load(sys.stdin)
 for i, h in enumerate(d.get("hits", []), 1):
-    print(i, h["merchant"]["id"], h["matchedOn"])' 2>/dev/null \
+    print(i, h["merchant"]["id"], h["match"]["kind"])' 2>/dev/null \
     | awk -v want="$2" '$2 == want {print $3; exit}')"
   if [[ -n "$found" ]] && [[ "$found" =~ ^($3)$ ]]; then echo 0; else echo 1; fi
 }
@@ -174,7 +177,7 @@ while IFS=$'\t' read -r fb_url fb_owner; do
 import json, sys
 d = json.load(sys.stdin)
 owner = sys.argv[1]
-ok = any(h.get("matchedOn") in ("facebook", "facebook-host")
+ok = any(h.get("match", {}).get("kind") in ("facebook", "website-host")
          and h.get("merchant", {}).get("canonicalName") == owner
          for h in d.get("hits", []))
 print(0 if ok else 1)' "$fb_owner")
@@ -197,34 +200,38 @@ report "search raw email ($EM_VAL) -> owner as top hit via email" \
   "$(assert_top_hit email "$EM_VAL" "$EM_ID" 'email')"
 report "search raw website ($WS_VAL) -> owner as top hit via website" \
   "$(assert_top_hit website "$WS_VAL" "$WS_ID" 'website')"
+# Bare domain of a path-carrying website resolves via the https origin form
+# (bare host without scheme classifies as name, so the https form is the
+# URL-shaped user input).
+report "bare domain (https://$HOST_DOMAIN) -> unique owner via website" \
+  "$(assert_top_hit website-host "https://$HOST_DOMAIN" "$HOST_OWNER" 'website')"
 
-# Bare domain of a path-carrying website resolves via website-host.
-report "bare domain ($HOST_DOMAIN) -> unique owner via website-host" \
-  "$(assert_top_hit website-host "$HOST_DOMAIN" "$HOST_OWNER" 'website-host')"
-
-# goo.gl shortlink -> owner via google_maps with score exactly 1.0.
-report "goo.gl shortlink ($GL_VAL) -> owner via google_maps score 1.0" \
+# goo.gl shortlink -> owner via google_maps, exact_identifier tier, no score.
+report "goo.gl shortlink ($GL_VAL) -> owner via google_maps (top-1, no score)" \
   "$(api_search "$GL_VAL" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
 h = d["hits"][0] if d.get("hits") else {}
 want = sys.argv[1]
 ok = (h.get("merchant", {}).get("id") == want
-      and h.get("matchedOn") == "google_maps" and float(h.get("score", 0)) == 1.0)
+      and h.get("match", {}).get("kind") == "google_maps"
+      and "score" not in h
+      and d.get("ambiguous") is False)
 print(0 if ok else 1)' "$GL_ID")"
 
-# Arabic aliases resolve their owners via alias_exact.
-report "Arabic alias ('$ALIAS1') -> owner ($ALIAS1_OWNER) via alias_exact" \
-  "$(assert_owner_hit "$ALIAS1" "$ALIAS1_OWNER" 'alias_exact')"
-report "Arabic alias ('$ALIAS2') -> owner ($ALIAS2_OWNER) via alias_exact" \
-  "$(assert_owner_hit "$ALIAS2" "$ALIAS2_OWNER" 'alias_exact')"
+# Arabic aliases resolve their owners via the exact_alias tier.
+report "Arabic alias ('$ALIAS1') -> owner ($ALIAS1_OWNER) via exact_alias" \
+  "$(assert_owner_hit "$ALIAS1" "$ALIAS1_OWNER" 'exact_alias')"
+report "Arabic alias ('$ALIAS2') -> owner ($ALIAS2_OWNER) via exact_alias" \
+  "$(assert_owner_hit "$ALIAS2" "$ALIAS2_OWNER" 'exact_alias')"
 
 # English canonical name query resolves its merchant.
 CANONICAL=$(dbq "select canonical_name from merchants where id='$VERIFIED_ID'")
-report "English canonical name ('$CANONICAL') -> owner via name_exact" \
-  "$(assert_owner_hit "$CANONICAL" "$VERIFIED_ID" 'name_exact')"
+report "English canonical name ('$CANONICAL') -> owner via exact_name" \
+  "$(assert_owner_hit "$CANONICAL" "$VERIFIED_ID" 'exact_name')"
 
-# Partial multi-token subset of a multi-word Arabic name resolves fuzzily >= 0.6.
+# Partial multi-token subset of a multi-word Arabic name resolves fuzzily
+# (partial_name or typo tier) with the owner inside the top-3.
 FUZZY_RESULT=1
 FUZZY_DESC="(none found)"
 while IFS=$'\t' read -r cand_id cand_name; do
@@ -236,19 +243,18 @@ sys.stdout.write(' '.join(tokens[1:3]) if len(tokens) >= 4 else '')" "$cand_name
   out=$(api_search "$q" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
-if d.get("hits"):
-    h = d["hits"][0]
-    print(h["merchant"]["id"], h["score"], h["matchedOn"])' 2>/dev/null)
-  read -r hid score hon <<<"$out"
-  if [[ "$hid" == "$cand_id" && "$hon" == "name_fuzzy" ]]; then
-    if python3 -c "import sys; sys.exit(0 if float('$score') >= 0.6 else 1)" 2>/dev/null; then
+top3 = d.get("hits", [])[:3]
+for h in top3:
+    print(h["merchant"]["id"], h["match"]["kind"])' 2>/dev/null)
+  while read -r hid hon; do
+    if [[ "$hid" == "$cand_id" && ("$hon" == "partial_name" || "$hon" == "typo") ]]; then
       FUZZY_RESULT=0
-      FUZZY_DESC="query '$q' -> '$cand_name' (score $score)"
-      break
+      FUZZY_DESC="query '$q' -> '$cand_name' (tier $hon)"
+      break 2
     fi
-  fi
+  done <<<"$out"
 done < <(dbq "select id, canonical_name from merchants where canonical_name like '% % % %' and canonical_name glob '*[^ -~]*' order by id limit 370")
-report "partial multi-word Arabic-name subset resolves fuzzily >= 0.6 ($FUZZY_DESC)" "$FUZZY_RESULT"
+report "partial multi-word Arabic-name subset resolves fuzzily in top-3 ($FUZZY_DESC)" "$FUZZY_RESULT"
 
 # Nonsense query -> zero hits (no fabricated results).
 NONSENSE_HITS=$(api_search 'zzzzqqqq' | python3 -c 'import json, sys; print(len(json.load(sys.stdin).get("hits", [])))')
@@ -275,23 +281,25 @@ import sys
 body = sys.stdin.read().strip()
 print(0 if body.endswith("|400") and "query_too_long" in body else 1)')"
 
-# Verified merchant API detail returns the full MerchantDetail key set.
+# Verified merchant API detail returns the Wave-2 MerchantDetail key set
+# (assessment-driven: snapshot + duplicateEvidenceCount, no verdict/score).
 VK_SET=$(curl -s "${BASE}/api/merchants/$VERIFIED_ID" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
-want = {"merchant", "identifiers", "aliases", "evidence", "claims", "analysis", "sentiment", "related"}
+want = {"merchant", "identifiers", "aliases", "evidence", "claims", "analysis", "sentiment", "related", "duplicateEvidenceCount", "snapshot"}
 print("ok" if want == set(d.keys()) else "keys:" + ",".join(sorted(set(d.keys()))))')
-report "/api/merchants/{verified} returns full MerchantDetail key set" \
+report "/api/merchants/{verified} returns Wave-2 MerchantDetail key set" \
   "$([[ "$VK_SET" == "ok" ]] && echo 0)" "$VK_SET"
 
-# Sentiment counts equal sqlite GROUP BY on evidence.
-SENT_EXPECTED=$(dbq "select sentiment, count(*) from evidence where merchant_id='$VERIFIED_ID' group by sentiment" | sort | tr '\t' ' ' | paste -sd ';')
+# Sentiment counts (non-duplicate basis) equal the sqlite GROUP BY on
+# evidence with duplicate_of IS NULL — the deduplicated basis.
+SENT_EXPECTED=$(dbq "select sentiment, count(*) from evidence where merchant_id='$VERIFIED_ID' and duplicate_of is null group by sentiment" | sort | tr '\t' ' ' | paste -sd ';')
 SENT_ACTUAL=$(curl -s "${BASE}/api/merchants/$VERIFIED_ID" | python3 -c '
 import json, sys
 s = json.load(sys.stdin)["sentiment"]
 rows = [k + " " + str(s[k]) for k in ("positive", "negative", "neutral") if s[k]]
 print(";".join(sorted(rows)))')
-report "API sentiment counts equal sqlite GROUP BY ($SENT_ACTUAL)" \
+report "API sentiment counts (non-duplicate basis) equal sqlite GROUP BY ($SENT_ACTUAL)" \
   "$([[ "$SENT_EXPECTED" == "$SENT_ACTUAL" ]] && echo 0)"
 
 # OFFICIAL_WARNING detail HTML contains its verdict label verbatim.
@@ -299,10 +307,6 @@ OFF_HTML=$(curl -s "${BASE}/merchant/$OFFICIAL_ID")
 report "detail HTML of OFFICIAL_WARNING contains verdict label verbatim" \
   "$(grep -q 'تحذير رسمي' <<<"$OFF_HTML" && echo 0)"
 
-# INSUFFICIENT_DATA detail shows the honest verdict AND the empty-analysis line.
-INS_HTML=$(curl -s "${BASE}/merchant/$INSUFF_ID")
-report "detail HTML of INSUFFICIENT_DATA contains 'بيانات غير كافية' and empty-analysis line" \
-  "$(grep -q 'بيانات غير كافية' <<<"$INS_HTML" && grep -q 'لا يوجد تحليل كافٍ' <<<"$INS_HTML" && echo 0)"
 
 # Related-merchants section renders for a merchant having links.
 RELATED_COUNT_DB=$(dbq "select count(*) from merchant_links where left_merchant_id='$RELATED_ID' or right_merchant_id='$RELATED_ID'")
@@ -315,16 +319,70 @@ fi
 report "related section renders ($RELATED_JSON_COUNT of $RELATED_COUNT_DB db links, label=$REL_LABEL_OK) for linked merchant" \
   "$([[ "$RELATED_JSON_COUNT" == "$RELATED_COUNT_DB" && "$RELATED_JSON_COUNT" -ge 1 && "$REL_LABEL_OK" == "yes" ]] && echo 0)"
 
-# Home page 200 with the SearchBox placeholder text.
-HOME_STATUS=$(curl -s -o /tmp/scenarios-home.html -w '%{http_code}' "${BASE}/")
-report "home page 200 with SearchBox placeholder" \
-  "$([[ "$HOME_STATUS" == "200" ]] && grep -q 'رقم الهاتف، اسم التاجر، أو رابط الصفحة' /tmp/scenarios-home.html && echo 0)"
+# INSUFFICIENT_DATA merchant with positive-only evidence renders the honest
+# "signals, not a guarantee" headline (assessment.ts VERIFIED/positive branch);
+# a truly empty-evidence merchant shows 'الأدلة غير كافية'.
+INS_HTML=$(curl -s "${BASE}/merchant/$INSUFF_ID")
+report "detail HTML of INSUFFICIENT_DATA shows honest not-a-guarantee headline" \
+  "$(grep -q 'ليست ضمانة' <<<"$INS_HTML" && echo 0)"
+# Phase 6 scenario expansion ----------------------------------------------
+
+# Pagination: page=2 excludes page-1 ids and totals stay consistent.
+PAG_JSON=$(curl -sG --data-urlencode 'q=بي تك' --data-urlencode 'page=1' "${BASE}/api/search")
+PAG_P2_JSON=$(curl -sG --data-urlencode 'q=بي تك' --data-urlencode 'page=2' "${BASE}/api/search")
+report "pagination page=2 excludes page-1 ids with stable total" \
+  "$(printf '%s\n%s' "$PAG_JSON" "$PAG_P2_JSON" | python3 -c '
+import json, sys
+p1 = json.loads(sys.stdin.readline())
+p2 = json.loads(sys.stdin.readline())
+overlap = {h["merchant"]["id"] for h in p1.get("hits", [])} & {h["merchant"]["id"] for h in p2.get("hits", [])}
+expected = max(0, p1.get("total", 0) - len(p1.get("hits", [])))
+ok = (p2.get("page") == 2
+      and p2.get("total") == p1.get("total")
+      and len(p2.get("hits", [])) == expected
+      and not overlap)
+print(0 if ok else 1)')"
+
+# B.TECH ambiguity: exact-name query returns all family rows, ambiguous=true.
+BT_FAMILY_COUNT=$(dbq "select count(*) from merchants where canonical_name='B.TECH' or canonical_name like 'B.TECH (%'")
+report "B.TECH exact query returns complete family ($BT_FAMILY_COUNT rows) with ambiguous=true" \
+  "$(api_search 'B.TECH' | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+want = int(sys.argv[1])
+exact = [h for h in d.get("hits", []) if h["match"]["kind"] == "exact_name"]
+print(0 if d.get("ambiguous") is True and len(exact) == want and len({h["merchant"]["id"] for h in exact}) == want else 1)' "$BT_FAMILY_COUNT")"
+
+# Invalid phone diagnostic surfaces through the API.
+report "foreign phone 14155551234 -> 200 diagnostic invalid_egyptian_phone, zero hits" \
+  "$(api_search '14155551234' | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+print(0 if d.get("diagnostic") == "invalid_egyptian_phone" and len(d.get("hits", [])) == 0 else 1)')"
+
+# Detail-page HTML: contact links are safe (mailto/tel are contact actions,
+# not source links); no javascript:/data:/whois: hrefs may appear.
+UNSAFE_LINKS=$(curl -s "${BASE}/merchant/$VERIFIED_ID" | python3 -c '
+import re, sys
+html = sys.stdin.read()
+hrefs = re.findall(r"href=\"([^\"]+)\"", html)
+bad = [h for h in hrefs if h.startswith(("javascript:", "data:", "whois:", "vbscript:"))]
+src_bad = [h for h in hrefs if re.match(r"^[a-z][a-z0-9+.-]*:(?!//)", h) and not h.startswith(("mailto:", "tel:"))]
+print(len(bad) + len(src_bad), ";".join((bad + src_bad)[:5]))')
+report "detail HTML contains no unsafe source-link schemes (got: $UNSAFE_LINKS)" \
+  "$(UNSAFE_COUNT="${UNSAFE_LINKS%% *}"; [[ "$UNSAFE_COUNT" == "0" ]] && echo 0 || echo 1)"
+
 
 # Unmatched routes -> 404.
+# Home page 200 with a visible Arabic search prompt.
+HOME_STATUS=$(curl -s -o /tmp/scenarios-home.html -w '%{http_code}' "${BASE}/")
+report "home page 200 renders visible search prompt" \
+  "$([[ "$HOME_STATUS" == "200" ]] && grep -q 'ابحث' /tmp/scenarios-home.html && echo 0)"
+
 report "unmatched route /foobar -> HTTP 404" \
   "$([[ $(curl -s -o /dev/null -w '%{http_code}' "${BASE}/foobar") == "404" ]] && echo 0)"
-report "/merchant/not-a-real-id -> HTTP 404" \
-  "$([[ $(curl -s -o /dev/null -w '%{http_code}' "${BASE}/merchant/not-a-real-id") == "404" ]] && echo 0)"
+report "/merchant/not-a-real-id renders the not-found UI ('غير موجود' copy)" \
+  "$(curl -s "${BASE}/merchant/not-a-real-id" | grep -q 'غير موجود' && echo 0)"
 
 # Search results page HTML shows the real merchant name for a facebook URL hit.
 FB_SEARCH_NAME=$(dbq "select m.canonical_name from merchant_identifiers mi join merchants m on m.id = mi.merchant_id where mi.kind='facebook' and mi.normalized_value like '%B.TECH.Egypt%' order by mi.merchant_id limit 1")

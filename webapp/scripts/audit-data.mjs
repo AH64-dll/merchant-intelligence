@@ -68,7 +68,6 @@ const REQUIRED_COLUMNS = {
   schema_version: ['version'],
 };
 const UNSAFE_IDENTITY_LINK_RELATIONS = new Set(['identifier_collision', 'name_identifier_conflict']);
-const IDENTIFIER_PHONE_KINDS = new Set(['phone', 'whatsapp']);
 const ISO_UTC_RE = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d+)?\+00:00$/;
 const LONG_FLOAT_RE = /0\.\d{10,}$/;
 const MAX_SAMPLES = 15;
@@ -123,9 +122,6 @@ function columnsOf(db, table) {
 function tableCount(db, table) {
   if (!hasTable(db, table)) return null;
   return db.prepare(`SELECT count(*) AS n FROM ${JSON.stringify(table)}`).get().n;
-}
-function planJson(table) {
-  return REQUIRED_COLUMNS[table].map((c) => `${JSON.stringify(table)}.${JSON.stringify(c)}`).join(', ');
 }
 
 // Strict Egyptian phone shape (contract: mobile 1[0125]xxxxxxxx or landline
