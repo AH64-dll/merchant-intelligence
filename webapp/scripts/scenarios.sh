@@ -531,37 +531,26 @@ for u in "view=positive" "page=1.5" "page=0" "coverage=wide" "page=abc"; do
   if [[ "$code" != "400" ]]; then BAD_QUERIES_OK=1; fi
 done
 report "invalid /api/merchants queries return 400 invalid_query (bad view, page, coverage)" "$BAD_QUERIES_OK"
-# API total for the same governorate, and the first card matches the API's
-# first item for that filter.
-DIR_GOV_HTML=$(curl -sG --data-urlencode "governorate=$FILTER_GOVERNORATE" "${BASE}/merchants")
-report "/merchants HTML governorate filter ($FILTER_GOVERNORATE) narrows the visible count like the API" \
-  "$(python3 -c '
-import json, re, sys
-api = json.loads(sys.argv[1])
-html = open(sys.argv[2], encoding="utf-8").read()
-want_total = api.get("pagination", {}).get("total", -1)
-m = re.search(r"إجمالي البائعين المطابقين: <span dir=\"ltr\">(\d+)</span>", html)
-first_name = api.get("items", [{}])[0].get("canonicalName", "")
-ok = (m is not None and int(m.group(1)) == want_total
-      and 0 < want_total < 351
-      and first_name in html)
-print(0 if ok else 1)' "$FILTERED_GOV" "/tmp/scenarios-dir-gov.html" <<<"")"
-DIR_GOV_HTML_FILE=/tmp/scenarios-dir-gov.html
+
+# /merchants HTML filter round-trip: the narrowed count caption equals the
+# API total for the same governorate, and the page renders the API's first
+# item for that filter.
+DIR_GOV_HTML_FILE=$(mktemp /tmp/scenarios-dir-gov.XXXXXX.html)
 curl -sG --data-urlencode "governorate=$FILTER_GOVERNORATE" -o "$DIR_GOV_HTML_FILE" "${BASE}/merchants"
 report "/merchants HTML governorate filter ($FILTER_GOVERNORATE) narrows the visible count like the API" \
   "$(python3 -c '
 import json, re, sys
-api = json.loads(open(sys.argv[1], encoding="utf-8").read())
-html = open(sys.argv[2], encoding="utf-8").read()
+api = json.loads(sys.stdin.read())
+html = open(sys.argv[1], encoding="utf-8").read()
 want_total = api.get("pagination", {}).get("total", -1)
 m = re.search(r"إجمالي البائعين المطابقين: <span dir=\"ltr\">(\d+)</span>", html)
 first_name = api.get("items", [{}])[0].get("canonicalName", "")
 ok = (m is not None and int(m.group(1)) == want_total
       and 0 < want_total < 351
       and first_name in html)
-print(0 if ok else 1)' "$FILTERED_GOV_FILE" "$DIR_GOV_HTML_FILE")"
-done
-report "invalid /api/merchants queries return 400 invalid_query (bad view, page, coverage)" "$BAD_QUERIES_OK"
+print(0 if ok else 1)' <<<"$FILTERED_GOV" "$DIR_GOV_HTML_FILE")"
+rm -f "$DIR_GOV_HTML_FILE"
+
 BLANK_BODY=$(curl -s -w '|%{http_code}' -G --data-urlencode 'category=   ' "${BASE}/api/merchants")
 report "blank category returns 400 invalid_query" \
   "$(grep -q 'invalid_query' <<<"$BLANK_BODY" && grep -q '|400$' <<<"$BLANK_BODY" && echo 0)"
