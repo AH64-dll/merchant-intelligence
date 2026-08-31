@@ -683,17 +683,50 @@ FB_SEARCH_NAME=$(dbq "select m.canonical_name from merchant_identifiers mi join 
 FB_RESULTS_HTML=$(curl -sG --data-urlencode "q=https://facebook.com/B.TECH.Egypt" "${BASE}/search")
 report "results page for B.TECH.Egypt URL shows real name ($FB_SEARCH_NAME)" \
   "$(grep -qF "$FB_SEARCH_NAME" <<<"$FB_RESULTS_HTML" && echo 0)"
+# First and last /merchants HTML pages: page 1 shows the first canonical
+# seller and page 18 shows the final one, with the same total caption.
+DIR_LAST_HTML=$(curl -s "${BASE}/merchants?page=18")
+LAST_PAGE_OK=0
+FIRST_API_NAME=$(python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+items = d.get("items", [])
+print(items[0]["canonicalName"] if items else "")' <<<"$DIR_ALL_P1")
+LAST_API_NAME=$(python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+items = d.get("items", [])
+print(items[-1]["canonicalName"] if items else "")' <<<"$DIR_ALL_LAST")
+if ! grep -qF "$FIRST_API_NAME" <<<"$DIR_P1_HTML" \
+   || ! grep -qF "$LAST_API_NAME" <<<"$DIR_LAST_HTML" \
+   || ! grep -q 'صفحة <span dir="ltr">18</span> من <span dir="ltr">18</span>' <<<"$DIR_LAST_HTML"; then
+  LAST_PAGE_OK=1
+fi
+report "/merchants first and last HTML pages render the API's first and final canonical sellers (page 18 of 18)" \
+  "$LAST_PAGE_OK"
 
-# RTL attributes present on every page tested.
+# Home page shows both directory calls to action.
+report "home page links to both directory surfaces (/merchants, /merchants/positive-evidence)" \
+  "$(grep -q 'href="/merchants"' /tmp/scenarios-home.html \
+    && grep -q '/merchants/positive-evidence' /tmp/scenarios-home.html \
+    && echo 0)"
+
+# Search results page HTML shows the real merchant name for a facebook URL hit.
+FB_SEARCH_NAME=$(dbq "select m.canonical_name from merchant_identifiers mi join merchants m on m.id = mi.merchant_id where mi.kind='facebook' and mi.normalized_value like '%B.TECH.Egypt%' order by mi.merchant_id limit 1")
+FB_RESULTS_HTML=$(curl -sG --data-urlencode "q=https://facebook.com/B.TECH.Egypt" "${BASE}/search")
+report "results page for B.TECH.Egypt URL shows real name ($FB_SEARCH_NAME)" \
+  "$(grep -qF "$FB_SEARCH_NAME" <<<"$FB_RESULTS_HTML" && echo 0)"
+
+# RTL attributes present on every page tested, including both directories.
 RTL_OK=0
-RTL_PAGES="/|/search?q=%D8%A8%D9%8A%20%D8%AA%D9%83|/merchant/$VERIFIED_ID|/merchant/$OFFICIAL_ID|/merchant/$INSUFF_ID"
+RTL_PAGES="/|/search?q=%D8%A8%D9%8A%20%D8%AA%D9%83|/merchants|/merchants/positive-evidence|/merchant/$VERIFIED_ID|/merchant/$OFFICIAL_ID|/merchant/$INSUFF_ID"
 while IFS= read -r page; do
   html=$(curl -s "${BASE}${page}")
   if ! grep -q 'lang="ar"' <<<"$html" || ! grep -q 'dir="rtl"' <<<"$html"; then
     RTL_OK=1
   fi
 done < <(tr '|' '\n' <<<"$RTL_PAGES")
-report "lang=ar dir=rtl present on home, search, and detail pages" "$RTL_OK"
+report "lang=ar dir=rtl present on home, search, both directories, and detail pages" "$RTL_OK"
 
 if [[ "$FAILED" == "0" ]]; then
   echo "SCENARIOS:${TOTAL}/${TOTAL} PASS"
