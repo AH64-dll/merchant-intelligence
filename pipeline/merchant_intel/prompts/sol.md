@@ -15,11 +15,10 @@ BATCHED MERCHANT PACKAGES
 {packages}
 
 For every merchant represented in the batch, return a MerchantAnalysis object. Use the exact
-merchant_id supplied in the package. Verification tasks must be narrow, date-bounded, and
-independent: a phone-to-page link, a page pair, a registration record, or a specific allegation.
-Do not ask a verifier to "research the store" generally. Exclude URLs already present in the package.
+merchant_id supplied in the package. If a verification gap exists, describe it in
+missing_information instead of enqueuing a task; verification_tasks must always be
+{"verification_tasks": []} (an empty array). Never emit task strings or objects.
 Unresolved claims are valid outcomes.
-
 Return ONLY valid JSON:
 {
   "merchants": [],

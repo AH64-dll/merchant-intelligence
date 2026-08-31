@@ -160,10 +160,12 @@ describe('SearchIndex — identifier matching', () => {
 });
 
 describe('SearchIndex — name matching', () => {
-  it('matches the canonical name exactly and tie-breaks on identity confidence', () => {
+  it('matches the canonical name exactly and orders by identity confidence within the tier', () => {
     const result = index.search('b tech');
     const exactHits = result.hits.filter((hit) => hit.match.kind === 'exact_name');
-    expect(exactHits.length).toBeGreaterThanOrEqual(2);
+    // Consolidation merged the B.TECH branch rows into one canonical seller,
+    // so the exact tier holds exactly that seller.
+    expect(exactHits.map((hit) => hit.merchant.id)).toEqual([B_TECH_ID]);
     expect(result.hits[0]?.merchant.id).toBe(B_TECH_ID);
     expect(result.hits[0]?.match.kind).toBe('exact_name');
     const confidences = exactHits.map((hit) => hit.merchant.identityConfidence);
@@ -281,14 +283,21 @@ describe('SearchIndex — name matching', () => {
 
 describe('SearchIndex — limits, ordering, pagination', () => {
   it('caps hits at the requested page size', () => {
-    const capped = index.search('بي تك', 1, 3);
-    expect(capped.hits.length).toBeLessThanOrEqual(3);
-    const uncapped = index.search('بي تك', 1, 20);
+    const capped = index.search('computer', 1, 3);
+    expect(capped.hits.length).toBe(3);
+    const uncapped = index.search('computer', 1, 20);
+    // بي تك is a single canonical seller after consolidation, so the broad
+    // partial-tier query carries the multi-hit comparison instead.
     expect(uncapped.hits.length).toBeGreaterThan(3);
+    expect(uncapped.total).toBe(capped.total);
   });
 
   it('sorts within a tier by identity confidence descending', () => {
-    const result = index.search('بي تك');
+    // "Delta Computer" is shared by the two location-qualified Delta sellers
+    // plus Delta Technology, all at the exact_alias tier — a genuine
+    // multi-hit tier on the consolidated snapshot.
+    const result = index.search('Delta Computer');
+    expect(result.hits.length).toBeGreaterThan(1);
     for (let i = 1; i < result.hits.length; i += 1) {
       const previous = result.hits[i - 1]!;
       const current = result.hits[i]!;

@@ -358,24 +358,53 @@ describe('MerchantDb.getMerchantDetail — identifiers and related', () => {
     }
   });
 
-  it('resolves B.TECH known collision link (deduped to the stronger relation)', () => {
-    const detail = db.getMerchantDetail(B_TECH_ID);
-    // Two links exist to d08748d3: identifier_collision (0.15) and
-    // name_identifier_conflict (0.3). Per-target dedupe keeps the stronger.
-    const related = (detail?.related ?? []).filter(
-      (entry) => entry.id === 'd08748d3-b6be-4185-a32e-e439d19d3c72',
-    );
+  it('dedupes a two-relation link to the stronger relation (Mobile City × Compumarts)', () => {
+    // Compumarts (534350dd) and Mobile City (af8ba37c) carry two rows for the
+    // same pair — identifier_collision (0.15) and name_identifier_conflict
+    // (0.3). Per-target dedupe keeps the stronger relation.
+    const MOBILE_CITY_ID = 'af8ba37c-a7ac-4bb5-bd84-4bbe02a3547b';
+    const COMPUMARTS_ID = '534350dd-ec1f-41bc-b430-6ef5277947da';
+    const pairRows = raw
+      .prepare(
+        `SELECT relation, confidence FROM merchant_links
+         WHERE (left_merchant_id = @a AND right_merchant_id = @b)
+            OR (left_merchant_id = @b AND right_merchant_id = @a)`,
+      )
+      .all({ a: MOBILE_CITY_ID, b: COMPUMARTS_ID }) as { relation: string; confidence: number }[];
+    expect(pairRows.length).toBe(2);
+    const detail = db.getMerchantDetail(MOBILE_CITY_ID);
+    const related = (detail?.related ?? []).filter((entry) => entry.id === COMPUMARTS_ID);
     expect(related).toHaveLength(1);
     expect(related[0].relation).toBe('name_identifier_conflict');
     expect(related[0].confidence).toBeCloseTo(0.3);
     expect(related[0].rationale.length).toBeGreaterThan(0);
+  });
+
+  it('keeps every merged B.TECH identifier_collision link on the canonical seller', () => {
+    // After consolidation the B.TECH seller inherited the retired branch
+    // rows' link partners; each appears exactly once per target.
+    const detail = db.getMerchantDetail(B_TECH_ID);
+    const targets = new Set((detail?.related ?? []).map((related) => related.id));
+    const outgoing = raw
+      .prepare(
+        'SELECT DISTINCT CASE WHEN left_merchant_id = ? THEN right_merchant_id ELSE left_merchant_id END AS other FROM merchant_links WHERE left_merchant_id = ? OR right_merchant_id = ?',
+      )
+      .all(B_TECH_ID, B_TECH_ID, B_TECH_ID) as { other: string }[];
+    expect(outgoing.length).toBeGreaterThan(0);
+    for (const row of outgoing) {
+      expect(targets.has(row.other), `related partner ${row.other} must surface once`).toBe(true);
+    }
+    expect((detail?.related ?? []).length).toBe(outgoing.length);
   });
 });
 
 describe('MerchantDb.getMerchantDetail — structural branches', () => {
   const ADDR_ONLY_ID = '17af7b06-643e-4cb8-880e-779ec39d3343';
   const NO_RELATED_ID = '00213c3a-c08d-4554-9993-ed39369a4543';
-  const NULLPUB_ID = 'd08748d3-b6be-4185-a32e-e439d19d3c72';
+  // The retired d08748d3 branch row supplied the null-published_at fixture;
+  // after consolidation the merged B.TECH seller carries it (113 of its 123
+  // evidence rows have no published_at).
+  const NULLPUB_ID = B_TECH_ID;
   const SAME_ROUND_ID = '02369463-bc9c-4b0a-bd4d-04544becaa38';
 
   it('returns address/commercial_register identifiers in the detail even though they are excluded from the index', () => {

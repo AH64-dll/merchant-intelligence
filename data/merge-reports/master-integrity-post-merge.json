@@ -1,0 +1,16 @@
+{
+  "merchants": 351,
+  "sources": 2144,
+  "evidence": 3763,
+  "claim_evidence": 3763,
+  "foreign_keys": 0,
+  "retired_remaining": 0,
+  "duplicate_normalized_names": 0,
+  "evidence_claim_mismatch": 0,
+  "claim_evidence_mismatch": 0,
+  "cross_seller_duplicate_roots": 0,
+  "duplicate_chains": 0,
+  "self_links": 0,
+  "evidence_without_claim_join": 0,
+  "sources_without_evidence": 0
+}

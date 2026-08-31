@@ -108,6 +108,16 @@ describe('snapshot merchants render without banned trust/rating copy', () => {
     expect(html).toMatch(/أدلة متضاربة|إشارة إيجابية|إشارة سلبية/);
   });
 
+  it('merged multi-branch seller (B.TECH) renders the consolidated record without banned copy', () => {
+    // The consolidated B.TECH seller inherited every retired branch's
+    // evidence, claims, and identifiers. None of that merged raw data may
+    // smuggle trust language or internal field names into the render.
+    const html = renderMerchant('0abffb14-4754-4d4a-8ec7-78a5732a9264');
+    for (const banned of BANNED_COPY) expect(html).not.toContain(banned);
+    for (const leak of BANNED_LEAKS) expect(html).not.toContain(leak);
+    expect(html).toContain('B.TECH');
+  });
+
   it('evidence rows in the OFFICIAL_WARNING merchant use safe links only', () => {
     const detail = db.getMerchantDetail('0eca990d-d567-45a7-b565-c1b284974c14');
     if (detail === null) throw new Error('merchant missing');

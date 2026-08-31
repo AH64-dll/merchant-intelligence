@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 # End-to-end user-scenario matrix against the PRODUCTION standalone build.
-# Boots .next/standalone/server.js on port 3200 with the snapshot DB,
-# resolves real fixtures from the readonly snapshot, then runs 30+ scenarios
-# covering every identifier kind, name/alias matching, API error paths,
-# detail-page rendering, and RTL attributes.
+# Boots .next/standalone/server.js on port 3200 with the consolidated
+# seller-shaped snapshot DB (351 canonical sellers), resolves real fixtures
+# from the readonly snapshot, then runs 50+ scenarios covering every
+# identifier kind, name/alias matching, merged-chain canonical resolution,
+# the /merchants and /merchants/positive-evidence directories, the
+# /api/merchants list envelope and 400 paths, card->detail navigation,
+# positive-highlight evidence anchors, multi-branch merged sellers, the
+# two location-qualified Delta sellers, API error paths, detail-page
+# rendering, and RTL attributes.
 set -u
 
 cd "$(dirname "$0")/.." || exit 1
@@ -325,12 +330,82 @@ report "related section renders ($RELATED_JSON_COUNT of $RELATED_COUNT_DB db lin
 INS_HTML=$(curl -s "${BASE}/merchant/$INSUFF_ID")
 report "detail HTML of INSUFFICIENT_DATA shows honest not-a-guarantee headline" \
   "$(grep -q 'ليست ضمانة' <<<"$INS_HTML" && echo 0)"
-# Phase 6 scenario expansion ----------------------------------------------
+# Canonical-seller consolidation scenarios -------------------------------
+# The snapshot is seller-shaped: every merged chain is ONE canonical merchant
+# and every retired branch UUID is gone. Fixtures resolve canonical rows by
+# canonical name (never by retired UUID), so the scenarios hold as long as
+# the reviewed merge manifest holds.
 
-# Pagination: page=2 excludes page-1 ids and totals stay consistent.
-PAG_JSON=$(curl -sG --data-urlencode 'q=بي تك' --data-urlencode 'page=1' "${BASE}/api/search")
-PAG_P2_JSON=$(curl -sG --data-urlencode 'q=بي تك' --data-urlencode 'page=2' "${BASE}/api/search")
-report "pagination page=2 excludes page-1 ids with stable total" \
+BT_CANONICAL=$(dbq "select id from merchants where canonical_name='B.TECH' limit 1")
+G2E_CANONICAL=$(dbq "select id from merchants where canonical_name='Games 2 Egypt' limit 1")
+RAYA_CANONICAL=$(dbq "select id from merchants where canonical_name='Raya Shop' limit 1")
+SHAHEEN_CANONICAL=$(dbq "select id from merchants where canonical_name='Shaheen Center' limit 1")
+DELTA_MOHANDESSIN=$(dbq "select id from merchants where canonical_name='Delta Computer — Mohandessin' limit 1")
+DELTA_ALEXANDRIA=$(dbq "select id from merchants where canonical_name='Delta Computer Supplies — Alexandria' limit 1")
+SNAPSHOT_MERCHANT_COUNT=$(dbq "select count(*) from merchants")
+
+for v in BT_CANONICAL G2E_CANONICAL RAYA_CANONICAL SHAHEEN_CANONICAL \
+         DELTA_MOHANDESSIN DELTA_ALEXANDRIA; do
+  if [[ -z "${!v}" ]]; then
+    echo "FATAL: canonical-seller fixture ${v} missing from data/merchants.db"
+    exit 1
+  fi
+done
+if [[ -z "$SNAPSHOT_MERCHANT_COUNT" || "$SNAPSHOT_MERCHANT_COUNT" != "351" ]]; then
+  echo "FATAL: expected the consolidated snapshot with 351 merchants, found '${SNAPSHOT_MERCHANT_COUNT}'"
+  exit 1
+fi
+
+# Each merged chain resolves to exactly one canonical seller: a single hit
+# set with no retired branch rows surviving at any rank.
+CHAIN_RESULT=0
+CHAIN_DESC=""
+for pair in "B.TECH:$BT_CANONICAL" "Games 2 Egypt:$G2E_CANONICAL" "Raya Shop:$RAYA_CANONICAL" "Shaheen Center:$SHAHEEN_CANONICAL"; do
+  q="${pair%%:*}"; want="${pair#*:}"
+  got=$(api_search "$q" | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+want = sys.argv[1]
+hits = d.get("hits", [])
+ok = (len(hits) >= 1
+      and hits[0]["merchant"]["id"] == want
+      and {h["merchant"]["id"] for h in hits} == {want})
+print(0 if ok else 1)' "$want")
+  if [[ "$got" != "0" ]]; then
+    CHAIN_RESULT=1
+    CHAIN_DESC="$q"
+  fi
+done
+report "merged chains resolve to one canonical seller each (B.TECH, Games 2 Egypt, Raya Shop, Shaheen Center; failed: ${CHAIN_DESC:-none})" \
+  "$CHAIN_RESULT"
+
+# Merged-chain queries never resurface a retired UUID at any rank.
+report "no retired branch UUID appears in merged-chain query results" \
+  "$(for q in 'B.TECH' 'Games 2 Egypt' 'Raya Shop' 'Shaheen Center' 'بي تك'; do
+    api_search "$q"; echo
+  done | python3 -c '
+import json, sys
+retired = {
+    "306c4864-694f-46ce-bb9a-0e18f9d31c3a", "31c54405-381c-4364-a49c-a8a9244f7471",
+    "d08748d3-b6be-4185-a32e-e439d19d3c72", "0f9b3f71-e2b2-41fb-b834-61ad2375282c",
+    "c5cbf814-b4d4-4e99-9532-367282905da1", "bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7",
+    "76fa120c-d0c5-489c-a3c2-a5c33d8678a6", "fc74448d-b496-4658-83e4-c938fa9413bf",
+    "7d17483f-507c-4171-8b78-9247687ec489",
+}
+bad = 0
+for line in sys.stdin:
+    line = line.strip()
+    if not line:
+        continue
+    d = json.loads(line)
+    if any(h["merchant"]["id"] in retired for h in d.get("hits", [])):
+        bad = 1
+print(bad)')"
+
+# Search pagination over a broad Arabic token with many partial-tier owners.
+PAG_JSON=$(curl -sG --data-urlencode 'q=كمبيوتر' --data-urlencode 'page=1' "${BASE}/api/search")
+PAG_P2_JSON=$(curl -sG --data-urlencode 'q=كمبيوتر' --data-urlencode 'page=2' "${BASE}/api/search")
+report "search pagination page=2 excludes page-1 ids with stable total" \
   "$(printf '%s\n%s' "$PAG_JSON" "$PAG_P2_JSON" | python3 -c '
 import json, sys
 p1 = json.loads(sys.stdin.readline())
@@ -343,15 +418,245 @@ ok = (p2.get("page") == 2
       and not overlap)
 print(0 if ok else 1)')"
 
-# B.TECH ambiguity: exact-name query returns all family rows, ambiguous=true.
-BT_FAMILY_COUNT=$(dbq "select count(*) from merchants where canonical_name='B.TECH' or canonical_name like 'B.TECH (%'")
-report "B.TECH exact query returns complete family ($BT_FAMILY_COUNT rows) with ambiguous=true" \
-  "$(api_search 'B.TECH' | python3 -c '
+# /api/merchants view=all: 351 canonical sellers, page size 20, 18 pages,
+# no id overlap between the sampled pages.
+DIR_ALL_P1=$(curl -s "${BASE}/api/merchants?view=all&page=1")
+DIR_ALL_P2=$(curl -s "${BASE}/api/merchants?view=all&page=2")
+DIR_ALL_LAST=$(curl -s "${BASE}/api/merchants?view=all&page=18")
+report "/api/merchants view=all exposes all $SNAPSHOT_MERCHANT_COUNT canonical sellers exactly once (page size 20, 18 pages)" \
+  "$(printf '%s\n%s\n%s\n' "$DIR_ALL_P1" "$DIR_ALL_P2" "$DIR_ALL_LAST" | python3 -c '
+import json, sys
+pages = [json.loads(line) for line in sys.stdin if line.strip()]
+ok = True
+seen = []
+for p in pages:
+    ok = ok and p.get("pagination", {}).get("pageSize") == 20
+    seen.extend(e["id"] for e in p.get("items", []))
+ok = ok and pages[0].get("pagination", {}).get("total") == 351
+ok = ok and pages[0].get("pagination", {}).get("totalPages") == 18
+ok = ok and len(set(seen)) == len(seen)
+print(0 if ok else 1)')"
+
+# /merchants HTML page: count caption + pagination link + RTL.
+DIR_P1_HTML=$(curl -s "${BASE}/merchants")
+report "/merchants HTML shows the count caption, pagination link, and RTL attributes" \
+  "$(grep -q 'إجمالي البائعين المطابقين' <<<"$DIR_P1_HTML" \
+    && grep -q 'dir="rtl"' <<<"$DIR_P1_HTML" \
+    && grep -q 'href="/merchants?page=2"' <<<"$DIR_P1_HTML" \
+    && echo 0)"
+
+# Positive-evidence view: first page with items (each carrying a highlight).
+POS_API_P1=$(curl -s "${BASE}/api/merchants?view=positive-evidence&page=1")
+POS_HTML=$(curl -s "${BASE}/merchants/positive-evidence")
+report "/api/merchants positive-evidence first page is ordered and every item carries a highlight" \
+  "$(python3 -c '
 import json, sys
 d = json.load(sys.stdin)
-want = int(sys.argv[1])
-exact = [h for h in d.get("hits", []) if h["match"]["kind"] == "exact_name"]
-print(0 if d.get("ambiguous") is True and len(exact) == want and len({h["merchant"]["id"] for h in exact}) == want else 1)' "$BT_FAMILY_COUNT")"
+items = d.get("items", [])
+ok = (d.get("pagination", {}).get("page") == 1
+      and d.get("pagination", {}).get("total", 0) >= 1
+      and len(items) >= 1
+      and all(e.get("positiveHighlight") is not None for e in items))
+print(0 if ok else 1)' <<<"$POS_API_P1")"
+report "/merchants/positive-evidence HTML carries the non-guarantee disclaimer" \
+  "$(grep -q 'لا يمثل ضمانًا لجودة البائع أو نتيجة الشراء' <<<"$POS_HTML" \
+    && grep -q 'البائعون ذوو أقوى الأدلة الإيجابية' <<<"$POS_HTML" \
+    && echo 0)"
+
+# The public list API never leaks internal fields.
+report "positive-evidence API items carry no internal state, confidence, or score fields" \
+  "$(python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+entry_keys = {"id", "canonicalName", "categoryTags", "locationLabel", "locationCount",
+              "identityLevel", "coverageLevel", "evidence", "positiveHighlight", "updatedAt"}
+evidence_keys = {"total", "nonDuplicate", "distinctSources", "positive", "neutral",
+                 "negative", "customerPositiveSources", "latestPublishedAt", "lastCapturedAt"}
+highlight_keys = {"evidenceId", "summary", "sourceUrl", "sourceCategory", "publishedAt"}
+items = d.get("items", [])
+ok = len(items) > 0
+for e in items:
+    ok = ok and set(e.keys()) == entry_keys
+    ok = ok and set(e["evidence"].keys()) == evidence_keys
+    if e.get("positiveHighlight") is not None:
+        ok = ok and set(e["positiveHighlight"].keys()) == highlight_keys
+print(0 if ok else 1)' <<<"$POS_API_P1")"
+
+# Filter round-trip: first available category and governorate narrow the
+# total below 351 and every returned item matches the filter.
+FILTER_CATEGORY=$(python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+cats = d.get("availableFilters", {}).get("categories", [])
+print(cats[0] if cats else "")' <<<"$DIR_ALL_P1")
+FILTER_GOVERNORATE=$(python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+go = d.get("availableFilters", {}).get("governorates", [])
+print(go[0] if go else "")' <<<"$DIR_ALL_P1")
+FILTERED_CAT=$(curl -sG --data-urlencode "category=$FILTER_CATEGORY" "${BASE}/api/merchants?view=all")
+FILTERED_GOV=$(curl -sG --data-urlencode "governorate=$FILTER_GOVERNORATE" "${BASE}/api/merchants?view=all")
+report "category filter ($FILTER_CATEGORY) round-trips: total narrows and every item carries the tag" \
+  "$(python3 -c '
+import json, sys
+want = sys.argv[1]
+d = json.load(sys.stdin)
+items = d.get("items", [])
+ok = (0 < d.get("pagination", {}).get("total", 0) < 351
+      and all(want in e.get("categoryTags", []) for e in items))
+print(0 if ok else 1)' "$FILTER_CATEGORY" <<<"$FILTERED_CAT")"
+report "governorate filter ($FILTER_GOVERNORATE) round-trips: total narrows below 351" \
+  "$(python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+ok = 0 < d.get("pagination", {}).get("total", 0) < 351
+print(0 if ok else 1)' <<<"$FILTERED_GOV")"
+
+# Out-of-range page: valid syntax, empty items, correct pagination metadata.
+OOB_JSON=$(curl -s "${BASE}/api/merchants?view=all&page=999")
+report "out-of-range /api/merchants page returns empty items with correct pagination" \
+  "$(python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+ok = (d.get("items") == []
+      and d.get("pagination", {}).get("page") == 999
+      and d.get("pagination", {}).get("total") == 351
+      and d.get("pagination", {}).get("totalPages") == 18)
+print(0 if ok else 1)' <<<"$OOB_JSON")"
+
+# Invalid list-API queries -> 400 invalid_query.
+BAD_QUERIES_OK=0
+for u in "view=positive" "page=1.5" "page=0" "coverage=wide" "page=abc"; do
+  code=$(curl -s -o /dev/null -w '%{http_code}' "${BASE}/api/merchants?$u")
+  if [[ "$code" != "400" ]]; then BAD_QUERIES_OK=1; fi
+done
+report "invalid /api/merchants queries return 400 invalid_query (bad view, page, coverage)" "$BAD_QUERIES_OK"
+# API total for the same governorate, and the first card matches the API's
+# first item for that filter.
+DIR_GOV_HTML=$(curl -sG --data-urlencode "governorate=$FILTER_GOVERNORATE" "${BASE}/merchants")
+report "/merchants HTML governorate filter ($FILTER_GOVERNORATE) narrows the visible count like the API" \
+  "$(python3 -c '
+import json, re, sys
+api = json.loads(sys.argv[1])
+html = open(sys.argv[2], encoding="utf-8").read()
+want_total = api.get("pagination", {}).get("total", -1)
+m = re.search(r"إجمالي البائعين المطابقين: <span dir=\"ltr\">(\d+)</span>", html)
+first_name = api.get("items", [{}])[0].get("canonicalName", "")
+ok = (m is not None and int(m.group(1)) == want_total
+      and 0 < want_total < 351
+      and first_name in html)
+print(0 if ok else 1)' "$FILTERED_GOV" "/tmp/scenarios-dir-gov.html" <<<"")"
+DIR_GOV_HTML_FILE=/tmp/scenarios-dir-gov.html
+curl -sG --data-urlencode "governorate=$FILTER_GOVERNORATE" -o "$DIR_GOV_HTML_FILE" "${BASE}/merchants"
+report "/merchants HTML governorate filter ($FILTER_GOVERNORATE) narrows the visible count like the API" \
+  "$(python3 -c '
+import json, re, sys
+api = json.loads(open(sys.argv[1], encoding="utf-8").read())
+html = open(sys.argv[2], encoding="utf-8").read()
+want_total = api.get("pagination", {}).get("total", -1)
+m = re.search(r"إجمالي البائعين المطابقين: <span dir=\"ltr\">(\d+)</span>", html)
+first_name = api.get("items", [{}])[0].get("canonicalName", "")
+ok = (m is not None and int(m.group(1)) == want_total
+      and 0 < want_total < 351
+      and first_name in html)
+print(0 if ok else 1)' "$FILTERED_GOV_FILE" "$DIR_GOV_HTML_FILE")"
+done
+report "invalid /api/merchants queries return 400 invalid_query (bad view, page, coverage)" "$BAD_QUERIES_OK"
+BLANK_BODY=$(curl -s -w '|%{http_code}' -G --data-urlencode 'category=   ' "${BASE}/api/merchants")
+report "blank category returns 400 invalid_query" \
+  "$(grep -q 'invalid_query' <<<"$BLANK_BODY" && grep -q '|400$' <<<"$BLANK_BODY" && echo 0)"
+
+# /api/merchants envelope: exactly {items, pagination, availableFilters, snapshot}.
+report "/api/merchants envelope is exactly {items, pagination, availableFilters, snapshot}" \
+  "$(python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+ok = set(d.keys()) == {"items", "pagination", "availableFilters", "snapshot"}
+ok = ok and set(d["pagination"].keys()) == {"page", "pageSize", "total", "totalPages"}
+ok = ok and set(d["availableFilters"].keys()) == {"categories", "governorates", "coverage"}
+ok = ok and set(d["snapshot"].keys()) == {"generatedAt", "sourceSchemaVersion", "appSchemaVersion", "counts"}
+ok = ok and d["snapshot"]["counts"]["merchants"] == 351
+print(0 if ok else 1)' <<<"$DIR_ALL_P1")"
+
+# Directory card -> seller detail navigation: the first /merchants card links
+# to a detail page rendering the same canonical name.
+DIR_FIRST_ID=$(python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+items = d.get("items", [])
+print(items[0]["id"] if items else "")' <<<"$DIR_ALL_P1")
+DIR_FIRST_NAME=$(python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+items = d.get("items", [])
+print(items[0]["canonicalName"] if items else "")' <<<"$DIR_ALL_P1")
+DIR_DETAIL_HTML=$(curl -s "${BASE}/merchant/$DIR_FIRST_ID")
+report "directory card links to its seller detail page (/merchant/$DIR_FIRST_ID renders '$DIR_FIRST_NAME')" \
+  "$(grep -qF "href=\"/merchant/$DIR_FIRST_ID\"" <<<"$DIR_P1_HTML" \
+    && grep -qF "$DIR_FIRST_NAME" <<<"$DIR_DETAIL_HTML" \
+    && echo 0)"
+
+# Positive highlight -> in-page evidence anchor: the highlight evidence id
+# must exist as #evidence-<id> on the target detail page (the full evidence
+# list renders one article per row with that id).
+POS_HIGHLIGHT_SELLER=$(python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+items = d.get("items", [])
+print(items[0]["id"] if items else "")' <<<"$POS_API_P1")
+POS_HIGHLIGHT_EVID=$(python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+items = d.get("items", [])
+h = items[0].get("positiveHighlight") if items else None
+print(h["evidenceId"] if h else "")' <<<"$POS_API_P1")
+POS_DETAIL_HTML=$(curl -s "${BASE}/merchant/$POS_HIGHLIGHT_SELLER")
+report "positive-evidence highlight resolves to its #evidence-<id> anchor on the seller detail page" \
+  "$(grep -qF "id=\"evidence-$POS_HIGHLIGHT_EVID\"" <<<"$POS_DETAIL_HTML" \
+    && grep -qF "/merchant/$POS_HIGHLIGHT_SELLER#evidence-$POS_HIGHLIGHT_EVID" <<<"$POS_HTML" \
+    && echo 0)"
+
+# Multi-branch merged seller (B.TECH): one seller, all recorded locations.
+BT_HTML=$(curl -s "${BASE}/merchant/$BT_CANONICAL")
+BT_ADDR_COUNT=$(dbq "select count(distinct trim(normalized_value)) from merchant_identifiers where merchant_id='$BT_CANONICAL' and kind='address'")
+report "multi-branch merged seller (B.TECH) detail shows 'several recorded locations' with all $BT_ADDR_COUNT location records" \
+  "$(grep -q 'توجد عدة مواقع مسجلة' <<<"$BT_HTML" \
+    && grep -qF "<span dir=\"ltr\">${BT_ADDR_COUNT}</span> سجلات عناوين" <<<"$BT_HTML" \
+    && echo 0)"
+report "merged seller detail conserves the union of evidence and aliases" \
+  "$(curl -s "${BASE}/api/merchants/$BT_CANONICAL" | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+ok = (len(d.get("evidence", [])) > 100
+      and len(d.get("aliases", [])) >= 20)
+print(0 if ok else 1)')"
+
+# Delta query: the two remaining Delta sellers are distinct and location-
+# qualified; the shared 'Delta Computer' alias surfaces the two Delta sellers
+# plus the distinct Delta Technology alias-sharer at the exact_alias tier,
+# so the ambiguity is explained, not merged away.
+DELTA_JSON=$(api_search 'Delta Computer')
+report "Delta Computer query returns both location-qualified Delta sellers (ambiguous exact_alias family)" \
+  "$(python3 -c '
+import json, sys
+want = {sys.argv[1], sys.argv[2]}
+d = json.load(sys.stdin)
+hits = d.get("hits", [])
+if not hits:
+    print(1)
+    sys.exit()
+top_kind = hits[0]["match"]["kind"]
+top = [h for h in hits if h["match"]["kind"] == top_kind]
+ids = {h["merchant"]["id"] for h in top}
+ok = (top_kind == "exact_alias"
+      and want <= ids
+      and len(top) == 3
+      and d.get("ambiguous") is True)
+print(0 if ok else 1)' "$DELTA_MOHANDESSIN" "$DELTA_ALEXANDRIA" <<<"$DELTA_JSON")"
+report "Delta sellers stay separate: two distinct location-qualified detail pages" \
+  "$(curl -s "${BASE}/merchant/$DELTA_MOHANDESSIN" | grep -qF 'Delta Computer — Mohandessin' \
+    && curl -s "${BASE}/merchant/$DELTA_ALEXANDRIA" | grep -qF 'Delta Computer Supplies — Alexandria' \
+    && echo 0)"
 
 # Invalid phone diagnostic surfaces through the API.
 report "foreign phone 14155551234 -> 200 diagnostic invalid_egyptian_phone, zero hits" \

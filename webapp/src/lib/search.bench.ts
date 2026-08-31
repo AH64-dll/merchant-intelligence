@@ -156,19 +156,19 @@ interface Gate {
 }
 
 const GATES: Record<string, Gate[]> = {
-  '1x (370)': [
+  '1x (351)': [
     { field: 'buildMs', limit: 250 },
     { field: 'firstQueryMs', limit: 500 },
     { field: 'typoP99Ms', limit: 25 },
   ],
-  '10x (3,700)': [
+  '10x (3,510)': [
     { field: 'buildMs', limit: 2_500 },
     { field: 'heapDeltaMb', limit: 150 },
     { field: 'exactP99Ms', limit: 25 },
     { field: 'nameP99Ms', limit: 25 },
     { field: 'typoP99Ms', limit: 60 },
   ],
-  '100x (37,000)': [
+  '100x (35,100)': [
     { field: 'buildMs', limit: 10_000 },
     { field: 'heapDeltaMb', limit: 500 },
     { field: 'exactP99Ms', limit: 250 },
@@ -179,7 +179,7 @@ const GATES: Record<string, Gate[]> = {
 
 
 function runBench(): ScaleResult[] {
-  const results = [benchScale('1x (370)', 0), benchScale('10x (3,700)', 9), benchScale('100x (37,000)', 99)];
+  const results = [benchScale('1x (351)', 0), benchScale('10x (3,510)', 9), benchScale('100x (35,100)', 99)];
 
   console.log('=== search bench (real snapshot + replicated merchants) ===');
   console.log(

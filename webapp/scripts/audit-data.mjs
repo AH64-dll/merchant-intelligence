@@ -197,6 +197,10 @@ try {
       if (r.n) addFatal('fk_orphan', `${r.n} evidence rows reference missing claims`, r.ids.split(','));
     }
   }
+  if (ok('evidence') && ok('claims')) {
+    const mismatched = db.prepare(`SELECT e.id FROM evidence e JOIN claims c ON c.id = e.claim_id WHERE e.merchant_id <> c.merchant_id`).all();
+    if (mismatched.length) addFatal('evidence_claim_owner_mismatch', `${mismatched.length} evidence rows reference claims owned by another seller`, mismatched.map((r) => r.id));
+  }
   if (ok('claims') && ok('merchants')) {
     const r = db.prepare(`SELECT group_concat(c.id) ids, count(*) n FROM claims c LEFT JOIN merchants m ON m.id = c.merchant_id WHERE m.id IS NULL`).get();
     if (r.n) addFatal('fk_orphan', `${r.n} claims reference missing merchants`, r.ids.split(','));
@@ -214,12 +218,16 @@ try {
     if (l.n) addFatal('fk_orphan', `${l.n} links reference missing left merchants`, l.ids.split(','));
     const r = db.prepare(`SELECT group_concat(l.id) ids, count(*) n FROM merchant_links l LEFT JOIN merchants m ON m.id = l.right_merchant_id WHERE m.id IS NULL`).get();
     if (r.n) addFatal('fk_orphan', `${r.n} links reference missing right merchants`, r.ids.split(','));
+    const selfLinks = db.prepare(`SELECT id FROM merchant_links WHERE left_merchant_id = right_merchant_id`).all();
+    if (selfLinks.length) addFatal('self_merchant_link', `${selfLinks.length} merchant links point from a seller to itself`, selfLinks.map((row) => row.id));
   }
   if (ok('claim_evidence') && ok('claims') && ok('evidence')) {
     const c = db.prepare(`SELECT group_concat(ce.claim_id || '/' || ce.evidence_id) ids, count(*) n FROM claim_evidence ce LEFT JOIN claims c ON c.id = ce.claim_id WHERE c.id IS NULL`).get();
     if (c.n) addFatal('fk_orphan', `${c.n} claim_evidence rows reference missing claims`, c.ids.split(','));
     const e = db.prepare(`SELECT group_concat(ce.claim_id || '/' || ce.evidence_id) ids, count(*) n FROM claim_evidence ce LEFT JOIN evidence e ON e.id = ce.evidence_id WHERE e.id IS NULL`).get();
     if (e.n) addFatal('fk_orphan', `${e.n} claim_evidence rows reference missing evidence`, e.ids.split(','));
+    const mismatched = db.prepare(`SELECT ce.claim_id || '/' || ce.evidence_id AS id FROM claim_evidence ce JOIN claims c ON c.id = ce.claim_id JOIN evidence e ON e.id = ce.evidence_id WHERE c.merchant_id <> e.merchant_id`).all();
+    if (mismatched.length) addFatal('claim_evidence_owner_mismatch', `${mismatched.length} claim_evidence rows connect different sellers`, mismatched.map((row) => row.id));
   }
 
   // -- duplicate chains ----------------------------------------------------
@@ -250,7 +258,7 @@ try {
     if (missingParentIds.length) addFatal('duplicate_missing_parent', `${missingParentIds.length} evidence rows have a duplicate_of pointing at a missing evidence id`, missingParentIds);
     if (cycleIds.length) addFatal('duplicate_cycle', `${cycleIds.length} evidence rows sit on a duplicate_of cycle`, cycleIds);
     if (nonRootIds.length) addFatal('duplicate_non_root', `${nonRootIds.length} same-merchant duplicate rows point at another duplicate instead of the chain root`, nonRootIds);
-    if (crossMerchantRootIds.length) addWarn('cross_merchant_duplicate_root', `${crossMerchantRootIds.length} duplicate rows resolve to a root owned by a different merchant (curation required)`, crossMerchantRootIds);
+    if (crossMerchantRootIds.length) addFatal('cross_merchant_duplicate_root', `${crossMerchantRootIds.length} duplicate rows resolve to a root owned by a different seller`, crossMerchantRootIds);
 
     // -- unknown enum values ----------------------------------------------
     const badStates = db.prepare(`SELECT id, state FROM merchants WHERE state NOT IN (${[...STATES].map(() => '?').join(',')})`).all(...STATES);

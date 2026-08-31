@@ -14,13 +14,11 @@ import type { SearchResult } from './types';
 const DB_PATH = new URL('../../data/merchants.db', import.meta.url).pathname;
 
 // Stable merchant IDs (snapshot-verified):
-const B_TECH_ID = '0abffb14-4754-4d4a-8ec7-78a5732a9264'; // B.TECH (Port Said row; brand-family main)
-const B_TECH_ALT1 = '306c4864-694f-46ce-bb9a-0e18f9d31c3a'; // B.TECH
-const B_TECH_ALT2 = '31c54405-381c-4364-a49c-a8a9244f7471'; // B.TECH
-const B_TECH_ALT3 = 'd08748d3-b6be-4185-a32e-e439d19d3c72'; // B.TECH (btech.com/ar + B.TECH.Egypt FB)
+// Stable merchant IDs (snapshot-verified against the consolidated 351-seller
+// snapshot; retired branch UUIDs must never appear here again):
+const B_TECH_ID = '0abffb14-4754-4d4a-8ec7-78a5732a9264'; // B.TECH (canonical seller; all branches merged)
 const MTI_ID = '9af176b0-b896-4494-bcfb-d1ef85166ba5'; // MTI Holding
-const G2E_ID = '3af4b233-ad29-4155-b436-3573576e1daf'; // Games 2 Egypt (goo.gl maps shortlinks)
-const G2E_ALT = '0f9b3f71-e2b2-41fb-b834-61ad2375282c'; // Games 2 Egypt (games2egypt.com)
+const G2E_ID = '3af4b233-ad29-4155-b436-3573576e1daf'; // Games 2 Egypt (canonical seller)
 const CONNECT_ID = '0d73d05b-7fb3-4afb-b4ea-c74e2025f8b0'; // Connect Phone
 const ROPHAEL_ID = '0e348653-7777-4b8c-8a9b-9fc2d7b2b0ba'; // شركة روفائيل للأجهزة الكهربائية الإسكندرية
 const DREAM_ID = 'c25a5a60-e885-4916-85aa-9618d9097d18'; // Dream 2000
@@ -40,8 +38,10 @@ const SEIF_ID = '52302796-4355-47a4-9f9f-eae06521e8e1'; // play store seif pharm
 const NOON_GAMER_ID = '6e5d728a-81fa-4ac6-b162-0dc301cf1f94'; // noon.com/egypt-en/egygamer
 const DUBIZZLE_AD_ID = '62ea11ca-a300-41b3-a695-b5b73082d53c'; // dubizzle ad path
 const WHATSAPP_DREAM_ID = DREAM_ID; // whatsapp +201000016942
-const SHAHEEN_1 = '05abc4eb-760c-4842-a467-716d52b1bd04';
-const SHAHEEN_2 = '7d17483f-507c-4171-8b78-9247687ec489';
+const SHAHEEN_ID = '05abc4eb-760c-4842-a467-716d52b1bd04'; // Shaheen Center (canonical seller)
+const DELTA_MOHANDESSIN_ID = 'ab13792f-8499-4f6e-b139-17ff7c4ad0a3'; // Delta Computer — Mohandessin
+const DELTA_ALEXANDRIA_ID = 'dab9cc64-1e22-4dcd-9461-1b7fc5cc6634'; // Delta Computer Supplies — Alexandria
+const DELTA_TECHNOLOGY_ID = '7f9fc65c-a14c-41b1-ac3b-376236e97b2a'; // Delta Technology (distinct seller sharing the "Delta Computer" alias)
 
 let index: SearchIndex;
 
@@ -49,7 +49,14 @@ beforeAll(() => {
   index = SearchIndex.fromDb(new MerchantDb(DB_PATH));
 });
 
-const B_TECH_FAMILY = [B_TECH_ID, B_TECH_ALT1, B_TECH_ALT2, B_TECH_ALT3];
+/** Owners sharing the retired-branch "Delta Computer" alias: the two
+ * location-qualified Delta sellers plus the distinct Delta Technology seller
+ * (kept separate by curation — a shared alias, not a shared identity). */
+const DELTA_ALIAS_OWNERS = [
+  DELTA_MOHANDESSIN_ID,
+  DELTA_ALEXANDRIA_ID,
+  DELTA_TECHNOLOGY_ID,
+];
 
 /** All hits of the result's top tier (the ambiguity surface). */
 function topTierIds(r: SearchResult): string[] {
@@ -121,8 +128,8 @@ describe('Golden matrix — exact Arabic names', () => {
 });
 
 describe('Golden matrix — exact English names', () => {
-  it('B.TECH returns the complete 4-owner family, ambiguous', () => {
-    expectAmbiguous('B.TECH', B_TECH_FAMILY, 'exact_name');
+  it('B.TECH resolves the single canonical seller top-1', () => {
+    expectTop1('B.TECH', B_TECH_ID, 'exact_name');
   });
 
   it('MTI Holding canonical alias top-1', () => {
@@ -146,25 +153,25 @@ describe('Golden matrix — exact English names', () => {
     expectTop1('El Nour Tech', NOUR_EG_ID, 'exact_name');
   });
 
-  it('Games 2 Egypt family ambiguity: both owners returned', () => {
-    expectAmbiguous('Games 2 Egypt', [G2E_ID, G2E_ALT], 'exact_name');
+  it('Games 2 Egypt resolves the single canonical seller top-1', () => {
+    expectTop1('Games 2 Egypt', G2E_ID, 'exact_name');
   });
 });
 
 describe('Golden matrix — aliases', () => {
-  it('B.Tech Egypt alias: complete family, ambiguous', () => {
-    expectAmbiguous('B.Tech Egypt', B_TECH_FAMILY, 'exact_alias');
+  it('B.Tech Egypt alias resolves the canonical seller top-1', () => {
+    expectTop1('B.Tech Egypt', B_TECH_ID, 'exact_alias');
   });
 
-  it('بي تك alias: complete family, ambiguous', () => {
-    expectAmbiguous('بي تك', B_TECH_FAMILY, 'exact_alias');
+  it('بي تك alias resolves the canonical seller top-1', () => {
+    expectTop1('بي تك', B_TECH_ID, 'exact_alias');
   });
 
-  it('بي.تك dotted form normalizes to the family', () => {
-    expectAmbiguous('بي.تك', B_TECH_FAMILY, 'exact_alias');
+  it('بي.تك dotted form normalizes to the canonical seller', () => {
+    expectTop1('بي.تك', B_TECH_ID, 'exact_alias');
   });
 
-  it('branch alias بي تك بورسعيد pins the Port Said row', () => {
+  it('branch alias بي تك بورسعيد resolves the merged canonical seller', () => {
     expectTop1('بي تك بورسعيد', B_TECH_ID, 'exact_alias');
   });
 
@@ -209,26 +216,22 @@ describe('Golden matrix — strict vs loose (النور تك / نور تك colli
 });
 
 describe('Golden matrix — tatweel', () => {
-  it('tatweel-stretched Arabic alias still resolves the family', () => {
-    expectAmbiguous('بـــي تـــك', B_TECH_FAMILY, 'exact_alias');
+  it('tatweel-stretched Arabic alias still resolves the canonical seller', () => {
+    expectTop1('بـــي تـــك', B_TECH_ID, 'exact_alias');
   });
 
-  it('tatweel inside Latin name B.TECHـــ still resolves the family', () => {
-    expectAmbiguous('B.TECHـــ', B_TECH_FAMILY, 'exact_name');
+  it('tatweel inside Latin name B.TECHـــ still resolves the canonical seller', () => {
+    expectTop1('B.TECHـــ', B_TECH_ID, 'exact_name');
   });
 
-  it('heavy mixed tatweel resolves the family', () => {
-    expectAmbiguous('بـــيـــ تــــكـــ', B_TECH_FAMILY, 'exact_alias');
+  it('heavy mixed tatweel resolves the canonical seller', () => {
+    expectTop1('بـــيـــ تــــكـــ', B_TECH_ID, 'exact_alias');
   });
 });
 
 describe('Golden matrix — leading-و conjunction', () => {
-  it('وبي تك reaches the family via conjunction recall', () => {
-    const r = index.search('وبي تك');
-    expect(r.hits.length).toBeGreaterThan(0);
-    for (const id of B_TECH_FAMILY) {
-      expect(ids(r), 'وبي تك must reach every family owner').toContain(id);
-    }
+  it('وبي تك reaches the canonical seller via conjunction recall', () => {
+    expectTop1('وبي تك', B_TECH_ID, 'normalized_variant');
   });
 
   it('conjunction stripping does not corrupt single-token ولي-style names', () => {
@@ -334,12 +337,12 @@ describe('Golden matrix — facebook platform', () => {
     expectTop1('HTTPS://WWW.Facebook.COM/mtiholding/?fref=ts', MTI_ID, 'facebook');
   });
 
-  it('B.TECH.Egypt page is shared by two family owners — complete set, ambiguous', () => {
-    expectAmbiguous('https://facebook.com/B.TECH.Egypt', [B_TECH_ID, B_TECH_ALT3], 'facebook');
+  it('B.TECH.Egypt page resolves the single canonical owner', () => {
+    expectTop1('https://facebook.com/B.TECH.Egypt', B_TECH_ID, 'facebook');
   });
 
-  it('tracking param variant of the shared page stays ambiguous with both owners', () => {
-    expectAmbiguous('https://www.facebook.com/B.TECH.Egypt?fref=ts', [B_TECH_ID, B_TECH_ALT3], 'facebook');
+  it('tracking param variant of the same page resolves the same canonical owner', () => {
+    expectTop1('https://www.facebook.com/B.TECH.Egypt?fref=ts', B_TECH_ID, 'facebook');
   });
 
   it('numeric profile page resolves its owner', () => {
@@ -363,14 +366,14 @@ describe('Golden matrix — facebook platform', () => {
     expectNoHits('https://www.facebook.com/', 'url');
   });
 
-  it('Shaheen Center shared facebook page returns both owners, ambiguous', () => {
-    expectAmbiguous('facebook.com/ShaheenCenter', [SHAHEEN_1, SHAHEEN_2], 'facebook');
+  it('Shaheen Center facebook page resolves the single canonical owner', () => {
+    expectTop1('facebook.com/ShaheenCenter', SHAHEEN_ID, 'facebook');
   });
 });
 
 describe('Golden matrix — instagram', () => {
   it('handle resolves owner', () => {
-    expectTop1('instagram.com/btech.egypt', B_TECH_ALT3, 'instagram');
+    expectTop1('instagram.com/btech.egypt', B_TECH_ID, 'instagram');
   });
 
   it('www + scheme + trailing slash variant resolves owner', () => {
@@ -496,24 +499,20 @@ describe('Golden matrix — website host + path + origin', () => {
     expectTop1('https://ahw.store/', AHW_ID, 'website');
   });
 
-  it('btech.com shared brand family: both website owners, ambiguous', () => {
-    expectAmbiguous('https://btech.com', [B_TECH_ID, B_TECH_ALT3], 'website-host');
+  it('btech.com resolves the single canonical website owner', () => {
+    expectTop1('https://btech.com', B_TECH_ID, 'website');
   });
 
-  it('btech.com www variant: both owners via website-host', () => {
-    expectAmbiguous('www.btech.com', [B_TECH_ID, B_TECH_ALT3], 'website-host');
+  it('btech.com www variant resolves the same canonical owner', () => {
+    expectTop1('www.btech.com', B_TECH_ID, 'website');
   });
 
-  it('btech.com exact stored subpath pins the exact-path owner at top', () => {
-    const r = index.search('https://btech.com/ar/tech-care');
-    expect(r.hits[0]?.merchant.id).toBe(B_TECH_ID);
-    expect(r.hits[0]?.match.kind).toBe('website');
-    // the shared-host owner may still appear below — no truncation
-    expect(ids(r)).toContain(B_TECH_ALT3);
+  it('btech.com exact stored subpath resolves the canonical owner', () => {
+    expectTop1('https://btech.com/ar/tech-care', B_TECH_ID, 'website');
   });
 
-  it('btech.com deep path: brand-family host fallback returns both, ambiguous', () => {
-    expectAmbiguous('https://btech.com/ar/c/gaming-area/consoles/playstation', [B_TECH_ID, B_TECH_ALT3]);
+  it('btech.com deep path falls back to the canonical host owner', () => {
+    expectTop1('https://btech.com/ar/c/gaming-area/consoles/playstation', B_TECH_ID, 'website');
   });
 
   it('blog subdomain exact stored path resolves owner', () => {
@@ -556,17 +555,12 @@ describe('Golden matrix — typos', () => {
     expectOwnerInTop3('روفايل', ROPHAEL_ID, 'typo');
   });
 
-  it('multi-token typo b techh egyot reaches the B.TECH family in top-3', () => {
-    const r = index.search('b techh egyot');
-    const top3 = ids(r).slice(0, 3);
-    expect(top3.filter((id) => B_TECH_FAMILY.includes(id)).length, `top3=${top3.join(',')}`).toBeGreaterThan(0);
-    expect(r.hits.find((h) => B_TECH_FAMILY.includes(h.merchant.id))?.match.kind).toBe('typo');
+  it('multi-token typo b techh egyot reaches the canonical seller in top-3', () => {
+    expectOwnerInTop3('b techh egyot', B_TECH_ID, 'typo');
   });
 
-  it('two-token typo b techh reaches the family via typo tier', () => {
-    const r = index.search('b techh');
-    const top3 = ids(r).slice(0, 3);
-    expect(top3.filter((id) => B_TECH_FAMILY.includes(id)).length).toBeGreaterThan(0);
+  it('two-token typo b techh reaches the canonical seller via typo tier', () => {
+    expectOwnerInTop3('b techh', B_TECH_ID, 'typo');
   });
 });
 
@@ -597,11 +591,12 @@ describe('Golden matrix — generic / incomplete queries', () => {
     }
   });
 
-  it('incomplete brand fragment games 2 returns both Games-2 owners (partial tier)', () => {
+  it('incomplete brand fragment games 2 reaches the canonical seller (partial tier)', () => {
     const r = index.search('games 2');
-    expect(r.ambiguous).toBe(true);
-    for (const id of [G2E_ID, G2E_ALT]) {
-      expect(ids(r)).toContain(id);
+    expect(r.hits.length).toBeGreaterThan(0);
+    expect(ids(r)).toContain(G2E_ID);
+    for (const hit of r.hits) {
+      expect(hit.match.kind).not.toBe('exact_name');
     }
   });
 
@@ -609,6 +604,120 @@ describe('Golden matrix — generic / incomplete queries', () => {
     const r = index.search('نور');
     expect(ids(r)).toContain(NOUR_EG_ID);
     expect(ids(r)).toContain(NOOR_AR_ID);
+  });
+});
+
+describe('Golden matrix — consolidated chains resolve one canonical seller', () => {
+  it.each([
+    ['Raya Shop', 'e6c3d479-b106-4cdb-a700-15e752033255', 'exact_name'],
+    ['raya shop', 'e6c3d479-b106-4cdb-a700-15e752033255', 'exact_name'],
+    ['Fathalla Gomla Market', '842ad9fe-ecfc-46f4-b065-e945fb3aaa3d', 'exact_name'],
+    ['Kheir Zaman', '890f8666-c04c-441a-b4ab-78a29ae04f90', 'exact_name'],
+    ['Spinneys Egypt', 'eaa59b9e-835a-413d-86a7-b8d64372e09f', 'exact_name'],
+    ['Spinneys', 'eaa59b9e-835a-413d-86a7-b8d64372e09f', 'exact_alias'],
+    ['CompuData Center', '038a190f-731e-4adf-8b80-723276ce3a3d', 'exact_name'],
+    ['CompuData', '038a190f-731e-4adf-8b80-723276ce3a3d', 'exact_alias'],
+    ['Compu Fast (كومبيو فاست)', '1687538d-eddd-4613-9761-59643d8a9e33', 'exact_name'],
+    ['Compu Fast', '1687538d-eddd-4613-9761-59643d8a9e33', 'exact_alias'],
+    ['Compu Science', 'd3c830bb-4339-41ed-a636-1c7710ff9825', 'exact_name'],
+    ['Fixawy', '0d6413ef-542d-4c85-a9cd-b480bd0810b3', 'exact_name'],
+    ['Games Spot Egypt (جيمز سبوت)', 'e536f972-8d6c-4513-a099-4a5457fceecf', 'exact_name'],
+    ['Games Spot', 'e536f972-8d6c-4513-a099-4a5457fceecf', 'exact_alias'],
+    ['Shaheen Center', '05abc4eb-760c-4842-a467-716d52b1bd04', 'exact_name'],
+    ['B.TECH (بي تك)', B_TECH_ID, 'exact_alias'],
+  ])('%s resolves exactly its canonical seller top-1', (query, merchantId, matchKind) => {
+    expectTop1(query, merchantId, matchKind);
+  });
+
+  it('merged B.TECH branch aliases all collapse onto the one canonical seller', () => {
+    // Aliases inherited from retired branch rows (Port Said, Tanta, TechCare,
+    // X, the legal company form) resolve the surviving seller at the exact
+    // alias tier.
+    for (const query of [
+      'B.Tech Port Said',
+      'B.TECH - Port Said Branch',
+      'B.Tech (Tanta Branches)',
+      'B.TECH Retail',
+      'B.TECH TechCare',
+      'B.TECH X',
+      'B.TECH (B.TECH for Trade and Distribution S.A.E.)',
+    ]) {
+      expectTop1(query, B_TECH_ID, 'exact_alias');
+    }
+    // City-qualified dash forms carry an em/en dash that normalizes away, so
+    // they reach the seller through the partial-name tier instead.
+    for (const query of ['B.TECH — Alexandria', 'B.TECH — Assiut', 'B.TECH — Cairo']) {
+      expectTop1(query, B_TECH_ID, 'partial_name');
+    }
+  });
+
+  it('retired branch UUIDs never resolve anywhere', () => {
+    const retiredIds = [
+      '306c4864-694f-46ce-bb9a-0e18f9d31c3a',
+      '31c54405-381c-4364-a49c-a8a9244f7471',
+      'd08748d3-b6be-4185-a32e-e439d19d3c72',
+      '0f9b3f71-e2b2-41fb-b834-61ad2375282c',
+      'c5cbf814-b4d4-4e99-9532-367282905da1',
+      'bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7',
+      '76fa120c-d0c5-489c-a3c2-a5c33d8678a6',
+      'fc74448d-b496-4658-83e4-c938fa9413bf',
+      '7d17483f-507c-4171-8b78-9247687ec489',
+      'cdbc1046-a283-4207-8519-6829b2d8a451',
+      '3b2f3927-90df-4826-b256-d69dc32ff8d5',
+      '550b1027-c781-4ca3-ab76-8a76fc19d816',
+      '31492070-416e-4307-bbbb-4915b262950e',
+      '93d4fd27-adac-4157-a9a2-c0a0423ecd8e',
+      'e266ad28-7e04-4177-9b4e-1975e46fea07',
+      '804e0ef3-669d-4adb-9573-0f2229b954f2',
+      '06d03aac-055a-4733-a3eb-6874a544f3ea',
+      '1cd85715-2084-4471-8e20-6e435c946271',
+      '53f064aa-0133-4986-9fc2-4a765762a1d4',
+    ];
+    const snapshotIds = new Set(
+      new MerchantDb(DB_PATH).getIndexData().merchants.map((merchant) => merchant.id),
+    );
+    for (const retiredId of retiredIds) {
+      expect(snapshotIds.has(retiredId), 'retired id must be absent from the snapshot').toBe(false);
+    }
+    // And no search surface may ever resolve them.
+    for (const query of ['B.TECH', 'بي تك', 'Games 2 Egypt', 'facebook.com/ShaheenCenter']) {
+      const all = index.search(query, 1, 500);
+      for (const hit of all.hits) {
+        expect(retiredIds, `${query}: retired id ${hit.merchant.id} must never resolve`).not.toContain(hit.merchant.id);
+      }
+      expect(all.total).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('Golden matrix — Delta Computer ambiguity (two location-qualified sellers)', () => {
+  it('Delta Computer returns the two location-qualified sellers plus the alias-sharing Delta Technology, ambiguous', () => {
+    // The retired "Delta Computer" branch rows were consolidated into two
+    // distinct location-qualified sellers. Delta Technology is a third,
+    // distinct seller that independently carries the same alias — the
+    // ambiguity is real and surfaced rather than merged.
+    expectAmbiguous('Delta Computer', DELTA_ALIAS_OWNERS, 'exact_alias');
+    expectAmbiguous('delta computer', DELTA_ALIAS_OWNERS, 'exact_alias');
+    expectAmbiguous('دلتا كمبيوتر', DELTA_ALIAS_OWNERS, 'exact_alias');
+  });
+
+  it('each location-qualified Delta seller resolves exactly by its canonical name', () => {
+    expectTop1('Delta Computer — Mohandessin', DELTA_MOHANDESSIN_ID, 'exact_name');
+    expectTop1('Delta Computer Supplies — Alexandria', DELTA_ALEXANDRIA_ID, 'exact_name');
+  });
+
+  it('location-qualified Delta aliases disambiguate within the family', () => {
+    expectTop1('Delta Computer Alexandria', DELTA_ALEXANDRIA_ID, 'exact_alias');
+    expectTop1('Delta Computer Egypt', DELTA_MOHANDESSIN_ID, 'exact_alias');
+    expectTop1('Delta Computer Sphinx', DELTA_MOHANDESSIN_ID, 'exact_alias');
+  });
+
+  it('the two Delta sellers are distinct records with different canonical identities', () => {
+    const moh = index.search('Delta Computer — Mohandessin').hits[0]?.merchant;
+    const alx = index.search('Delta Computer Supplies — Alexandria').hits[0]?.merchant;
+    expect(moh?.id).not.toBe(alx?.id);
+    expect(moh?.canonicalName).toBe('Delta Computer — Mohandessin');
+    expect(alx?.canonicalName).toBe('Delta Computer Supplies — Alexandria');
   });
 });
 

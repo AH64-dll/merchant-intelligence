@@ -1,0 +1,25 @@
+{
+  "master": "/home/amr/Documents/project/data/merchant_intelligence.db",
+  "backup": "/home/amr/Documents/project/data/backups/merchant_intelligence-pre-seller-merge-20260831T002459Z.db",
+  "created_at": "20260831T002459Z",
+  "counts": {
+    "agent_runs": 797,
+    "checkpoints": 1,
+    "claim_evidence": 3763,
+    "claims": 2650,
+    "evidence": 3763,
+    "fb_group_registry": 31,
+    "merchant_aliases": 1924,
+    "merchant_analyses": 410,
+    "merchant_identifiers": 3077,
+    "merchant_links": 102,
+    "merchants": 370,
+    "pipeline_runs": 1,
+    "quality_metrics": 18,
+    "research_gaps": 12,
+    "schema_version": 1,
+    "sources": 2144,
+    "verification_tasks": 1737
+  },
+  "integrity": "ok"
+}

@@ -14,9 +14,9 @@ import { benchScale, GATES } from './search.bench';
  * when every gate passes.
  */
 const SCALES: ReadonlyArray<readonly [string, number]> = [
-  ['1x (370)', 0],
-  ['10x (3,700)', 9],
-  ['100x (37,000)', 99],
+  ['1x (351)', 0],
+  ['10x (3,510)', 9],
+  ['100x (35,100)', 99],
 ];
 
 const results: ScaleResult[] = [];

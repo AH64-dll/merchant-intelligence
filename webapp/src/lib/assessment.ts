@@ -184,13 +184,13 @@ export function assessEvidenceCoverage(evidence: EvidenceItem[]): EvidenceCovera
   };
 }
 
-function isWarningEvidence(item: EvidenceItem): boolean {
+export function isWarningEvidence(item: EvidenceItem): boolean {
   if (item.authorType === 'merchant') return false;
   if (OFFICIAL_WARNING_CLAIM_TYPES.has(item.claimType)) return true;
   return item.authorType === 'regulator' && NEGATIVE_CLAIM_TYPES.has(item.claimType);
 }
 
-function isRiskEvidence(item: EvidenceItem): boolean {
+export function isRiskEvidence(item: EvidenceItem): boolean {
   return item.authorType !== 'merchant' && RISK_CLAIM_TYPES.has(item.claimType);
 }
 

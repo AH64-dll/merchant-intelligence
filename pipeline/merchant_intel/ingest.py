@@ -461,7 +461,7 @@ def ingest_sol(
     allowed_merchant_ids: set[str] | None = None,
 ) -> int:
     tasks = 0
-    allowed = allowed_merchant_ids or set()
+    now = _now()
     for analysis in output.merchants:
         merchant_id = analysis.merchant_id
         if merchant_id in {"", "pending"} and len(allowed) == 1:

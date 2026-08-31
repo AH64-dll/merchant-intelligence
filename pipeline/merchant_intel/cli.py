@@ -233,6 +233,50 @@ async def cmd_verify(args: argparse.Namespace) -> int:
         await client.close()
 
 
+def cmd_merge_sellers(args: argparse.Namespace) -> int:
+    from merchant_intel.merchant_merge import merge_sellers
+
+    cfg = load_config(getattr(args, "config", None))
+    db = _db(cfg)
+    try:
+        report = merge_sellers(
+            db,
+            apply=bool(args.apply),
+            report_path=args.report,
+        )
+        print(
+            json.dumps(
+                {
+                    "mode": report["mode"],
+                    "report_path": report["report_path"],
+                    "before_counts": report["before_counts"],
+                    "after_counts": report.get("after_counts"),
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+        return 0
+    finally:
+        db.close()
+
+
+async def cmd_reanalyze_merchants(args: argparse.Namespace) -> int:
+    from merchant_intel.reanalysis import reanalyze_merchants
+
+    cfg = load_config(getattr(args, "config", None))
+    configure_logging(cfg.resolve(cfg.log_dir), cfg.log_level)
+    db = _db(cfg)
+    client = OmpClient(cfg)
+    try:
+        result = await reanalyze_merchants(cfg, client, db, args.merchant_ids)
+        print(json.dumps(result.as_dict(), ensure_ascii=False, indent=2))
+        return 0
+    finally:
+        await client.close()
+        db.close()
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="merchant-intel")
     parser.add_argument("--config", default=None)
@@ -261,6 +305,14 @@ def build_parser() -> argparse.ArgumentParser:
     export.add_argument("--format", choices=["json", "jsonl", "csv"], default="json")
     export.add_argument("--include-raw", action="store_true")
     verify = sub.add_parser("verify")
+    merge = sub.add_parser("merge-sellers")
+    _add_config(merge)
+    merge.add_argument("--apply", action="store_true")
+    merge.add_argument("--report")
+    reanalyze = sub.add_parser("reanalyze-merchants")
+    _add_config(reanalyze)
+    reanalyze.add_argument("merchant_ids", nargs="+", metavar="UUID")
+
 
     fb_seed = sub.add_parser("fb-seed-groups")
     _add_config(fb_seed)
@@ -291,6 +343,10 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_export(args)
     if args.cmd == "verify":
         return asyncio.run(cmd_verify(args))
+    if args.cmd == "merge-sellers":
+        return cmd_merge_sellers(args)
+    if args.cmd == "reanalyze-merchants":
+        return asyncio.run(cmd_reanalyze_merchants(args))
     if args.cmd == "fb-seed-groups":
         return cmd_fb_seed_groups(args)
     if args.cmd == "fb-gen-tasks":

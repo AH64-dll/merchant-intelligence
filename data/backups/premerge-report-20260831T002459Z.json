@@ -1,0 +1,3870 @@
+{
+  "created_at": "20260831T002459Z",
+  "master": "/home/amr/Documents/project/data/merchant_intelligence.db",
+  "backup": "/home/amr/Documents/project/data/backups/merchant_intelligence-pre-seller-merge-20260831T002459Z.db",
+  "baseline_counts": {
+    "agent_runs": 797,
+    "checkpoints": 1,
+    "claim_evidence": 3763,
+    "claims": 2650,
+    "evidence": 3763,
+    "fb_group_registry": 31,
+    "merchant_aliases": 1924,
+    "merchant_analyses": 410,
+    "merchant_identifiers": 3077,
+    "merchant_links": 102,
+    "merchants": 370,
+    "pipeline_runs": 1,
+    "quality_metrics": 18,
+    "research_gaps": 12,
+    "schema_version": 1,
+    "sources": 2144,
+    "verification_tasks": 1737
+  },
+  "manifest_groups": [
+    {
+      "target_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+      "retired_ids": [
+        "306c4864-694f-46ce-bb9a-0e18f9d31c3a",
+        "31c54405-381c-4364-a49c-a8a9244f7471",
+        "d08748d3-b6be-4185-a32e-e439d19d3c72"
+      ]
+    },
+    {
+      "target_id": "842ad9fe-ecfc-46f4-b065-e945fb3aaa3d",
+      "retired_ids": [
+        "cdbc1046-a283-4207-8519-6829b2d8a451"
+      ]
+    },
+    {
+      "target_id": "3af4b233-ad29-4155-b436-3573576e1daf",
+      "retired_ids": [
+        "0f9b3f71-e2b2-41fb-b834-61ad2375282c"
+      ]
+    },
+    {
+      "target_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+      "retired_ids": [
+        "c5cbf814-b4d4-4e99-9532-367282905da1",
+        "bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7",
+        "76fa120c-d0c5-489c-a3c2-a5c33d8678a6",
+        "fc74448d-b496-4658-83e4-c938fa9413bf"
+      ]
+    },
+    {
+      "target_id": "05abc4eb-760c-4842-a467-716d52b1bd04",
+      "retired_ids": [
+        "7d17483f-507c-4171-8b78-9247687ec489"
+      ]
+    },
+    {
+      "target_id": "038a190f-731e-4adf-8b80-723276ce3a3d",
+      "retired_ids": [
+        "31492070-416e-4307-bbbb-4915b262950e",
+        "93d4fd27-adac-4157-a9a2-c0a0423ecd8e"
+      ]
+    },
+    {
+      "target_id": "1687538d-eddd-4613-9761-59643d8a9e33",
+      "retired_ids": [
+        "e266ad28-7e04-4177-9b4e-1975e46fea07"
+      ]
+    },
+    {
+      "target_id": "d3c830bb-4339-41ed-a636-1c7710ff9825",
+      "retired_ids": [
+        "804e0ef3-669d-4adb-9573-0f2229b954f2"
+      ]
+    },
+    {
+      "target_id": "0d6413ef-542d-4c85-a9cd-b480bd0810b3",
+      "retired_ids": [
+        "06d03aac-055a-4733-a3eb-6874a544f3ea"
+      ]
+    },
+    {
+      "target_id": "e536f972-8d6c-4513-a099-4a5457fceecf",
+      "retired_ids": [
+        "1cd85715-2084-4471-8e20-6e435c946271"
+      ]
+    },
+    {
+      "target_id": "890f8666-c04c-441a-b4ab-78a29ae04f90",
+      "retired_ids": [
+        "3b2f3927-90df-4826-b256-d69dc32ff8d5"
+      ]
+    },
+    {
+      "target_id": "eaa59b9e-835a-413d-86a7-b8d64372e09f",
+      "retired_ids": [
+        "550b1027-c781-4ca3-ab76-8a76fc19d816"
+      ]
+    },
+    {
+      "target_id": "dab9cc64-1e22-4dcd-9461-1b7fc5cc6634",
+      "retired_ids": [
+        "53f064aa-0133-4986-9fc2-4a765762a1d4"
+      ]
+    }
+  ],
+  "changed_merchants": [
+    {
+      "id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+      "canonical_name": "B.TECH",
+      "normalized_name": "b tech",
+      "category": "Consumer Electronics & Household Appliances Retailer",
+      "city": "Giza (Haram / Faisal / Omraneya)",
+      "governorate": "Giza",
+      "identity_confidence": 0.98,
+      "state": "VERIFIED_HIGH_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:32:46.239707+00:00",
+      "updated_at": "2026-08-24T04:01:54.580875+00:00",
+      "dependent_counts": {
+        "claims": 72,
+        "evidence": 75,
+        "merchant_aliases": 15,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 42,
+        "verification_tasks": 34
+      },
+      "aliases": [
+        {
+          "alias": "B.TECH",
+          "normalized_alias": "b tech"
+        },
+        {
+          "alias": "B.TECH (B.TECH for Trade and Distribution S.A.E.)",
+          "normalized_alias": "b tech b tech for trade and distribution s a e"
+        },
+        {
+          "alias": "B.Tech Egypt",
+          "normalized_alias": "b tech egypt"
+        },
+        {
+          "alias": "B.Tech Port Said",
+          "normalized_alias": "b tech port said"
+        },
+        {
+          "alias": "B.TECH - Port Said Branch",
+          "normalized_alias": "b tech port said branch"
+        },
+        {
+          "alias": "B.Tech (Tanta Branches)",
+          "normalized_alias": "b tech tanta branches"
+        },
+        {
+          "alias": "B.TECH TechCare",
+          "normalized_alias": "b tech techcare"
+        },
+        {
+          "alias": "B.TECH X",
+          "normalized_alias": "b tech x"
+        },
+        {
+          "alias": "B.TECH (بي تك)",
+          "normalized_alias": "b tech بي تك"
+        },
+        {
+          "alias": "بي.تك",
+          "normalized_alias": "بي تك"
+        },
+        {
+          "alias": "بي تك بورسعيد",
+          "normalized_alias": "بي تك بورسعيد"
+        },
+        {
+          "alias": "بي تك شارع الجمهورية بورسعيد",
+          "normalized_alias": "بي تك شارع الجمهورية بورسعيد"
+        },
+        {
+          "alias": "بي تك للأجهزة الإلكترونية",
+          "normalized_alias": "بي تك للأجهزة الإلكترونية"
+        },
+        {
+          "alias": "بي تك للإلكترونيات",
+          "normalized_alias": "بي تك للإلكترونيات"
+        },
+        {
+          "alias": "شركة بي تك للتجارة والتوزيع",
+          "normalized_alias": "بي تك والتوزيع"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "18 Abdel Latif El Sofani St, Sidi Gaber, Alexandria, Egypt",
+          "normalized_value": "18 abdel latif el sofani st, sidi gaber, alexandria, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "18 Alexandria Street, Kafret El Segn, Tanta",
+          "normalized_value": "18 alexandria street, kafret el segn, tanta",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "212 King Faisal Street, Faisal, Giza Governorate, Egypt",
+          "normalized_value": "212 king faisal street, faisal, giza governorate, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "301 Port Said St, Sidi Gaber, Alexandria, Egypt",
+          "normalized_value": "301 port said st, sidi gaber, alexandria, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "301 شارع بورسعيد، سيدي جابر، الإسكندرية",
+          "normalized_value": "301 شارع بورسعيد، سيدي جابر، الإسكندرية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "35 Khalil Hamada St, Gihan Square, Sidi Bishr, Alexandria, Egypt",
+          "normalized_value": "35 khalil hamada st, gihan square, sidi bishr, alexandria, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "35 شارع خليل حمادة، أمام مستشفى جيهان، سيدي بشر، الإسكندرية",
+          "normalized_value": "35 شارع خليل حمادة، أمام مستشفى جيهان، سيدي بشر، الإسكندرية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "372 Gamal Abdel Nasser St, Asafra, Alexandria, Egypt",
+          "normalized_value": "372 gamal abdel nasser st, asafra, alexandria, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "38A-40 Tutankhamun St, Smouha, Alexandria, Egypt",
+          "normalized_value": "38a-40 tutankhamun st, smouha, alexandria, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "40 شارع توت عنخ آمون، أمام مدارس السيد محمد كريم، سموحة، الإسكندرية",
+          "normalized_value": "40 شارع توت عنخ آمون، أمام مدارس السيد محمد كريم، سموحة، الإسكندرية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "40A El Gomhoureya St, intersection with Damietta St, in front of Gianola, Port Said, Egypt",
+          "normalized_value": "40a el gomhoureya st, intersection with damietta st, in front of gianola, port said, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "465 Al Ahram Street, Omraneya, Giza Governorate, Egypt",
+          "normalized_value": "465 al ahram street, omraneya, giza governorate, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "696 El Horreya Road, Feroza Bldg, Loran, Alexandria, Egypt",
+          "normalized_value": "696 el horreya road, feroza bldg, loran, alexandria, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "696 طريق الحرية، عمارة فيروزة، لوران، الإسكندرية",
+          "normalized_value": "696 طريق الحرية، عمارة فيروزة، لوران، الإسكندرية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "6th of October Branch: Al Hay Al Motamayez, Giza",
+          "normalized_value": "6th of october branch: al hay al motamayez, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "City Centre Alexandria, Desert Road, Alexandria, Egypt",
+          "normalized_value": "city centre alexandria, desert road, alexandria, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Corner of Al-Adawy St and Abdel Wahab Abou Ashra St, Al-Labini, Faisal, Giza Governorate, Egypt",
+          "normalized_value": "corner of al-adawy st and abdel wahab abou ashra st, al-labini, faisal, giza governorate, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Corporate HQ: Emtedad Ramsis St., 6th District, Nasr City, Cairo",
+          "normalized_value": "corporate hq: emtedad ramsis st., 6th district, nasr city, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Dokki Branch: 10 Sudan St., Dokki, Giza",
+          "normalized_value": "dokki branch: 10 sudan st., dokki, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "El Bahr St, intersection with Tutankhamun St, opposite Governorate Building, Tanta",
+          "normalized_value": "el bahr st, intersection with tutankhamun st, opposite governorate building, tanta",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Faisal Branch: 212 King Faisal St., Giza",
+          "normalized_value": "faisal branch: 212 king faisal st., giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Gameat El Dowal Al Arabiya, Mohandessin, Giza",
+          "normalized_value": "gameat el dowal al arabiya, mohandessin, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Haram Branch: 465 Al-Haram St. (Nasr El Din), Giza",
+          "normalized_value": "haram branch: 465 al-haram st. (nasr el din), giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Km 17 Alexandria-Matrouh Road, Agami, Alexandria, Egypt",
+          "normalized_value": "km 17 alexandria-matrouh road, agami, alexandria, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Mall of Arabia Tanta, after Seberbay station, Tanta",
+          "normalized_value": "mall of arabia tanta, after seberbay station, tanta",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Nasr Road, Nasr City, Cairo",
+          "normalized_value": "nasr road, nasr city, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Nasr Road, Nasr City, Cairo / Branches nationwide",
+          "normalized_value": "nasr road, nasr city, cairo / branches nationwide",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "San Stefano Mall, 4th Floor, Alexandria, Egypt",
+          "normalized_value": "san stefano mall, 4th floor, alexandria, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Sheikh Zayed Branch: Central Spine, Sheikh Zayed, Giza",
+          "normalized_value": "sheikh zayed branch: central spine, sheikh zayed, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Sidi Gaber Branch, Alexandria, Egypt",
+          "normalized_value": "sidi gaber branch, alexandria, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "الكيلو 17 طريق إسكندرية مطروح، أمام بنزينة توتال، العجمي، الإسكندرية",
+          "normalized_value": "الكيلو 17 طريق إسكندرية مطروح، أمام بنزينة توتال، العجمي، الإسكندرية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "مول سان ستيفانو، الدور الرابع، الإسكندرية",
+          "normalized_value": "مول سان ستيفانو، الدور الرابع، الإسكندرية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "commercial_register",
+          "value": "FRA Consumer Finance License No. 7 of 2020",
+          "normalized_value": "fra consumer finance license no. 7 of 2020",
+          "confidence": 0.7
+        },
+        {
+          "kind": "email",
+          "value": "customerservice@btech.com",
+          "normalized_value": "customerservice@btech.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/b.tech.egypt",
+          "normalized_value": "https://facebook.com/b.tech.egypt",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/btech.egypt",
+          "normalized_value": "https://facebook.com/btech.egypt",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/mybtech/",
+          "normalized_value": "https://facebook.com/mybtech",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "01286619966",
+          "normalized_value": "+201286619966",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://blog.btech.com/ar/%D8%B9%D9%86%D8%A7%D9%88%D9%8A%D9%86-%D9%81%D8%B1%D9%88%D8%B9-%D8%A8%D9%8A-%D8%AA%D9%83-%D9%85%D8%B5%D8%B1/",
+          "normalized_value": "https://blog.btech.com/ar/%D8%B9%D9%86%D8%A7%D9%88%D9%8A%D9%86-%D9%81%D8%B1%D9%88%D8%B9-%D8%A8%D9%8A-%D8%AA%D9%83-%D9%85%D8%B5%D8%B1",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://btech.com",
+          "normalized_value": "https://btech.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://btech.com/ar/tech-care",
+          "normalized_value": "https://btech.com/ar/tech-care",
+          "confidence": 0.7
+        },
+        {
+          "kind": "whatsapp",
+          "value": "01286619966",
+          "normalized_value": "+201286619966",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 25,
+      "merchant_links": [
+        {
+          "id": "c59a5a1d-f37f-4d4e-abb7-1c5a2714c2a4",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "306c4864-694f-46ce-bb9a-0e18f9d31c3a",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same whatsapp identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:51:46.946912+00:00"
+        },
+        {
+          "id": "b5cd1141-5ccf-486f-a094-0df2d0878b74",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "31c54405-381c-4364-a49c-a8a9244f7471",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same whatsapp identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:53:43.609185+00:00"
+        },
+        {
+          "id": "6c404e5b-b0dc-422d-ae2f-5b8796ed57e6",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "c25a5a60-e885-4916-85aa-9618d9097d18",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.056072+00:00"
+        },
+        {
+          "id": "c06edb5e-6375-48f7-9722-a1a0b0740efc",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:49:35.574218+00:00"
+        },
+        {
+          "id": "41b28c4e-f1c4-4ea7-8477-9016c85ce5bf",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "name_identifier_conflict",
+          "confidence": 0.3,
+          "rationale": "name/city matched but candidate identifiers point elsewhere",
+          "created_at": "2026-08-23T20:49:35.581960+00:00"
+        }
+      ]
+    },
+    {
+      "id": "306c4864-694f-46ce-bb9a-0e18f9d31c3a",
+      "canonical_name": "B.TECH",
+      "normalized_name": "b tech",
+      "category": "Consumer Electronics, Home Appliances & Electronics Retail",
+      "city": "Assiut",
+      "governorate": "Assiut",
+      "identity_confidence": 0.85,
+      "state": "VERIFIED_HIGH_CONFIDENCE",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:51:46.937821+00:00",
+      "updated_at": "2026-08-24T06:05:11.353852+00:00",
+      "dependent_counts": {
+        "claims": 1,
+        "evidence": 1,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 5,
+        "verification_tasks": 0
+      },
+      "aliases": [
+        {
+          "alias": "B.TECH",
+          "normalized_alias": "b tech"
+        },
+        {
+          "alias": "B.TECH Egypt",
+          "normalized_alias": "b tech egypt"
+        },
+        {
+          "alias": "بي تك",
+          "normalized_alias": "بي تك"
+        },
+        {
+          "alias": "بي تك إكس أسيوط",
+          "normalized_alias": "بي تك إكس أسيوط"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "105 أبراج الوطنية، شارع الجمهورية، أسيوط (B.TECH X)",
+          "normalized_value": "105 أبراج الوطنية، شارع الجمهورية، أسيوط (b.tech x)",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "أبراج الموالح، برج رقم 11، شارع الجلاء، أمام مديرية الزراعة، أسيوط",
+          "normalized_value": "أبراج الموالح، برج رقم 11، شارع الجلاء، أمام مديرية الزراعة، أسيوط",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "الوليدية، 24 حوض 17، أسيوط",
+          "normalized_value": "الوليدية، 24 حوض 17، أسيوط",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "برج ابن سينا، شارع 23 يوليو، بجوار سينما رينيسانس، منطقة المجذوب، أسيوط",
+          "normalized_value": "برج ابن سينا، شارع 23 يوليو، بجوار سينما رينيسانس، منطقة المجذوب، أسيوط",
+          "confidence": 0.35
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/b.techEgypt",
+          "normalized_value": "https://facebook.com/b.techEgypt",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 1,
+      "merchant_links": [
+        {
+          "id": "c59a5a1d-f37f-4d4e-abb7-1c5a2714c2a4",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "306c4864-694f-46ce-bb9a-0e18f9d31c3a",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same whatsapp identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:51:46.946912+00:00"
+        },
+        {
+          "id": "f2eef4c2-329b-469c-8329-d2a730663215",
+          "left_merchant_id": "306c4864-694f-46ce-bb9a-0e18f9d31c3a",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:51:46.948535+00:00"
+        }
+      ]
+    },
+    {
+      "id": "31c54405-381c-4364-a49c-a8a9244f7471",
+      "canonical_name": "B.TECH",
+      "normalized_name": "b tech",
+      "category": "Home Appliances & Consumer Electronics Retail Chain",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.75,
+      "state": "VERIFIED_HIGH_CONFIDENCE",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:53:43.602912+00:00",
+      "updated_at": "2026-08-24T06:15:28.672325+00:00",
+      "dependent_counts": {
+        "claims": 6,
+        "evidence": 15,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 6,
+        "verification_tasks": 3
+      },
+      "aliases": [
+        {
+          "alias": "B.TECH",
+          "normalized_alias": "b tech"
+        },
+        {
+          "alias": "B.TECH Egypt",
+          "normalized_alias": "b tech egypt"
+        },
+        {
+          "alias": "بي تك",
+          "normalized_alias": "بي تك"
+        },
+        {
+          "alias": "بي تك للتجارة والتوزيع",
+          "normalized_alias": "بي تك والتوزيع"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "Central HQ, 6th District, Nasr City, Cairo",
+          "normalized_value": "central hq, 6th district, nasr city, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "City Centre Alexandria Carrefour Mall, Alexandria",
+          "normalized_value": "city centre alexandria carrefour mall, alexandria",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Loran Branch, Alexandria",
+          "normalized_value": "loran branch, alexandria",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Mega Store Sidi Gaber, 301 Port Said St, Sidi Gaber, Alexandria",
+          "normalized_value": "mega store sidi gaber, 301 port said st, sidi gaber, alexandria",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Smouha Branch, Alexandria",
+          "normalized_value": "smouha branch, alexandria",
+          "confidence": 0.35
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/btech.eg",
+          "normalized_value": "https://facebook.com/btech.eg",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 10,
+      "merchant_links": [
+        {
+          "id": "b5cd1141-5ccf-486f-a094-0df2d0878b74",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "31c54405-381c-4364-a49c-a8a9244f7471",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same whatsapp identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:53:43.609185+00:00"
+        },
+        {
+          "id": "8eeb38bd-62bc-40a6-8108-efb6e24e6751",
+          "left_merchant_id": "31c54405-381c-4364-a49c-a8a9244f7471",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:53:43.610343+00:00"
+        }
+      ]
+    },
+    {
+      "id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+      "canonical_name": "B.TECH",
+      "normalized_name": "b tech",
+      "category": "Consumer Electronics & Home Appliances Retailer",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.75,
+      "state": "MIXED_REPUTATION",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:28:02.492795+00:00",
+      "updated_at": "2026-08-25T09:49:43.679580+00:00",
+      "dependent_counts": {
+        "claims": 21,
+        "evidence": 32,
+        "merchant_aliases": 6,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 16,
+        "verification_tasks": 4
+      },
+      "aliases": [
+        {
+          "alias": "B.TECH",
+          "normalized_alias": "b tech"
+        },
+        {
+          "alias": "B.Tech Egypt",
+          "normalized_alias": "b tech egypt"
+        },
+        {
+          "alias": "B.TECH Retail",
+          "normalized_alias": "b tech retail"
+        },
+        {
+          "alias": "Btech",
+          "normalized_alias": "btech"
+        },
+        {
+          "alias": "بي تك",
+          "normalized_alias": "بي تك"
+        },
+        {
+          "alias": "شركة بي تك للتجارة والتوزيع",
+          "normalized_alias": "بي تك والتوزيع"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "90th North St., New Cairo, Cairo",
+          "normalized_value": "90th north st., new cairo, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Abbas El-Akkad St., Nasr City, Cairo, Egypt",
+          "normalized_value": "abbas el-akkad st., nasr city, cairo, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Abdel Salam Aref St., Mansoura, Dakahlia",
+          "normalized_value": "abdel salam aref st., mansoura, dakahlia",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "El Gomhoureya St., Mansoura, Dakahlia",
+          "normalized_value": "el gomhoureya st., mansoura, dakahlia",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "El Merghany, Heliopolis, Cairo",
+          "normalized_value": "el merghany, heliopolis, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "El-Laselky St., New Maadi, Cairo, Egypt",
+          "normalized_value": "el-laselky st., new maadi, cairo, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "El-Nasr Road, Autostrad, Mokattam, Cairo, Egypt",
+          "normalized_value": "el-nasr road, autostrad, mokattam, cairo, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Headquarters: Nasr City, Cairo",
+          "normalized_value": "headquarters: nasr city, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Makram Ebeid, Nasr City, Cairo",
+          "normalized_value": "makram ebeid, nasr city, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Ring Road, Maadi, Cairo",
+          "normalized_value": "ring road, maadi, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Roxy Square, Heliopolis, Cairo, Egypt",
+          "normalized_value": "roxy square, heliopolis, cairo, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/B.TECH.Egypt",
+          "normalized_value": "https://facebook.com/B.TECH.Egypt",
+          "confidence": 0.7
+        },
+        {
+          "kind": "instagram",
+          "value": "https://www.instagram.com/btech.egypt",
+          "normalized_value": "https://instagram.com/btech.egypt",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://btech.com/ar",
+          "normalized_value": "https://btech.com/ar",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://btech.com/en",
+          "normalized_value": "https://btech.com/en",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://btech.com/en/c/gaming-area/consoles/playstation",
+          "normalized_value": "https://btech.com/en/c/gaming-area/consoles/playstation",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 21,
+      "merchant_links": [
+        {
+          "id": "c06edb5e-6375-48f7-9722-a1a0b0740efc",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:49:35.574218+00:00"
+        },
+        {
+          "id": "d26c9bab-a993-4318-a073-a055848dde1e",
+          "left_merchant_id": "1f271b65-9b0b-4d3f-b519-6c61d240f4ff",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:28:02.813299+00:00"
+        },
+        {
+          "id": "f2eef4c2-329b-469c-8329-d2a730663215",
+          "left_merchant_id": "306c4864-694f-46ce-bb9a-0e18f9d31c3a",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:51:46.948535+00:00"
+        },
+        {
+          "id": "8eeb38bd-62bc-40a6-8108-efb6e24e6751",
+          "left_merchant_id": "31c54405-381c-4364-a49c-a8a9244f7471",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:53:43.610343+00:00"
+        },
+        {
+          "id": "7980ce2a-ab76-41b3-9114-fd5e04f0f760",
+          "left_merchant_id": "4fa441a7-25b7-4710-9da0-689241c9fd2d",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.077923+00:00"
+        },
+        {
+          "id": "194dfaa8-9800-4b9a-bb9e-7c74ef35e704",
+          "left_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "right_merchant_id": "e756323c-cc6d-49b4-aa5d-7a33dfe1e124",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.115580+00:00"
+        },
+        {
+          "id": "40f90ea4-69fb-40d8-aa94-4c71ae1f4fcb",
+          "left_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "right_merchant_id": "fc638067-985a-490a-8064-94b35b6846f5",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:28:02.896633+00:00"
+        },
+        {
+          "id": "41b28c4e-f1c4-4ea7-8477-9016c85ce5bf",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "name_identifier_conflict",
+          "confidence": 0.3,
+          "rationale": "name/city matched but candidate identifiers point elsewhere",
+          "created_at": "2026-08-23T20:49:35.581960+00:00"
+        }
+      ]
+    },
+    {
+      "id": "842ad9fe-ecfc-46f4-b065-e945fb3aaa3d",
+      "canonical_name": "Fathalla Gomla Market",
+      "normalized_name": "fathalla gomla market",
+      "category": "Supermarket / Hypermarket / Wholesale & Retail",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.85,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:58:17.246390+00:00",
+      "updated_at": "2026-08-24T11:09:37.197441+00:00",
+      "dependent_counts": {
+        "claims": 31,
+        "evidence": 37,
+        "merchant_aliases": 12,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 14,
+        "verification_tasks": 5
+      },
+      "aliases": [
+        {
+          "alias": "Fathalla Gomla Market",
+          "normalized_alias": "fathalla gomla market"
+        },
+        {
+          "alias": "Fathalla Gomla Market (شركة أسواق فتح الله للجملة)",
+          "normalized_alias": "fathalla gomla market أسواق فتح الله للجملة"
+        },
+        {
+          "alias": "Fathalla Gomla Market (فتح الله جملة ماركت - شركة أسواق فتح الله للجملة)",
+          "normalized_alias": "fathalla gomla market فتح الله جملة ماركت أسواق فتح الله للجملة"
+        },
+        {
+          "alias": "Fathalla Market",
+          "normalized_alias": "fathalla market"
+        },
+        {
+          "alias": "Gomla Market",
+          "normalized_alias": "gomla market"
+        },
+        {
+          "alias": "أسواق فتح الله",
+          "normalized_alias": "أسواق فتح الله"
+        },
+        {
+          "alias": "جملة ماركت",
+          "normalized_alias": "جملة ماركت"
+        },
+        {
+          "alias": "فتح الله",
+          "normalized_alias": "فتح الله"
+        },
+        {
+          "alias": "فتح الله جملة ماركت",
+          "normalized_alias": "فتح الله جملة ماركت"
+        },
+        {
+          "alias": "فتح الله ماركت",
+          "normalized_alias": "فتح الله ماركت"
+        },
+        {
+          "alias": "شركة مسعد فتح الله وإخوانه",
+          "normalized_alias": "مسعد فتح الله وإخوانه"
+        },
+        {
+          "alias": "شركة مسعد فتح الله وإخوته",
+          "normalized_alias": "مسعد فتح الله وإخوته"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "Alexandria branches",
+          "normalized_value": "alexandria branches",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Faisal St, Giza",
+          "normalized_value": "faisal st, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Headquarters: Alexandria, Egypt (Over 30 hypermarket & wholesale branches across Alexandria, Cairo, Giza, Gharbia, and Beheira)",
+          "normalized_value": "headquarters: alexandria, egypt (over 30 hypermarket & wholesale branches across alexandria, cairo, giza, gharbia, and beheira)",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "المقر الرئيسي: الإسكندرية",
+          "normalized_value": "المقر الرئيسي: الإسكندرية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "فروع متعددة في الإسكندرية والقاهرة والمحافظات والوجه القبلي",
+          "normalized_value": "فروع متعددة في الإسكندرية والقاهرة والمحافظات والوجه القبلي",
+          "confidence": 0.35
+        },
+        {
+          "kind": "commercial_register",
+          "value": "شركة أسواق فتح الله للجملة ش.م.م - تأسست 1948",
+          "normalized_value": "شركة أسواق فتح الله للجملة ش.م.م - تأسست 1948",
+          "confidence": 0.7
+        },
+        {
+          "kind": "email",
+          "value": "cs.cairo@fathallamarket.com.eg",
+          "normalized_value": "cs.cairo@fathallamarket.com.eg",
+          "confidence": 0.7
+        },
+        {
+          "kind": "email",
+          "value": "info@aswaqfathalla.com",
+          "normalized_value": "info@aswaqfathalla.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "email",
+          "value": "info@gomlamarket.com",
+          "normalized_value": "info@gomlamarket.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/GomlaMarket",
+          "normalized_value": "https://facebook.com/GomlaMarket",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/Gomlamarket/",
+          "normalized_value": "https://facebook.com/Gomlamarket",
+          "confidence": 0.7
+        },
+        {
+          "kind": "marketplace",
+          "value": "https://play.google.com/store/apps/details?id=com.fathallamarket.trustystore",
+          "normalized_value": "https://play.google.com/store/apps/details?id=com.fathallamarket.trustystore",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "http://fathallamarket.com.eg",
+          "normalized_value": "http://fathallamarket.com.eg",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://gomlamarket.com",
+          "normalized_value": "https://gomlamarket.com",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 25,
+      "merchant_links": [
+        {
+          "id": "c525078a-92c3-42bf-a8fe-aeb0585b28a6",
+          "left_merchant_id": "842ad9fe-ecfc-46f4-b065-e945fb3aaa3d",
+          "right_merchant_id": "c25a5a60-e885-4916-85aa-9618d9097d18",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.262122+00:00"
+        }
+      ]
+    },
+    {
+      "id": "cdbc1046-a283-4207-8519-6829b2d8a451",
+      "canonical_name": "Fathalla Gomla Market",
+      "normalized_name": "fathalla gomla market",
+      "category": "Hypermarket & Wholesale Supermarket",
+      "city": "Tanta",
+      "governorate": "Gharbia",
+      "identity_confidence": 0.75,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:57:06.303831+00:00",
+      "updated_at": "2026-08-25T09:26:29.049879+00:00",
+      "dependent_counts": {
+        "claims": 1,
+        "evidence": 1,
+        "merchant_aliases": 5,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 6,
+        "verification_tasks": 0
+      },
+      "aliases": [
+        {
+          "alias": "Fathalla Gomla Market",
+          "normalized_alias": "fathalla gomla market"
+        },
+        {
+          "alias": "Fathalla Market",
+          "normalized_alias": "fathalla market"
+        },
+        {
+          "alias": "أسواق فتح الله",
+          "normalized_alias": "أسواق فتح الله"
+        },
+        {
+          "alias": "فتح الله جملة ماركت طنطا",
+          "normalized_alias": "فتح الله جملة ماركت طنطا"
+        },
+        {
+          "alias": "فتح الله ماركت",
+          "normalized_alias": "فتح الله ماركت"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "9 شارع حسن حسيب متفرع من شارع سعيد أمام كلية التجارة، طنطا، الغربية",
+          "normalized_value": "9 شارع حسن حسيب متفرع من شارع سعيد أمام كلية التجارة، طنطا، الغربية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "أوتليت سيتي مول، شارع الأشرف الجديد مع ميدان شارع عنتر الرئيسي، طنطا، الغربية",
+          "normalized_value": "أوتليت سيتي مول، شارع الأشرف الجديد مع ميدان شارع عنتر الرئيسي، طنطا، الغربية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/fathallamarket",
+          "normalized_value": "https://facebook.com/fathallamarket",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "0403293383",
+          "normalized_value": "+20403293383",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "0403293393",
+          "normalized_value": "+20403293393",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://fathallamarket.com",
+          "normalized_value": "https://fathallamarket.com",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 1,
+      "merchant_links": []
+    },
+    {
+      "id": "3af4b233-ad29-4155-b436-3573576e1daf",
+      "canonical_name": "Games 2 Egypt",
+      "normalized_name": "games 2 egypt",
+      "category": "Gaming & Console Retailer",
+      "city": "Giza",
+      "governorate": "Giza",
+      "identity_confidence": 0.92,
+      "state": "VERIFIED_HIGH_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:34:39.432246+00:00",
+      "updated_at": "2026-08-24T06:40:43.671032+00:00",
+      "dependent_counts": {
+        "claims": 2,
+        "evidence": 6,
+        "merchant_aliases": 3,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 27,
+        "verification_tasks": 2
+      },
+      "aliases": [
+        {
+          "alias": "Games 2 Egypt",
+          "normalized_alias": "games 2 egypt"
+        },
+        {
+          "alias": "Games2Egypt",
+          "normalized_alias": "games2egypt"
+        },
+        {
+          "alias": "جيمز تو ايجيبت",
+          "normalized_alias": "جيمز تو ايجيبت"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "7 Wadi El Nil st, intersection with Gameet el Dewal, Mohandessin, Giza",
+          "normalized_value": "7 wadi el nil st, intersection with gameet el dewal, mohandessin, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Americana Plaza, in front of IMax Cinemas, El Sheikh Zayed, Giza",
+          "normalized_value": "americana plaza, in front of imax cinemas, el sheikh zayed, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Behind New Cairo Courthouse, Al Bostan Mall 2, New Cairo",
+          "normalized_value": "behind new cairo courthouse, al bostan mall 2, new cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "City Centre Mall Alexandria, Gate number 4, Alexandria",
+          "normalized_value": "city centre mall alexandria, gate number 4, alexandria",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "City Starts Mall, in front of Gate 5, Ground Floor, Nasr City, Cairo",
+          "normalized_value": "city starts mall, in front of gate 5, ground floor, nasr city, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Elite Compound in front of Marriott Mena House, Pyramids Road, Giza",
+          "normalized_value": "elite compound in front of marriott mena house, pyramids road, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Green park mall, infront of 6th october sports club, 6th of October, Giza",
+          "normalized_value": "green park mall, infront of 6th october sports club, 6th of october, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Nasr street, in front of SAIB Bank, Maadi, Cairo",
+          "normalized_value": "nasr street, in front of saib bank, maadi, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Point 90 Mall, in 3nd Floor, in front of cinemas, 5th Settlement, New Cairo",
+          "normalized_value": "point 90 mall, in 3nd floor, in front of cinemas, 5th settlement, new cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "google_maps",
+          "value": "https://goo.gl/maps/BHcuX9XRrpKz2Atd6",
+          "normalized_value": "https://goo.gl/maps/BHcuX9XRrpKz2Atd6",
+          "confidence": 0.7
+        },
+        {
+          "kind": "google_maps",
+          "value": "https://goo.gl/maps/BbZuAKqi75232WJZ8",
+          "normalized_value": "https://goo.gl/maps/BbZuAKqi75232WJZ8",
+          "confidence": 0.7
+        },
+        {
+          "kind": "google_maps",
+          "value": "https://goo.gl/maps/ELwZdK8EA8FSyRZf8",
+          "normalized_value": "https://goo.gl/maps/ELwZdK8EA8FSyRZf8",
+          "confidence": 0.7
+        },
+        {
+          "kind": "google_maps",
+          "value": "https://goo.gl/maps/KDZhVLbmxziwXfPBA",
+          "normalized_value": "https://goo.gl/maps/KDZhVLbmxziwXfPBA",
+          "confidence": 0.7
+        },
+        {
+          "kind": "google_maps",
+          "value": "https://goo.gl/maps/KhUfQdxh3uSVpcrv8",
+          "normalized_value": "https://goo.gl/maps/KhUfQdxh3uSVpcrv8",
+          "confidence": 0.7
+        },
+        {
+          "kind": "google_maps",
+          "value": "https://goo.gl/maps/PhFU5AXUTHp4vJDz5",
+          "normalized_value": "https://goo.gl/maps/PhFU5AXUTHp4vJDz5",
+          "confidence": 0.7
+        },
+        {
+          "kind": "google_maps",
+          "value": "https://goo.gl/maps/ZXMctm32YGeqEGAp7",
+          "normalized_value": "https://goo.gl/maps/ZXMctm32YGeqEGAp7",
+          "confidence": 0.7
+        },
+        {
+          "kind": "google_maps",
+          "value": "https://goo.gl/maps/xBDLmozSLrPQ5TuNA",
+          "normalized_value": "https://goo.gl/maps/xBDLmozSLrPQ5TuNA",
+          "confidence": 0.7
+        },
+        {
+          "kind": "google_maps",
+          "value": "https://maps.app.goo.gl/n2vQprey9naG6LWZ9",
+          "normalized_value": "https://maps.app.goo.gl/n2vQprey9naG6LWZ9",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "01281516280",
+          "normalized_value": "+201281516280",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "01282116280",
+          "normalized_value": "+201282116280",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "01282516280",
+          "normalized_value": "+201282516280",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "01283116280",
+          "normalized_value": "+201283116280",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "01283316280",
+          "normalized_value": "+201283316280",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "01283616280",
+          "normalized_value": "+201283616280",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "01283816280",
+          "normalized_value": "+201283816280",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "01283916280",
+          "normalized_value": "+201283916280",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://www.games2egypt.com/Web/Home/ContactUs",
+          "normalized_value": "https://games2egypt.com/Web/Home/ContactUs",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 6,
+      "merchant_links": []
+    },
+    {
+      "id": "0f9b3f71-e2b2-41fb-b834-61ad2375282c",
+      "canonical_name": "Games 2 Egypt",
+      "normalized_name": "games 2 egypt",
+      "category": "Gaming retail & console store",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.8,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:29:11.738158+00:00",
+      "updated_at": "2026-08-24T04:32:05.334690+00:00",
+      "dependent_counts": {
+        "claims": 13,
+        "evidence": 16,
+        "merchant_aliases": 8,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 17,
+        "verification_tasks": 4
+      },
+      "aliases": [
+        {
+          "alias": "Games 2 All",
+          "normalized_alias": "games 2 all"
+        },
+        {
+          "alias": "Games 2 Egypt",
+          "normalized_alias": "games 2 egypt"
+        },
+        {
+          "alias": "Games 2 Egypt for Video Games & Toys",
+          "normalized_alias": "games 2 egypt for video games toys"
+        },
+        {
+          "alias": "Games 2 Egypt - G2E",
+          "normalized_alias": "games 2 egypt g2e"
+        },
+        {
+          "alias": "Games 2 Egypt (جيمز تو إيجيبت)",
+          "normalized_alias": "games 2 egypt جيمز تو إيجيبت"
+        },
+        {
+          "alias": "Games2Egypt",
+          "normalized_alias": "games2egypt"
+        },
+        {
+          "alias": "جيمز تو إيجيبت",
+          "normalized_alias": "جيمز تو إيجيبت"
+        },
+        {
+          "alias": "جيمز تو ايجيبت",
+          "normalized_alias": "جيمز تو ايجيبت"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "5 Hadayek Al Ahram Street, El Remaya, Haram, Giza; Mohandessin (Syria St); Mall of Arabia, 6th of October; Maadi; Citystars",
+          "normalized_value": "5 hadayek al ahram street, el remaya, haram, giza; mohandessin (syria st); mall of arabia, 6th of october; maadi; citystars",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Bostan Mall 2, New Cairo, Cairo",
+          "normalized_value": "bostan mall 2, new cairo, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "City Stars Mall, Nasr City, Cairo",
+          "normalized_value": "city stars mall, nasr city, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Green Park Mall, 26th of July Corridor, 6th of October, Giza",
+          "normalized_value": "green park mall, 26th of july corridor, 6th of october, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Maadi Branch, Cairo",
+          "normalized_value": "maadi branch, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Point 90 Mall، التجمع الخامس، القاهرة الجديدة",
+          "normalized_value": "point 90 mall، التجمع الخامس، القاهرة الجديدة",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "أمريكانا بلازا، الشيخ زايد، الجيزة",
+          "normalized_value": "أمريكانا بلازا، الشيخ زايد، الجيزة",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "المعادي، القاهرة",
+          "normalized_value": "المعادي، القاهرة",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "المهندسين، الجيزة",
+          "normalized_value": "المهندسين، الجيزة",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "سيتي ستارز، مدينة نصر، القاهرة",
+          "normalized_value": "سيتي ستارز، مدينة نصر، القاهرة",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "سيتي سنتر الإسكندرية",
+          "normalized_value": "سيتي سنتر الإسكندرية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "email",
+          "value": "contactus@games2egypt.com",
+          "normalized_value": "contactus@games2egypt.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/Games2Egypt/",
+          "normalized_value": "https://facebook.com/Games2Egypt",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/games2egypt/",
+          "normalized_value": "https://facebook.com/games2egypt",
+          "confidence": 0.7
+        },
+        {
+          "kind": "instagram",
+          "value": "https://www.instagram.com/games2egypt/",
+          "normalized_value": "https://instagram.com/games2egypt",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://www.games2egypt.com",
+          "normalized_value": "https://games2egypt.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://www.games2egypt.com/ar/web/staticpages/tradeorsellservice/",
+          "normalized_value": "https://games2egypt.com/ar/web/staticpages/tradeorsellservice",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 9,
+      "merchant_links": [
+        {
+          "id": "bffa69ca-0d53-457a-8de4-09f8689e70fe",
+          "left_merchant_id": "0f9b3f71-e2b2-41fb-b834-61ad2375282c",
+          "right_merchant_id": "4fa441a7-25b7-4710-9da0-689241c9fd2d",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:29:12.155658+00:00"
+        },
+        {
+          "id": "bccd390f-9b1f-4db0-a64b-565fdbcb85cb",
+          "left_merchant_id": "0f9b3f71-e2b2-41fb-b834-61ad2375282c",
+          "right_merchant_id": "a518feda-64f8-48f9-bf98-c77d73c85bc7",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:14:29.259159+00:00"
+        }
+      ]
+    },
+    {
+      "id": "e6c3d479-b106-4cdb-a700-15e752033255",
+      "canonical_name": "Raya Shop",
+      "normalized_name": "raya",
+      "category": "Consumer Electronics & Mobile Devices Retailer",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.9,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:28:02.773363+00:00",
+      "updated_at": "2026-08-25T11:35:06.340727+00:00",
+      "dependent_counts": {
+        "claims": 10,
+        "evidence": 10,
+        "merchant_aliases": 15,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 29,
+        "verification_tasks": 0
+      },
+      "aliases": [
+        {
+          "alias": "Raya Shop",
+          "normalized_alias": "raya"
+        },
+        {
+          "alias": "Raya Care",
+          "normalized_alias": "raya care"
+        },
+        {
+          "alias": "Raya Customer Experience",
+          "normalized_alias": "raya customer experience"
+        },
+        {
+          "alias": "Raya Holding",
+          "normalized_alias": "raya holding"
+        },
+        {
+          "alias": "Raya Mega Store Assiut",
+          "normalized_alias": "raya mega assiut"
+        },
+        {
+          "alias": "Raya Electronics / Raya Care (راية للإلكترونيات وخدمات الصيانة)",
+          "normalized_alias": "raya raya care راية للإلكترونيات وخدمات الصيانة"
+        },
+        {
+          "alias": "Raya Smart Care",
+          "normalized_alias": "raya smart care"
+        },
+        {
+          "alias": "Raya Trade",
+          "normalized_alias": "raya trade"
+        },
+        {
+          "alias": "Raya Trade & Distribution",
+          "normalized_alias": "raya trade distribution"
+        },
+        {
+          "alias": "راية",
+          "normalized_alias": "راية"
+        },
+        {
+          "alias": "راية سمارت كير",
+          "normalized_alias": "راية سمارت كير"
+        },
+        {
+          "alias": "راية شوب",
+          "normalized_alias": "راية شوب"
+        },
+        {
+          "alias": "راية كير",
+          "normalized_alias": "راية كير"
+        },
+        {
+          "alias": "راية للإلكترونيات",
+          "normalized_alias": "راية للإلكترونيات"
+        },
+        {
+          "alias": "شركة راية للتجارة والتوزيع",
+          "normalized_alias": "راية والتوزيع"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "22 El-Gomhoureya St., El-Nawras Tower, in front of Mansoura University, Mansoura, Dakahlia",
+          "normalized_value": "22 el-gomhoureya st., el-nawras tower, in front of mansoura university, mansoura, dakahlia",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "26th of July Corridor, Smart Village, 6th of October City, Giza",
+          "normalized_value": "26th of july corridor, smart village, 6th of october city, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "65 Moharam Bek St, Moharam Bek, Alexandria",
+          "normalized_value": "65 moharam bek st, moharam bek, alexandria",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "71 شارع الجمهورية، أمام معامل البرج ومعامل ألفا، بالقرب من إشارة المساحة، حي شرق، أسيوط",
+          "normalized_value": "71 شارع الجمهورية، أمام معامل البرج ومعامل ألفا، بالقرب من إشارة المساحة، حي شرق، أسيوط",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Branches across Greater Cairo including Heliopolis, Nasr City, Downtown, Mohandessin, and Maadi",
+          "normalized_value": "branches across greater cairo including heliopolis, nasr city, downtown, mohandessin, and maadi",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Dokki Branch, 40 Mossadak St, Dokki, Giza",
+          "normalized_value": "dokki branch, 40 mossadak st, dokki, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "El Agami Branch, Alexandria",
+          "normalized_value": "el agami branch, alexandria",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Haram Branch, 128 El Haram St, Giza",
+          "normalized_value": "haram branch, 128 el haram st, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Headquarters: Smart Village, Giza",
+          "normalized_value": "headquarters: smart village, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Mega Store Faisal, Faisal St, Giza",
+          "normalized_value": "mega store faisal, faisal st, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Multiple retail outlets across Mohandessin, Dokki, Faisal, Haram, and 6th of October, Giza",
+          "normalized_value": "multiple retail outlets across mohandessin, dokki, faisal, haram, and 6th of october, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Pharmacists Towers, Masjed Hatem St, Smouha, Alexandria",
+          "normalized_value": "pharmacists towers, masjed hatem st, smouha, alexandria",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Raya Holding HQ, 6th of October / Smart Village, Giza, Egypt (Serving nationwide delivery & repair intake including Port Said)",
+          "normalized_value": "raya holding hq, 6th of october / smart village, giza, egypt (serving nationwide delivery & repair intake including port said)",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Raya Holding HQ, 6th of October City, Giza",
+          "normalized_value": "raya holding hq, 6th of october city, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Raya Street, Tourist Zone, 6th of October City, Giza, Postal Code 12568",
+          "normalized_value": "raya street, tourist zone, 6th of october city, giza, postal code 12568",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Smart Village, 6th of October, Giza, Egypt (Nationwide network of retail stores)",
+          "normalized_value": "smart village, 6th of october, giza, egypt (nationwide network of retail stores)",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Smart Village, Km 28 Cairo-Alexandria Desert Road, Giza / Branches in Cairo & Giza",
+          "normalized_value": "smart village, km 28 cairo-alexandria desert road, giza / branches in cairo & giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "القرية الذكية، مبنى راية، طريق القاهرة الإسكندرية الصحراوي، 6 أكتوبر، الجيزة",
+          "normalized_value": "القرية الذكية، مبنى راية، طريق القاهرة الإسكندرية الصحراوي، 6 أكتوبر، الجيزة",
+          "confidence": 0.35
+        },
+        {
+          "kind": "commercial_register",
+          "value": "FRA Consumer Finance License: 3/2020",
+          "normalized_value": "fra consumer finance license: 3/2020",
+          "confidence": 0.7
+        },
+        {
+          "kind": "commercial_register",
+          "value": "Tax Reg: 200-196-375",
+          "normalized_value": "tax reg: 200-196-375",
+          "confidence": 0.7
+        },
+        {
+          "kind": "commercial_register",
+          "value": "Tax Registration: 200-196-375",
+          "normalized_value": "tax registration: 200-196-375",
+          "confidence": 0.7
+        },
+        {
+          "kind": "email",
+          "value": "info@rayashop.com",
+          "normalized_value": "info@rayashop.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "email",
+          "value": "support@rayashop.com",
+          "normalized_value": "support@rayashop.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/RayaShop",
+          "normalized_value": "https://facebook.com/RayaShop",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/RayaShopFans",
+          "normalized_value": "https://facebook.com/RayaShopFans",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://www.rayacorp.com",
+          "normalized_value": "https://rayacorp.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://www.rayashop.com",
+          "normalized_value": "https://rayashop.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://rayasmartcare.com",
+          "normalized_value": "https://rayasmartcare.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "whatsapp",
+          "value": "01281661880",
+          "normalized_value": "+201281661880",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 6,
+      "merchant_links": [
+        {
+          "id": "312cd122-63ce-4056-85b5-88327df00ebf",
+          "left_merchant_id": "76fa120c-d0c5-489c-a3c2-a5c33d8678a6",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:16:08.813229+00:00"
+        },
+        {
+          "id": "85244f51-4dd9-489d-b650-c0a5197a8130",
+          "left_merchant_id": "bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.094797+00:00"
+        },
+        {
+          "id": "e622894a-4210-4c19-aa40-749085009c1b",
+          "left_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same facebook identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:30:29.265432+00:00"
+        },
+        {
+          "id": "f574ace2-c0fa-49a8-a9fd-225ef7915b96",
+          "left_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "right_merchant_id": "fc74448d-b496-4658-83e4-c938fa9413bf",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:16:23.360569+00:00"
+        },
+        {
+          "id": "813783d7-92d1-4180-85ce-b896756c13ad",
+          "left_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "name_identifier_conflict",
+          "confidence": 0.3,
+          "rationale": "name/city matched but candidate identifiers point elsewhere",
+          "created_at": "2026-08-23T21:30:29.268607+00:00"
+        }
+      ]
+    },
+    {
+      "id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+      "canonical_name": "Raya Shop",
+      "normalized_name": "raya",
+      "category": "Mobile Phones, Electronics & Appliances Retailer",
+      "city": "Giza (Dokki / Mohandessin / Haram / Faisal)",
+      "governorate": "Giza",
+      "identity_confidence": 0.55,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:32:46.281094+00:00",
+      "updated_at": "2026-08-25T09:17:42.851202+00:00",
+      "dependent_counts": {
+        "claims": 10,
+        "evidence": 19,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 8,
+        "verification_tasks": 5
+      },
+      "aliases": [
+        {
+          "alias": "Raya Shop",
+          "normalized_alias": "raya"
+        },
+        {
+          "alias": "Raya Distribution",
+          "normalized_alias": "raya distribution"
+        },
+        {
+          "alias": "Raya Mega Store",
+          "normalized_alias": "raya mega"
+        },
+        {
+          "alias": "راية شوب",
+          "normalized_alias": "راية شوب"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "14 Mossadak St, Dokki, Giza Governorate, Egypt",
+          "normalized_value": "14 mossadak st, dokki, giza governorate, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "166 Al Haram St, near Al Areesh St, Haram, Giza Governorate, Egypt",
+          "normalized_value": "166 al haram st, near al areesh st, haram, giza governorate, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "411 King Faisal St (Tamimy Station), Faisal, Giza Governorate, Egypt",
+          "normalized_value": "411 king faisal st (tamimy station), faisal, giza governorate, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "44 Mossadak St, Dokki, Giza Governorate, Egypt",
+          "normalized_value": "44 mossadak st, dokki, giza governorate, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "5 Fawakeh St (near Mustafa Mahmoud Mosque), Mohandessin, Giza Governorate, Egypt",
+          "normalized_value": "5 fawakeh st (near mustafa mahmoud mosque), mohandessin, giza governorate, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Mall of Arabia (Gate 22/23), 6th of October City, Giza Governorate, Egypt",
+          "normalized_value": "mall of arabia (gate 22/23), 6th of october city, giza governorate, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/RayaShopOfficial/",
+          "normalized_value": "https://facebook.com/RayaShopOfficial",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://www.rayashop.com/ar/",
+          "normalized_value": "https://rayashop.com/ar",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 18,
+      "merchant_links": [
+        {
+          "id": "f73eef2d-7568-4c60-b419-635a5a07630e",
+          "left_merchant_id": "76fa120c-d0c5-489c-a3c2-a5c33d8678a6",
+          "right_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same facebook identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:16:08.815112+00:00"
+        },
+        {
+          "id": "a8d416a5-6a9d-45e3-b1c6-b60fbfd1eafc",
+          "left_merchant_id": "bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7",
+          "right_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same facebook identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.095795+00:00"
+        },
+        {
+          "id": "e622894a-4210-4c19-aa40-749085009c1b",
+          "left_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same facebook identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:30:29.265432+00:00"
+        },
+        {
+          "id": "228c844b-2564-45c7-be8c-467938007e90",
+          "left_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "right_merchant_id": "fc74448d-b496-4658-83e4-c938fa9413bf",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same facebook identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:16:23.362614+00:00"
+        },
+        {
+          "id": "813783d7-92d1-4180-85ce-b896756c13ad",
+          "left_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "name_identifier_conflict",
+          "confidence": 0.3,
+          "rationale": "name/city matched but candidate identifiers point elsewhere",
+          "created_at": "2026-08-23T21:30:29.268607+00:00"
+        }
+      ]
+    },
+    {
+      "id": "bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7",
+      "canonical_name": "Raya Shop (Raya Trade & Distribution)",
+      "normalized_name": "raya raya trade distribution",
+      "category": "Consumer Electronics / Home Appliances / Mobile Retail",
+      "city": "6th of October",
+      "governorate": "Giza",
+      "identity_confidence": 0.7,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:58:17.086823+00:00",
+      "updated_at": "2026-08-26T10:10:14.304318+00:00",
+      "dependent_counts": {
+        "claims": 4,
+        "evidence": 9,
+        "merchant_aliases": 6,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 3,
+        "verification_tasks": 4
+      },
+      "aliases": [
+        {
+          "alias": "Raya Shop",
+          "normalized_alias": "raya"
+        },
+        {
+          "alias": "Raya Holding",
+          "normalized_alias": "raya holding"
+        },
+        {
+          "alias": "Raya Shop (Raya Trade & Distribution)",
+          "normalized_alias": "raya raya trade distribution"
+        },
+        {
+          "alias": "Raya Trade",
+          "normalized_alias": "raya trade"
+        },
+        {
+          "alias": "راية للتجارة",
+          "normalized_alias": "راية"
+        },
+        {
+          "alias": "راية شوب",
+          "normalized_alias": "راية شوب"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "El Lasilky St, New Maadi, Cairo",
+          "normalized_value": "el lasilky st, new maadi, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Smart Village, KM 28 Cairo-Alexandria Desert Road, 6th of October, Giza",
+          "normalized_value": "smart village, km 28 cairo-alexandria desert road, 6th of october, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "commercial_register",
+          "value": "FRA Consumer Finance License No. 3 of 2020",
+          "normalized_value": "fra consumer finance license no. 3 of 2020",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 7,
+      "merchant_links": [
+        {
+          "id": "b9ec3683-95df-4f84-8b55-d372d1ec282f",
+          "left_merchant_id": "bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7",
+          "right_merchant_id": "c25a5a60-e885-4916-85aa-9618d9097d18",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.097943+00:00"
+        },
+        {
+          "id": "a8d416a5-6a9d-45e3-b1c6-b60fbfd1eafc",
+          "left_merchant_id": "bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7",
+          "right_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same facebook identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.095795+00:00"
+        },
+        {
+          "id": "85244f51-4dd9-489d-b650-c0a5197a8130",
+          "left_merchant_id": "bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.094797+00:00"
+        }
+      ]
+    },
+    {
+      "id": "76fa120c-d0c5-489c-a3c2-a5c33d8678a6",
+      "canonical_name": "Raya Shop (راية شوب)",
+      "normalized_name": "raya راية شوب",
+      "category": "Consumer Electronics, Mobiles & Home Appliances Retailer",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.85,
+      "state": "MIXED_REPUTATION",
+      "first_seen_round": 3,
+      "created_at": "2026-08-23T21:16:08.803813+00:00",
+      "updated_at": "2026-08-24T10:15:07.131743+00:00",
+      "dependent_counts": {
+        "claims": 15,
+        "evidence": 16,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 3,
+        "verification_tasks": 4
+      },
+      "aliases": [
+        {
+          "alias": "Raya",
+          "normalized_alias": "raya"
+        },
+        {
+          "alias": "Raya Mega Store",
+          "normalized_alias": "raya mega"
+        },
+        {
+          "alias": "Raya Shop (راية شوب)",
+          "normalized_alias": "raya راية شوب"
+        },
+        {
+          "alias": "راية للتجارة والتوزيع",
+          "normalized_alias": "راية والتوزيع"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "65 شارع محرم بك، بجوار مكتب بريد محرم بك، الإسكندرية",
+          "normalized_value": "65 شارع محرم بك، بجوار مكتب بريد محرم بك، الإسكندرية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "696 طريق الحرية، تقاطع شارع شعراوي، لوران، الإسكندرية",
+          "normalized_value": "696 طريق الحرية، تقاطع شارع شعراوي، لوران، الإسكندرية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "طريق إسكندرية مطروح، العجمي، الإسكندرية",
+          "normalized_value": "طريق إسكندرية مطروح، العجمي، الإسكندرية",
+          "confidence": 0.35
+        }
+      ],
+      "evidence_source_count": 13,
+      "merchant_links": [
+        {
+          "id": "f73eef2d-7568-4c60-b419-635a5a07630e",
+          "left_merchant_id": "76fa120c-d0c5-489c-a3c2-a5c33d8678a6",
+          "right_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same facebook identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:16:08.815112+00:00"
+        },
+        {
+          "id": "312cd122-63ce-4056-85b5-88327df00ebf",
+          "left_merchant_id": "76fa120c-d0c5-489c-a3c2-a5c33d8678a6",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:16:08.813229+00:00"
+        }
+      ]
+    },
+    {
+      "id": "fc74448d-b496-4658-83e4-c938fa9413bf",
+      "canonical_name": "Raya Shop",
+      "normalized_name": "raya",
+      "category": "Electronics, Laptops & Mobile Retail",
+      "city": "6th of October",
+      "governorate": "Giza",
+      "identity_confidence": 0.75,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 3,
+      "created_at": "2026-08-23T21:16:23.349096+00:00",
+      "updated_at": "2026-08-25T13:15:05.255633+00:00",
+      "dependent_counts": {
+        "claims": 1,
+        "evidence": 1,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 6,
+        "verification_tasks": 0
+      },
+      "aliases": [
+        {
+          "alias": "Raya Shop",
+          "normalized_alias": "raya"
+        },
+        {
+          "alias": "Raya Holding for Financial Investments",
+          "normalized_alias": "raya holding for financial investments"
+        },
+        {
+          "alias": "راية شوب",
+          "normalized_alias": "راية شوب"
+        },
+        {
+          "alias": "راية للتجارة والتوزيع",
+          "normalized_alias": "راية والتوزيع"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "Arkan Plaza Branch: Sheikh Zayed, Giza",
+          "normalized_value": "arkan plaza branch: sheikh zayed, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Dokki Branch: Mosaddak St., Dokki, Giza",
+          "normalized_value": "dokki branch: mosaddak st., dokki, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Mall of Egypt: Wahat Road, 6th of October, Giza",
+          "normalized_value": "mall of egypt: wahat road, 6th of october, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Mohandessin Branch: Gamiat El Dewal El Arabia St., Giza",
+          "normalized_value": "mohandessin branch: gamiat el dewal el arabia st., giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Raya Holding HQ: 26th of July Corridor, Smart Village, Giza",
+          "normalized_value": "raya holding hq: 26th of july corridor, smart village, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "commercial_register",
+          "value": "Consumer Finance License No. 3 of 2020",
+          "normalized_value": "consumer finance license no. 3 of 2020",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 1,
+      "merchant_links": [
+        {
+          "id": "228c844b-2564-45c7-be8c-467938007e90",
+          "left_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "right_merchant_id": "fc74448d-b496-4658-83e4-c938fa9413bf",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same facebook identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:16:23.362614+00:00"
+        },
+        {
+          "id": "f574ace2-c0fa-49a8-a9fd-225ef7915b96",
+          "left_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "right_merchant_id": "fc74448d-b496-4658-83e4-c938fa9413bf",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:16:23.360569+00:00"
+        }
+      ]
+    },
+    {
+      "id": "05abc4eb-760c-4842-a467-716d52b1bd04",
+      "canonical_name": "Shaheen Center",
+      "normalized_name": "shaheen center",
+      "category": "Home Appliances, Electronics & Household Goods Retail Chain",
+      "city": "Giza",
+      "governorate": "Giza",
+      "identity_confidence": 0.7,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:41:07.679079+00:00",
+      "updated_at": "2026-08-26T10:10:14.103833+00:00",
+      "dependent_counts": {
+        "claims": 2,
+        "evidence": 14,
+        "merchant_aliases": 3,
+        "merchant_analyses": 3,
+        "merchant_identifiers": 7,
+        "verification_tasks": 38
+      },
+      "aliases": [
+        {
+          "alias": "Shaheen Center",
+          "normalized_alias": "shaheen center"
+        },
+        {
+          "alias": "Shaheen Center for Electrical Appliances",
+          "normalized_alias": "shaheen center for electrical appliances"
+        },
+        {
+          "alias": "سنتر شاهين",
+          "normalized_alias": "سنتر شاهين"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "Faisal, Giza / Camp Shezar, Alexandria / Shubra, Cairo / Helwan, Cairo",
+          "normalized_value": "faisal, giza / camp shezar, alexandria / shubra, cairo / helwan, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "commercial_register",
+          "value": "Tax ID: 709-493-425",
+          "normalized_value": "tax id: 709-493-425",
+          "confidence": 0.7
+        },
+        {
+          "kind": "commercial_register",
+          "value": "Tax Registration: 674-798-413",
+          "normalized_value": "tax registration: 674-798-413",
+          "confidence": 0.7
+        },
+        {
+          "kind": "email",
+          "value": "info@shaheeneg.com",
+          "normalized_value": "info@shaheeneg.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/ShaheenCenter",
+          "normalized_value": "https://facebook.com/ShaheenCenter",
+          "confidence": 0.7
+        },
+        {
+          "kind": "instagram",
+          "value": "https://www.instagram.com/shaheencenter",
+          "normalized_value": "https://instagram.com/shaheencenter",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://shaheeneg.com",
+          "normalized_value": "https://shaheeneg.com",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 9,
+      "merchant_links": []
+    },
+    {
+      "id": "7d17483f-507c-4171-8b78-9247687ec489",
+      "canonical_name": "Shaheen Center",
+      "normalized_name": "shaheen center",
+      "category": "Electrical Appliances & Home Essentials",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.82,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:38:43.727658+00:00",
+      "updated_at": "2026-08-24T10:27:09.916401+00:00",
+      "dependent_counts": {
+        "claims": 2,
+        "evidence": 2,
+        "merchant_aliases": 5,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 11,
+        "verification_tasks": 0
+      },
+      "aliases": [
+        {
+          "alias": "Shaheen Stores",
+          "normalized_alias": "shaheen"
+        },
+        {
+          "alias": "Shaheen Center",
+          "normalized_alias": "shaheen center"
+        },
+        {
+          "alias": "سنتر شاهين",
+          "normalized_alias": "سنتر شاهين"
+        },
+        {
+          "alias": "مركز شاهين للأجهزة الكهربائية",
+          "normalized_alias": "مركز شاهين للأجهزة الكهربائية"
+        },
+        {
+          "alias": "مركز شاهين للأجهزة الكهربائية والمنزلية",
+          "normalized_alias": "مركز شاهين للأجهزة الكهربائية والمنزلية"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "10 Hassan El Maamoun St, Intersection of Mostafa El Nahhas, 8th District, Nasr City, Cairo",
+          "normalized_value": "10 hassan el maamoun st, intersection of mostafa el nahhas, 8th district, nasr city, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "104 Misr Helwan Agricultural Road, Dar El Salam, Cairo",
+          "normalized_value": "104 misr helwan agricultural road, dar el salam, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "31 El Sadd El Aaly St, Sayeda Zeinab, Cairo",
+          "normalized_value": "31 el sadd el aaly st, sayeda zeinab, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "41 Rayel St, Helwan, Cairo",
+          "normalized_value": "41 rayel st, helwan, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "94A Gesr El Suez St, Cairo",
+          "normalized_value": "94a gesr el suez st, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Cairo, Giza, Alexandria branches, Egypt",
+          "normalized_value": "cairo, giza, alexandria branches, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "email",
+          "value": "info@shaheen.center",
+          "normalized_value": "info@shaheen.center",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/shaheencenter",
+          "normalized_value": "https://facebook.com/shaheencenter",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://shaheen.center",
+          "normalized_value": "https://shaheen.center",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://shbabbek.com/show/181081",
+          "normalized_value": "https://shbabbek.com/show/181081",
+          "confidence": 0.7
+        },
+        {
+          "kind": "whatsapp",
+          "value": "01124065555",
+          "normalized_value": "+201124065555",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 2,
+      "merchant_links": []
+    },
+    {
+      "id": "038a190f-731e-4adf-8b80-723276ce3a3d",
+      "canonical_name": "CompuData Egypt",
+      "normalized_name": "compudata egypt",
+      "category": "Computer Hardware & Networking",
+      "city": "Heliopolis",
+      "governorate": "Cairo",
+      "identity_confidence": 0.8,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:43:27.539485+00:00",
+      "updated_at": "2026-08-24T03:53:14.965992+00:00",
+      "dependent_counts": {
+        "claims": 11,
+        "evidence": 16,
+        "merchant_aliases": 5,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 6,
+        "verification_tasks": 36
+      },
+      "aliases": [
+        {
+          "alias": "CompuData Egypt",
+          "normalized_alias": "compudata egypt"
+        },
+        {
+          "alias": "CompuData Sakhawey",
+          "normalized_alias": "compudata sakhawey"
+        },
+        {
+          "alias": "CompuData Souq El-Asr",
+          "normalized_alias": "compudata souq el asr"
+        },
+        {
+          "alias": "كمبيو داتا",
+          "normalized_alias": "كمبيو داتا"
+        },
+        {
+          "alias": "كمبيوداتا",
+          "normalized_alias": "كمبيوداتا"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "Al-Sakhawey Computer Mall, Roxy, Heliopolis, Cairo",
+          "normalized_value": "al-sakhawey computer mall, roxy, heliopolis, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Souq El-Asr Mall, 50 Khalifa El-Maamoun St., 1st Floor, Shop 103, Heliopolis, Cairo",
+          "normalized_value": "souq el-asr mall, 50 khalifa el-maamoun st., 1st floor, shop 103, heliopolis, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "email",
+          "value": "info@compudata.com.eg",
+          "normalized_value": "info@compudata.com.eg",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/compudataegypt/",
+          "normalized_value": "https://facebook.com/compudataegypt",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "+201001718191",
+          "normalized_value": "+201001718191",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "+20222584103",
+          "normalized_value": "+20222584103",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 12,
+      "merchant_links": []
+    },
+    {
+      "id": "31492070-416e-4307-bbbb-4915b262950e",
+      "canonical_name": "CompuData",
+      "normalized_name": "compudata",
+      "category": "Gaming PC, Hardware & Computer Components",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.3,
+      "state": "IDENTITY_UNCERTAIN",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:38:43.743051+00:00",
+      "updated_at": "2026-08-24T06:15:28.659592+00:00",
+      "dependent_counts": {
+        "claims": 2,
+        "evidence": 9,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 4,
+        "verification_tasks": 4
+      },
+      "aliases": [
+        {
+          "alias": "Compu Data Center",
+          "normalized_alias": "compu data center"
+        },
+        {
+          "alias": "CompuData",
+          "normalized_alias": "compudata"
+        },
+        {
+          "alias": "CompuData Egypt",
+          "normalized_alias": "compudata egypt"
+        },
+        {
+          "alias": "كمبيوداتا",
+          "normalized_alias": "كمبيوداتا"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "7 El Sakhy St., 3rd Floor, Office 304, Heliopolis, Cairo, Egypt",
+          "normalized_value": "7 el sakhy st., 3rd floor, office 304, heliopolis, cairo, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Shop 103 Souq El Asr Mall, Heliopolis, Cairo, Egypt",
+          "normalized_value": "shop 103 souq el asr mall, heliopolis, cairo, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Shop 5B El Sakhy Computer Mall, Heliopolis, Cairo, Egypt",
+          "normalized_value": "shop 5b el sakhy computer mall, heliopolis, cairo, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "website",
+          "value": "https://yellowpages.com.eg/ar/profile/%D9%85%D8%AC%D9%85%D9%88%D8%B9%D8%A9-%D8%A7%D9%84%D8%B1%D9%88%D8%A7%D8%AF/167806",
+          "normalized_value": "https://yellowpages.com.eg/ar/profile/%D9%85%D8%AC%D9%85%D9%88%D8%B9%D8%A9-%D8%A7%D9%84%D8%B1%D9%88%D8%A7%D8%AF/167806",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 6,
+      "merchant_links": []
+    },
+    {
+      "id": "93d4fd27-adac-4157-a9a2-c0a0423ecd8e",
+      "canonical_name": "CompuData Center",
+      "normalized_name": "compudata center",
+      "category": "Computer Hardware & PC Components Retailer",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.35,
+      "state": "IDENTITY_UNCERTAIN",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T21:02:26.005817+00:00",
+      "updated_at": "2026-08-24T11:44:40.259677+00:00",
+      "dependent_counts": {
+        "claims": 2,
+        "evidence": 21,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 2,
+        "verification_tasks": 4
+      },
+      "aliases": [
+        {
+          "alias": "CompuData",
+          "normalized_alias": "compudata"
+        },
+        {
+          "alias": "CompuData Center",
+          "normalized_alias": "compudata center"
+        },
+        {
+          "alias": "كمبيوداتا سنتر",
+          "normalized_alias": "كمبيوداتا سنتر"
+        },
+        {
+          "alias": "كمبيوداتا مصر الجديدة",
+          "normalized_alias": "كمبيوداتا مصر الجديدة"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "El-Sakhawy Mall, Khalifa El-Maamoun St, Roxy, Heliopolis, Cairo, Egypt",
+          "normalized_value": "el-sakhawy mall, khalifa el-maamoun st, roxy, heliopolis, cairo, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/CompuDataCenter/",
+          "normalized_value": "https://facebook.com/CompuDataCenter",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 14,
+      "merchant_links": []
+    },
+    {
+      "id": "1687538d-eddd-4613-9761-59643d8a9e33",
+      "canonical_name": "Compu Fast (كومبيو فاست)",
+      "normalized_name": "compu fast كومبيو فاست",
+      "category": "Computer Hardware & Gaming Peripherals Retailer",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.62,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 3,
+      "created_at": "2026-08-23T21:16:08.639617+00:00",
+      "updated_at": "2026-08-24T04:40:43.380939+00:00",
+      "dependent_counts": {
+        "claims": 2,
+        "evidence": 9,
+        "merchant_aliases": 3,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 4,
+        "verification_tasks": 6
+      },
+      "aliases": [
+        {
+          "alias": "Compu Fast Alexandria",
+          "normalized_alias": "compu fast alexandria"
+        },
+        {
+          "alias": "Compu Fast (كومبيو فاست)",
+          "normalized_alias": "compu fast كومبيو فاست"
+        },
+        {
+          "alias": "كومبيوفاست لمكونات الكمبيوتر",
+          "normalized_alias": "كومبيوفاست لمكونات الكمبيوتر"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "34 شارع محمود العيسوي، سيدي بشر بحري، كمبيوتر مول، الإسكندرية",
+          "normalized_value": "34 شارع محمود العيسوي، سيدي بشر بحري، كمبيوتر مول، الإسكندرية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "شارع سوريا، رشدي، الإسكندرية",
+          "normalized_value": "شارع سوريا، رشدي، الإسكندرية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/compufastegypt/",
+          "normalized_value": "https://facebook.com/compufastegypt",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://compu-fast.com",
+          "normalized_value": "https://compu-fast.com",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 5,
+      "merchant_links": []
+    },
+    {
+      "id": "e266ad28-7e04-4177-9b4e-1975e46fea07",
+      "canonical_name": "Compu Fast",
+      "normalized_name": "compu fast",
+      "category": "mobile_laptop",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.15,
+      "state": "IDENTITY_UNCERTAIN",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:31:51.945318+00:00",
+      "updated_at": "2026-08-25T11:17:33.353954+00:00",
+      "dependent_counts": {
+        "claims": 2,
+        "evidence": 13,
+        "merchant_aliases": 3,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 1,
+        "verification_tasks": 3
+      },
+      "aliases": [
+        {
+          "alias": "Compu Fast",
+          "normalized_alias": "compu fast"
+        },
+        {
+          "alias": "Compu Fast Alexandria",
+          "normalized_alias": "compu fast alexandria"
+        },
+        {
+          "alias": "كمبيو فاست",
+          "normalized_alias": "كمبيو فاست"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "El Deeb Mall, 1 Souria St. / Abou Qir St., 5th Floor, Shop 26, Roushdy, Alexandria, Egypt",
+          "normalized_value": "el deeb mall, 1 souria st. / abou qir st., 5th floor, shop 26, roushdy, alexandria, egypt",
+          "confidence": 0.35
+        }
+      ],
+      "evidence_source_count": 8,
+      "merchant_links": []
+    },
+    {
+      "id": "d3c830bb-4339-41ed-a636-1c7710ff9825",
+      "canonical_name": "Compu Science",
+      "normalized_name": "compu science",
+      "category": "IT Hardware & Laptop Retailer",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.9,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:28:02.745656+00:00",
+      "updated_at": "2026-08-25T10:01:53.971148+00:00",
+      "dependent_counts": {
+        "claims": 8,
+        "evidence": 15,
+        "merchant_aliases": 9,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 21,
+        "verification_tasks": 4
+      },
+      "aliases": [
+        {
+          "alias": "Compu Science",
+          "normalized_alias": "compu science"
+        },
+        {
+          "alias": "Compu Science Egypt",
+          "normalized_alias": "compu science egypt"
+        },
+        {
+          "alias": "Compu Science (كمبيوساينس لتكنولوجيا المعلومات)",
+          "normalized_alias": "compu science كمبيوساينس لتكنولوجيا المعلومات"
+        },
+        {
+          "alias": "Compuscience",
+          "normalized_alias": "compuscience"
+        },
+        {
+          "alias": "CompuScience Alexandria (كمبيوساينس)",
+          "normalized_alias": "compuscience alexandria كمبيوساينس"
+        },
+        {
+          "alias": "Compuscience Egypt",
+          "normalized_alias": "compuscience egypt"
+        },
+        {
+          "alias": "CompuScience (كمبيوساينس للأنظمة وتكنولوجيا المعلومات)",
+          "normalized_alias": "compuscience كمبيوساينس للأنظمة وتكنولوجيا المعلومات"
+        },
+        {
+          "alias": "كمبيو ساينس",
+          "normalized_alias": "كمبيو ساينس"
+        },
+        {
+          "alias": "كمبيوساينس",
+          "normalized_alias": "كمبيوساينس"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "50 Khalifa El Maamoun St, Souq El Asr Mall, Heliopolis, Cairo, Egypt",
+          "normalized_value": "50 khalifa el maamoun st, souq el asr mall, heliopolis, cairo, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Compu City Mall, Gameat El Dowal Al Arabia St, Mohandessin, Giza, Egypt",
+          "normalized_value": "compu city mall, gameat el dowal al arabia st, mohandessin, giza, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "E-Zone Mall, Intersection of Atteya El-Sawalhy St. and Samir Farhat St., End of Makram Ebeid, 8th District (beside Central Nasr City 2), Nasr City, Cairo, Egypt",
+          "normalized_value": "e-zone mall, intersection of atteya el-sawalhy st. and samir farhat st., end of makram ebeid, 8th district (beside central nasr city 2), nasr city, cairo, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "El Sakhawy Mall, Roxy, Heliopolis, Cairo, Egypt",
+          "normalized_value": "el sakhawy mall, roxy, heliopolis, cairo, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "El-Sakhy Computer Mall, Roxy, Heliopolis, Cairo",
+          "normalized_value": "el-sakhy computer mall, roxy, heliopolis, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Zahran Mall, Shop A25, 31 Victor Emmanuel Street, Smouha, Alexandria, Egypt",
+          "normalized_value": "zahran mall, shop a25, 31 victor emmanuel street, smouha, alexandria, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "زهران مول، 31 شارع فيكتور عمانويل، محل A25، سموحة، الإسكندرية",
+          "normalized_value": "زهران مول، 31 شارع فيكتور عمانويل، محل a25، سموحة، الإسكندرية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "مركز البستان التجاري، باب اللوق، وسط البلد، القاهرة",
+          "normalized_value": "مركز البستان التجاري، باب اللوق، وسط البلد، القاهرة",
+          "confidence": 0.35
+        },
+        {
+          "kind": "email",
+          "value": "info@compuscience.com.eg",
+          "normalized_value": "info@compuscience.com.eg",
+          "confidence": 0.7
+        },
+        {
+          "kind": "email",
+          "value": "sales@compuscience.com.eg",
+          "normalized_value": "sales@compuscience.com.eg",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/CompuScienceGroup/",
+          "normalized_value": "https://facebook.com/CompuScienceGroup",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/Compuscience.Egypt",
+          "normalized_value": "https://facebook.com/Compuscience.Egypt",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/compuscience/",
+          "normalized_value": "https://facebook.com/compuscience",
+          "confidence": 0.7
+        },
+        {
+          "kind": "instagram",
+          "value": "https://www.instagram.com/compuscience/",
+          "normalized_value": "https://instagram.com/compuscience",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "01026002008",
+          "normalized_value": "+201026002008",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "+2034248222",
+          "normalized_value": "+202034248222",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "0222712231",
+          "normalized_value": "+20222712231",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "0224535300",
+          "normalized_value": "+20224535300",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://compuscience.com.eg",
+          "normalized_value": "https://compuscience.com.eg",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://compuscience.com.eg/en/stores?stores=1",
+          "normalized_value": "https://compuscience.com.eg/en/stores?stores=1",
+          "confidence": 0.7
+        },
+        {
+          "kind": "whatsapp",
+          "value": "01026002008",
+          "normalized_value": "+201026002008",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 10,
+      "merchant_links": []
+    },
+    {
+      "id": "804e0ef3-669d-4adb-9573-0f2229b954f2",
+      "canonical_name": "Compu Science (شركة كمبيو ساينس للكمبيوتر)",
+      "normalized_name": "compu science كمبيو ساينس للكمبيوتر",
+      "category": "Computer Hardware, Laptops & Components",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.8,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 3,
+      "created_at": "2026-08-23T21:23:54.784798+00:00",
+      "updated_at": "2026-08-24T10:49:10.359726+00:00",
+      "dependent_counts": {
+        "claims": 1,
+        "evidence": 1,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 5,
+        "verification_tasks": 0
+      },
+      "aliases": [
+        {
+          "alias": "Compu Science",
+          "normalized_alias": "compu science"
+        },
+        {
+          "alias": "Compu Science (شركة كمبيو ساينس للكمبيوتر)",
+          "normalized_alias": "compu science كمبيو ساينس للكمبيوتر"
+        },
+        {
+          "alias": "كمبيو ساينس",
+          "normalized_alias": "كمبيو ساينس"
+        },
+        {
+          "alias": "كمبيوساينس",
+          "normalized_alias": "كمبيوساينس"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "Compu City Mall, Gamiat El Dewal Al Arabia St., Mohandessin, Giza, Egypt",
+          "normalized_value": "compu city mall, gamiat el dewal al arabia st., mohandessin, giza, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Souq El Asr Mall, 50 Khalifa El Mamoon St., Ground Floor, Heliopolis, Cairo, Egypt",
+          "normalized_value": "souq el asr mall, 50 khalifa el mamoon st., ground floor, heliopolis, cairo, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Souq El Computer 1 (El Sakhawy Mall), 7 El Sakhawy St., Ground Floor, Mansheyet El Bakry, Heliopolis, Cairo, Egypt",
+          "normalized_value": "souq el computer 1 (el sakhawy mall), 7 el sakhawy st., ground floor, mansheyet el bakry, heliopolis, cairo, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "phone",
+          "value": "0224501063",
+          "normalized_value": "+20224501063",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "0224513004",
+          "normalized_value": "+20224513004",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 1,
+      "merchant_links": []
+    },
+    {
+      "id": "0d6413ef-542d-4c85-a9cd-b480bd0810b3",
+      "canonical_name": "Fixawy",
+      "normalized_name": "fixawy",
+      "category": "Home Tech, Appliances & Electronics Maintenance Platform",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.65,
+      "state": "REQUIRES_MANUAL_REVIEW",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:43:27.628292+00:00",
+      "updated_at": "2026-08-24T04:13:16.576205+00:00",
+      "dependent_counts": {
+        "claims": 30,
+        "evidence": 33,
+        "merchant_aliases": 4,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 8,
+        "verification_tasks": 31
+      },
+      "aliases": [
+        {
+          "alias": "Fixawy",
+          "normalized_alias": "fixawy"
+        },
+        {
+          "alias": "Fixawy Egypt",
+          "normalized_alias": "fixawy egypt"
+        },
+        {
+          "alias": "فيكساوي",
+          "normalized_alias": "فيكساوي"
+        },
+        {
+          "alias": "منصة فيكساوي",
+          "normalized_alias": "منصة فيكساوي"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "Nasr City, Cairo / Servicing Cairo, Giza, and Alexandria",
+          "normalized_value": "nasr city, cairo / servicing cairo, giza, and alexandria",
+          "confidence": 0.35
+        },
+        {
+          "kind": "email",
+          "value": "support@fixawy.com",
+          "normalized_value": "support@fixawy.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/fixawyapp/",
+          "normalized_value": "https://facebook.com/fixawyapp",
+          "confidence": 0.7
+        },
+        {
+          "kind": "instagram",
+          "value": "https://www.instagram.com/fixawy/",
+          "normalized_value": "https://instagram.com/fixawy",
+          "confidence": 0.7
+        },
+        {
+          "kind": "marketplace",
+          "value": "https://fixawy.com",
+          "normalized_value": "https://fixawy.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "+201222207333",
+          "normalized_value": "+201222207333",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://fixawy.com",
+          "normalized_value": "https://fixawy.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "whatsapp",
+          "value": "+201222207333",
+          "normalized_value": "+201222207333",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 4,
+      "merchant_links": []
+    },
+    {
+      "id": "06d03aac-055a-4733-a3eb-6874a544f3ea",
+      "canonical_name": "Fixawy (فيكساوي)",
+      "normalized_name": "fixawy فيكساوي",
+      "category": "Home Maintenance, Electrical & Appliance Repair Services Platform",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.6,
+      "state": "REQUIRES_MANUAL_REVIEW",
+      "first_seen_round": 3,
+      "created_at": "2026-08-23T21:16:08.855508+00:00",
+      "updated_at": "2026-08-24T04:01:54.544380+00:00",
+      "dependent_counts": {
+        "claims": 35,
+        "evidence": 52,
+        "merchant_aliases": 3,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 3,
+        "verification_tasks": 36
+      },
+      "aliases": [
+        {
+          "alias": "Fixawy Home Maintenance App",
+          "normalized_alias": "fixawy home maintenance app"
+        },
+        {
+          "alias": "Fixawy (فيكساوي)",
+          "normalized_alias": "fixawy فيكساوي"
+        },
+        {
+          "alias": "تطبيق فيكساوي",
+          "normalized_alias": "تطبيق فيكساوي"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "شارع الهانوفيل، العجمي، الإسكندرية",
+          "normalized_value": "شارع الهانوفيل، العجمي، الإسكندرية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/fixawy/",
+          "normalized_value": "https://facebook.com/fixawy",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://play.google.com/store/apps/details?id=com.fixawy.servicebooking",
+          "normalized_value": "https://play.google.com/store/apps/details?id=com.fixawy.servicebooking",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 20,
+      "merchant_links": []
+    },
+    {
+      "id": "e536f972-8d6c-4513-a099-4a5457fceecf",
+      "canonical_name": "Games Spot Egypt (جيمز سبوت)",
+      "normalized_name": "games spot egypt جيمز سبوت",
+      "category": "Video Game Store & Console Retailer",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.9,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:29:13.259206+00:00",
+      "updated_at": "2026-08-25T11:17:33.366779+00:00",
+      "dependent_counts": {
+        "claims": 8,
+        "evidence": 13,
+        "merchant_aliases": 6,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 8,
+        "verification_tasks": 4
+      },
+      "aliases": [
+        {
+          "alias": "Games Spot",
+          "normalized_alias": "games spot"
+        },
+        {
+          "alias": "Games Spot Cairo",
+          "normalized_alias": "games spot cairo"
+        },
+        {
+          "alias": "Games Spot Egypt (جيمز سبوت)",
+          "normalized_alias": "games spot egypt جيمز سبوت"
+        },
+        {
+          "alias": "Games Spot Smouha",
+          "normalized_alias": "games spot smouha"
+        },
+        {
+          "alias": "gamesspot.egypt",
+          "normalized_alias": "gamesspot egypt"
+        },
+        {
+          "alias": "جيمز سبوت",
+          "normalized_alias": "جيمز سبوت"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "5th Settlement, New Cairo, Cairo",
+          "normalized_value": "5th settlement, new cairo, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "شارع زكي رجب، أمام فتح الله ماركت، سموحة، الإسكندرية",
+          "normalized_value": "شارع زكي رجب، أمام فتح الله ماركت، سموحة، الإسكندرية",
+          "confidence": 0.35
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/p/Games-spot-61566368139737/",
+          "normalized_value": "https://facebook.com/p/Games-spot-61566368139737",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "01022103040",
+          "normalized_value": "+201022103040",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "01050774466",
+          "normalized_value": "+201050774466",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "01080013700",
+          "normalized_value": "+201080013700",
+          "confidence": 0.7
+        },
+        {
+          "kind": "phone",
+          "value": "01080013900",
+          "normalized_value": "+201080013900",
+          "confidence": 0.7
+        },
+        {
+          "kind": "whatsapp",
+          "value": "01050774466",
+          "normalized_value": "+201050774466",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 8,
+      "merchant_links": [
+        {
+          "id": "b9ad82e5-fd6b-4b47-9bad-961e6ccea359",
+          "left_merchant_id": "1cd85715-2084-4471-8e20-6e435c946271",
+          "right_merchant_id": "e536f972-8d6c-4513-a099-4a5457fceecf",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:34:39.730708+00:00"
+        },
+        {
+          "id": "89952535-53cf-4627-93d4-f584539be02b",
+          "left_merchant_id": "1de28808-94b5-434b-af5d-50a0f60444c4",
+          "right_merchant_id": "e536f972-8d6c-4513-a099-4a5457fceecf",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:34:39.731679+00:00"
+        }
+      ]
+    },
+    {
+      "id": "1cd85715-2084-4471-8e20-6e435c946271",
+      "canonical_name": "Games Spot",
+      "normalized_name": "games spot",
+      "category": "Gaming retail & console store",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.75,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:29:12.057342+00:00",
+      "updated_at": "2026-08-24T05:07:49.640591+00:00",
+      "dependent_counts": {
+        "claims": 1,
+        "evidence": 1,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 5,
+        "verification_tasks": 1
+      },
+      "aliases": [
+        {
+          "alias": "Games Spot",
+          "normalized_alias": "games spot"
+        },
+        {
+          "alias": "Games Spot Egypt",
+          "normalized_alias": "games spot egypt"
+        },
+        {
+          "alias": "gamesspoteg",
+          "normalized_alias": "gamesspoteg"
+        },
+        {
+          "alias": "جيمز سبوت",
+          "normalized_alias": "جيمز سبوت"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "El Shorouk City, Cairo",
+          "normalized_value": "el shorouk city, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Opposite City Stars, Supply and Internal Trade Building Complex, Nasr City, Cairo",
+          "normalized_value": "opposite city stars, supply and internal trade building complex, nasr city, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Sheikh Zayed, Giza",
+          "normalized_value": "sheikh zayed, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/61566368139737/",
+          "normalized_value": "https://facebook.com/61566368139737",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://gamesspoteg.com/",
+          "normalized_value": "https://gamesspoteg.com",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 1,
+      "merchant_links": [
+        {
+          "id": "b9ad82e5-fd6b-4b47-9bad-961e6ccea359",
+          "left_merchant_id": "1cd85715-2084-4471-8e20-6e435c946271",
+          "right_merchant_id": "e536f972-8d6c-4513-a099-4a5457fceecf",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:34:39.730708+00:00"
+        }
+      ]
+    },
+    {
+      "id": "890f8666-c04c-441a-b4ab-78a29ae04f90",
+      "canonical_name": "Kheir Zaman",
+      "normalized_name": "kheir zaman",
+      "category": "Supermarket / Discount Grocery Retail Chain",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.9,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:58:17.154019+00:00",
+      "updated_at": "2026-08-24T11:18:01.528850+00:00",
+      "dependent_counts": {
+        "claims": 10,
+        "evidence": 14,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 6,
+        "verification_tasks": 4
+      },
+      "aliases": [
+        {
+          "alias": "Kheir Zaman",
+          "normalized_alias": "kheir zaman"
+        },
+        {
+          "alias": "Kheir Zaman Supermarkets",
+          "normalized_alias": "kheir zaman supermarkets"
+        },
+        {
+          "alias": "خير زمان",
+          "normalized_alias": "خير زمان"
+        },
+        {
+          "alias": "سوبر ماركت خير زمان",
+          "normalized_alias": "سوبر ماركت خير زمان"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "10th of Ramadan Mall, 10th of Ramadan / Cairo",
+          "normalized_value": "10th of ramadan mall, 10th of ramadan / cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Al Haram Street, Giza",
+          "normalized_value": "al haram street, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Faisal Main Street, Giza",
+          "normalized_value": "faisal main street, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/KheirZamanEgypt",
+          "normalized_value": "https://facebook.com/KheirZamanEgypt",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://www.kheirzaman.com",
+          "normalized_value": "https://kheirzaman.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "whatsapp",
+          "value": "01212216007",
+          "normalized_value": "+201212216007",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 9,
+      "merchant_links": [
+        {
+          "id": "d991e518-1047-4af1-8599-16a52e0f2c48",
+          "left_merchant_id": "1de28808-94b5-434b-af5d-50a0f60444c4",
+          "right_merchant_id": "890f8666-c04c-441a-b4ab-78a29ae04f90",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.170257+00:00"
+        }
+      ]
+    },
+    {
+      "id": "3b2f3927-90df-4826-b256-d69dc32ff8d5",
+      "canonical_name": "Kheir Zaman (Tanta Branch)",
+      "normalized_name": "kheir zaman tanta branch",
+      "category": "supermarket",
+      "city": "Tanta",
+      "governorate": "Gharbia",
+      "identity_confidence": 0.8,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 3,
+      "created_at": "2026-08-23T21:19:15.519297+00:00",
+      "updated_at": "2026-08-24T06:40:43.675429+00:00",
+      "dependent_counts": {
+        "claims": 2,
+        "evidence": 3,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 1,
+        "verification_tasks": 2
+      },
+      "aliases": [
+        {
+          "alias": "Kheir Zaman Supermarket",
+          "normalized_alias": "kheir zaman supermarket"
+        },
+        {
+          "alias": "Kheir Zaman (Tanta Branch)",
+          "normalized_alias": "kheir zaman tanta branch"
+        },
+        {
+          "alias": "خير زمان",
+          "normalized_alias": "خير زمان"
+        },
+        {
+          "alias": "سوبر ماركت خير زمان",
+          "normalized_alias": "سوبر ماركت خير زمان"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "27 Saeed Street, Kitchener Square, in front of Delta International Hospital, Tanta, Gharbia",
+          "normalized_value": "27 saeed street, kitchener square, in front of delta international hospital, tanta, gharbia",
+          "confidence": 0.35
+        }
+      ],
+      "evidence_source_count": 3,
+      "merchant_links": []
+    },
+    {
+      "id": "eaa59b9e-835a-413d-86a7-b8d64372e09f",
+      "canonical_name": "Spinneys Egypt",
+      "normalized_name": "spinneys egypt",
+      "category": "Supermarket & Hypermarket Chain",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.88,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:57:06.382735+00:00",
+      "updated_at": "2026-08-25T11:56:08.145076+00:00",
+      "dependent_counts": {
+        "claims": 3,
+        "evidence": 8,
+        "merchant_aliases": 5,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 9,
+        "verification_tasks": 4
+      },
+      "aliases": [
+        {
+          "alias": "Spinneys",
+          "normalized_alias": "spinneys"
+        },
+        {
+          "alias": "Spinneys Egypt",
+          "normalized_alias": "spinneys egypt"
+        },
+        {
+          "alias": "Spinneys Hypermarket Egypt",
+          "normalized_alias": "spinneys hypermarket egypt"
+        },
+        {
+          "alias": "سبينيس",
+          "normalized_alias": "سبينيس"
+        },
+        {
+          "alias": "سبينيس مصر",
+          "normalized_alias": "سبينيس مصر"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "Citystars Mall, Heliopolis, Cairo",
+          "normalized_value": "citystars mall, heliopolis, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Mall of Arabia, Juhayna Sq, 6th of October, Giza",
+          "normalized_value": "mall of arabia, juhayna sq, 6th of october, giza",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "Silver Star Mall, Fifth Settlement, New Cairo, Cairo",
+          "normalized_value": "silver star mall, fifth settlement, new cairo, cairo",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "سيتي ستارز مول، مدينة نصر، القاهرة",
+          "normalized_value": "سيتي ستارز مول، مدينة نصر، القاهرة",
+          "confidence": 0.35
+        },
+        {
+          "kind": "address",
+          "value": "مول العرب، السادس من أكتوبر، الجيزة",
+          "normalized_value": "مول العرب، السادس من أكتوبر، الجيزة",
+          "confidence": 0.35
+        },
+        {
+          "kind": "commercial_register",
+          "value": "Tax Registration: 240-533-215",
+          "normalized_value": "tax registration: 240-533-215",
+          "confidence": 0.7
+        },
+        {
+          "kind": "email",
+          "value": "customer.service@spinneys-egypt.com",
+          "normalized_value": "customer.service@spinneys-egypt.com",
+          "confidence": 0.7
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/SpinneysEgypt",
+          "normalized_value": "https://facebook.com/SpinneysEgypt",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://spinneys-egypt.com",
+          "normalized_value": "https://spinneys-egypt.com",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 6,
+      "merchant_links": [
+        {
+          "id": "41dd57fe-0456-4697-ac64-27dcf7de1a58",
+          "left_merchant_id": "1ecfb4fa-3937-49a6-ab0b-592d0a16c799",
+          "right_merchant_id": "eaa59b9e-835a-413d-86a7-b8d64372e09f",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:59:30.432220+00:00"
+        }
+      ]
+    },
+    {
+      "id": "550b1027-c781-4ca3-ab76-8a76fc19d816",
+      "canonical_name": "Spinneys Egypt (Tanta Branch)",
+      "normalized_name": "spinneys egypt tanta branch",
+      "category": "supermarket_and_hypermarket",
+      "city": "Tanta",
+      "governorate": "Gharbia",
+      "identity_confidence": 0.9,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 3,
+      "created_at": "2026-08-23T21:19:15.251748+00:00",
+      "updated_at": "2026-08-26T10:10:14.284865+00:00",
+      "dependent_counts": {
+        "claims": 6,
+        "evidence": 6,
+        "merchant_aliases": 5,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 4,
+        "verification_tasks": 1
+      },
+      "aliases": [
+        {
+          "alias": "Spinneys Egypt (Tanta Branch)",
+          "normalized_alias": "spinneys egypt tanta branch"
+        },
+        {
+          "alias": "Spinneys Tanta",
+          "normalized_alias": "spinneys tanta"
+        },
+        {
+          "alias": "سبينس طنطا",
+          "normalized_alias": "سبينس طنطا"
+        },
+        {
+          "alias": "سبينيس مصر",
+          "normalized_alias": "سبينيس مصر"
+        },
+        {
+          "alias": "سبينيس مول طنطا",
+          "normalized_alias": "سبينيس مول طنطا"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "Mall of Tanta, Manshiyet El Awqaf, Old Qutour Road, next to Seberbay Station, Tanta, Gharbia",
+          "normalized_value": "mall of tanta, manshiyet el awqaf, old qutour road, next to seberbay station, tanta, gharbia",
+          "confidence": 0.35
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/MallofTanta/videos/668179121947629/",
+          "normalized_value": "https://facebook.com/MallofTanta/videos/668179121947629",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://spinneys-egypt.com/ar/stores",
+          "normalized_value": "https://spinneys-egypt.com/ar/stores",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://spinneys-egypt.com/en/stores",
+          "normalized_value": "https://spinneys-egypt.com/en/stores",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 4,
+      "merchant_links": []
+    },
+    {
+      "id": "dab9cc64-1e22-4dcd-9461-1b7fc5cc6634",
+      "canonical_name": "Delta Computer",
+      "normalized_name": "delta computer",
+      "category": "mobile_laptop",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.6,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:31:51.913837+00:00",
+      "updated_at": "2026-08-25T10:32:32.970234+00:00",
+      "dependent_counts": {
+        "claims": 8,
+        "evidence": 11,
+        "merchant_aliases": 3,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 4,
+        "verification_tasks": 4
+      },
+      "aliases": [
+        {
+          "alias": "Delta Computer",
+          "normalized_alias": "delta computer"
+        },
+        {
+          "alias": "دلتا كمبيوتر",
+          "normalized_alias": "دلتا كمبيوتر"
+        },
+        {
+          "alias": "دلتا لمستلزمات الكمبيوتر",
+          "normalized_alias": "دلتا لمستلزمات الكمبيوتر"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "170 Port Said St., Al-Ibrahimiyyah Bahri, Alexandria, Egypt",
+          "normalized_value": "170 port said st., al-ibrahimiyyah bahri, alexandria, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/delta1993",
+          "normalized_value": "https://facebook.com/delta1993",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://delta-computer.net/",
+          "normalized_value": "https://delta-computer.net",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "https://deltacomputerstore.com/",
+          "normalized_value": "https://deltacomputerstore.com",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 10,
+      "merchant_links": []
+    },
+    {
+      "id": "53f064aa-0133-4986-9fc2-4a765762a1d4",
+      "canonical_name": "Delta Computer Alexandria",
+      "normalized_name": "delta computer alexandria",
+      "category": "Computer Hardware & Gaming Systems Retailer",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.5,
+      "state": "IDENTITY_UNCERTAIN",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T21:02:26.028181+00:00",
+      "updated_at": "2026-08-24T08:30:47.071492+00:00",
+      "dependent_counts": {
+        "claims": 1,
+        "evidence": 1,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 3,
+        "verification_tasks": 1
+      },
+      "aliases": [
+        {
+          "alias": "Delta Computer",
+          "normalized_alias": "delta computer"
+        },
+        {
+          "alias": "Delta Computer Alexandria",
+          "normalized_alias": "delta computer alexandria"
+        },
+        {
+          "alias": "دلتا للكمبيوتر",
+          "normalized_alias": "دلتا للكمبيوتر"
+        },
+        {
+          "alias": "شركة دلتا للكمبيوتر والنظم",
+          "normalized_alias": "دلتا للكمبيوتر والنظم"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "170 Port Said St, Ibrahimiya, Alexandria, Egypt",
+          "normalized_value": "170 port said st, ibrahimiya, alexandria, egypt",
+          "confidence": 0.35
+        },
+        {
+          "kind": "facebook",
+          "value": "https://www.facebook.com/deltacomputer/",
+          "normalized_value": "https://facebook.com/deltacomputer",
+          "confidence": 0.7
+        },
+        {
+          "kind": "website",
+          "value": "http://www.delta-computer.net",
+          "normalized_value": "http://delta-computer.net",
+          "confidence": 0.7
+        }
+      ],
+      "evidence_source_count": 1,
+      "merchant_links": []
+    },
+    {
+      "id": "ab13792f-8499-4f6e-b139-17ff7c4ad0a3",
+      "canonical_name": "Delta Computer",
+      "normalized_name": "delta computer",
+      "category": "Computer Hardware & Laptop Retailer",
+      "city": "Mohandessin",
+      "governorate": "Giza",
+      "identity_confidence": 0.15,
+      "state": "IDENTITY_UNCERTAIN",
+      "first_seen_round": 4,
+      "created_at": "2026-08-23T21:27:47.006773+00:00",
+      "updated_at": "2026-08-25T07:09:46.842387+00:00",
+      "dependent_counts": {
+        "claims": 8,
+        "evidence": 12,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 1,
+        "verification_tasks": 3
+      },
+      "aliases": [
+        {
+          "alias": "Delta Computer",
+          "normalized_alias": "delta computer"
+        },
+        {
+          "alias": "Delta Computer Egypt",
+          "normalized_alias": "delta computer egypt"
+        },
+        {
+          "alias": "Delta Computer Sphinx",
+          "normalized_alias": "delta computer sphinx"
+        },
+        {
+          "alias": "دلتا كمبيوتر",
+          "normalized_alias": "دلتا كمبيوتر"
+        }
+      ],
+      "identifiers": [
+        {
+          "kind": "address",
+          "value": "Sphinx Computer Mall, 3 Gameat El Dawal El Arabia St., Sphinx Square, Mohandessin, Giza",
+          "normalized_value": "sphinx computer mall, 3 gameat el dawal el arabia st., sphinx square, mohandessin, giza",
+          "confidence": 0.35
+        }
+      ],
+      "evidence_source_count": 9,
+      "merchant_links": []
+    }
+  ]
+}

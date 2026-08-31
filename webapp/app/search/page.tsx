@@ -4,6 +4,7 @@ import type { SearchHit, SearchResult, SearchTier } from '@/lib/types';
 import { categoryTags, CATEGORY_TAG_LABELS, normalizeGovernorate, GOVERNORATE_LABELS } from '@/lib/taxonomy';
 import { formatDateAr } from '@/components/display';
 import { getIndex } from '@/lib/singletons';
+import { Pagination } from '@/components/Pagination';
 
 const TIER_SECTION_CAPTIONS: Record<SearchTier, string> = {
   exact_identifier: 'تطابقات تامة في المعرفات (هاتف، رابط، بريد…)',
@@ -98,34 +99,15 @@ function TieredHits({ hits }: { hits: SearchHit[] }) {
   );
 }
 
-function Pagination({ result, q }: { result: SearchResult; q: string }) {
+function SearchPagination({ result, q }: { result: SearchResult; q: string }) {
   const totalPages = Math.max(1, Math.ceil(result.total / result.pageSize));
-  if (totalPages <= 1) return null;
-  const pages: number[] = [];
-  const from = Math.max(1, result.page - 2);
-  const to = Math.min(totalPages, from + 4);
-  for (let p = from; p <= to; p += 1) pages.push(p);
   return (
-    <nav aria-label="تصفح النتائج" className="flex flex-wrap items-center gap-2">
-      {pages.map((p) =>
-        p === result.page ? (
-          <span key={p} aria-current="page" className="border border-black px-3 py-2 font-bold">
-            {p}
-          </span>
-        ) : (
-          <Link
-            key={p}
-            href={`/search?q=${encodeURIComponent(q)}&page=${p}`}
-            className="inline-block min-h-[44px] border border-black px-3 py-2 underline"
-          >
-            {p}
-          </Link>
-        ),
-      )}
-      <span className="text-sm">
-        صفحة {result.page} من {totalPages}
-      </span>
-    </nav>
+    <Pagination
+      basePath="/search"
+      page={result.page}
+      totalPages={totalPages}
+      query={[['q', q]]}
+    />
   );
 }
 
@@ -183,7 +165,7 @@ export default async function SearchPage({
       ) : (
         <>
           <TieredHits hits={result.hits} />
-          <Pagination result={result} q={q} />
+          <SearchPagination result={result} q={q} />
         </>
       )}
     </section>

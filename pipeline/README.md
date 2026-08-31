@@ -52,6 +52,9 @@ python main.py export --format json            # sanitized nested export
 python main.py export --format jsonl           # one provenance row per line
 python main.py export --format csv             # evidence CSV with URLs
 python main.py export --include-raw            # explicitly include internal raw fields
+python main.py merge-sellers                     # reviewed manifest dry-run
+python main.py merge-sellers --apply             # one fail-closed transaction
+python main.py reanalyze-merchants UUID [UUID…]  # UUID-only aggregate summaries
 ```
 
 `--smoke` is accepted as an alias for `--smoke-test`. An incomplete run exits with code 2 and
@@ -95,6 +98,12 @@ SQLite uses WAL mode and versioned schema migrations. It stores:
 Raw OMP responses are written below `data/raw/`; normalized database records remain queryable for
 future model re-analysis. Sanitized exports retain commercial source URLs but omit internal raw
 JSON and quoted excerpts by default.
+
+## Canonical seller consolidation
+
+`merchant_merge.py` contains the only approved merge manifest. `merge-sellers` never matches names automatically: dry-run is the default, and `--apply` verifies every reviewed UUID/name before one transaction unions aliases, identifiers and recorded locations; moves all dependent observations; rewrites links; and rebuilds seller-local fingerprints, claims and duplicate roots. Every source and evidence row is conserved. A second apply fails because retired IDs are absent.
+
+After a merge, `reanalyze-merchants` regenerates summaries for an explicit UUID list without restarting the coordinator or verification loop. It uses the bounded seller package, requires exactly one result per requested UUID, rejects fallback/name-based/outside results, strips generated tasks, preserves curated identity confidence, and writes only after the complete response validates.
 
 ## Resume behavior
 

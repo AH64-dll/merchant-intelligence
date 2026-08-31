@@ -1,5 +1,12 @@
 import Database from 'better-sqlite3';
 import type { Database as DatabaseHandle } from 'better-sqlite3';
+import { buildMerchantDirectoryProjection, selectMerchantDirectory } from './directory';
+import type {
+  DirectoryEvidenceRow,
+  DirectoryLinkRow,
+  DirectoryMerchantIdentifierRow,
+  MerchantDirectoryProjection,
+} from './directory';
 import { identifyIdentifierRole, isDisplayableIdentifier, isSearchableIdentifier } from './identifier-policy';
 import { deriveSourceCategory } from './taxonomy';
 import type {
@@ -10,6 +17,9 @@ import type {
   IdentifierKind,
   Merchant,
   MerchantDetail,
+  MerchantDirectoryEntry,
+  MerchantDirectoryQueryInput,
+  MerchantDirectoryResult,
   MerchantState,
   Sentiment,
   SentimentCounts,
@@ -173,6 +183,27 @@ interface SnapshotMetaRow {
   merchant_links_count: number;
 }
 
+interface DirectoryEvidenceDbRow {
+  id: string;
+  merchantId: string;
+  claimType: string;
+  sentiment: Sentiment;
+  summary: string;
+  authorType: string;
+  confidence: number;
+  reliabilityBand: string;
+  publishedAt: string | null;
+  capturedAt: string;
+  platform: string;
+  sourceUrl: string;
+  canonicalSourceUrl: string;
+  sourceType: string;
+  transactionEvidence: number;
+  verified: number;
+  independent: number;
+  duplicateOf: string | null;
+}
+
 function str(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
@@ -303,6 +334,10 @@ export class MerchantDb {
   private readonly stmtLatestAnalysis: Database.Statement<[string]>;
   private readonly stmtRelatedOutgoing: Database.Statement<[string]>;
   private readonly stmtRelatedIncoming: Database.Statement<[string]>;
+  private readonly stmtDirectoryMerchants: Database.Statement;
+  private readonly stmtDirectoryLinks: Database.Statement;
+  private readonly stmtDirectoryEvidence: Database.Statement;
+  private directoryProjection: MerchantDirectoryProjection | null = null;
 
   constructor(dbPath: string) {
     this.db = new Database(dbPath, { readonly: true, fileMustExist: true });
@@ -370,6 +405,33 @@ export class MerchantDb {
        FROM merchant_links ml JOIN merchants m ON m.id = ml.left_merchant_id
        WHERE ml.right_merchant_id = ?`,
     );
+    this.stmtDirectoryMerchants = this.db.prepare(
+      `SELECT m.id AS merchantId, m.canonical_name AS canonicalName,
+              m.category, m.city, m.governorate, m.state, m.updated_at AS updatedAt,
+              mi.id AS identifierId, mi.kind AS identifierKind,
+              mi.value AS identifierValue, mi.normalized_value AS identifierNormalizedValue
+       FROM merchants m
+       LEFT JOIN merchant_identifiers mi ON mi.merchant_id = m.id
+       ORDER BY m.id, mi.kind, mi.normalized_value, mi.id`,
+    );
+    this.stmtDirectoryLinks = this.db.prepare(
+      `SELECT left_merchant_id AS leftMerchantId,
+              right_merchant_id AS rightMerchantId, relation
+       FROM merchant_links
+       ORDER BY left_merchant_id, right_merchant_id, relation`,
+    );
+    this.stmtDirectoryEvidence = this.db.prepare(
+      `SELECT e.id, e.merchant_id AS merchantId, e.claim_type AS claimType,
+              e.sentiment, e.summary, e.author_type AS authorType, e.confidence,
+              e.reliability_band AS reliabilityBand, e.published_at AS publishedAt,
+              e.captured_at AS capturedAt, s.platform, s.url AS sourceUrl,
+              s.canonical_url AS canonicalSourceUrl, s.source_type AS sourceType,
+              e.transaction_evidence AS transactionEvidence, e.verified,
+              e.independent, e.duplicate_of AS duplicateOf
+       FROM evidence e
+       JOIN sources s ON s.id = e.source_id
+       ORDER BY e.merchant_id, e.id`,
+    );
   }
 
   getSnapshotInfo(): SnapshotInfo {
@@ -399,6 +461,37 @@ export class MerchantDb {
       alias: row.alias,
     }));
     return { merchants, identifiers, aliases };
+  }
+
+  private getDirectoryProjection(): MerchantDirectoryProjection {
+    if (this.directoryProjection !== null) return this.directoryProjection;
+    const merchantRows = this.stmtDirectoryMerchants.all() as DirectoryMerchantIdentifierRow[];
+    const linkRows = this.stmtDirectoryLinks.all() as DirectoryLinkRow[];
+    const evidenceRows = (this.stmtDirectoryEvidence.all() as DirectoryEvidenceDbRow[]).map(
+      (row): DirectoryEvidenceRow => ({
+        ...row,
+        transactionEvidence: row.transactionEvidence !== 0,
+        verified: row.verified !== 0,
+        independent: row.independent !== 0,
+      }),
+    );
+    this.directoryProjection = buildMerchantDirectoryProjection(
+      merchantRows,
+      linkRows,
+      evidenceRows,
+      this.snapshotInfo,
+    );
+    return this.directoryProjection;
+  }
+
+  /** Safe, immutable canonical-seller summaries in canonical-name order. */
+  getMerchantDirectoryEntries(): readonly MerchantDirectoryEntry[] {
+    return this.getDirectoryProjection().entries;
+  }
+
+  /** Shared paginated selector for server pages and the public list API. */
+  getMerchantDirectory(input: MerchantDirectoryQueryInput = {}): MerchantDirectoryResult {
+    return selectMerchantDirectory(this.getDirectoryProjection(), input);
   }
 
   /**

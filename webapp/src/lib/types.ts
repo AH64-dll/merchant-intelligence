@@ -208,3 +208,84 @@ export interface SnapshotInfo {
 export interface MerchantDetail extends MerchantDetailBase {
   snapshot: SnapshotInfo;
 }
+
+export const MERCHANT_DIRECTORY_PAGE_SIZE = 20;
+
+export type MerchantDirectoryView = 'all' | 'positive-evidence';
+export type MerchantDirectoryCoverageLevel = 'none' | 'limited' | 'moderate' | 'broad';
+
+/**
+ * Public seller summary used by directory pages and the list API.
+ *
+ * Deliberately excludes model state, confidence, reliability, duplicate
+ * pointers, and raw provenance. Those remain available only in seller detail.
+ */
+export interface MerchantDirectoryEntry {
+  id: string;
+  canonicalName: string;
+  categoryTags: string[];
+  locationLabel: string;
+  /** Number of distinct stored address records, not an asserted branch count. */
+  locationCount: number;
+  identityLevel: 'established' | 'supported' | 'uncertain';
+  coverageLevel: MerchantDirectoryCoverageLevel;
+  evidence: {
+    total: number;
+    nonDuplicate: number;
+    distinctSources: number;
+    positive: number;
+    neutral: number;
+    negative: number;
+    customerPositiveSources: number;
+    latestPublishedAt: string | null;
+    lastCapturedAt: string | null;
+  };
+  positiveHighlight: null | {
+    evidenceId: string;
+    summary: string;
+    sourceUrl: string;
+    sourceCategory: SourceCategory;
+    publishedAt: string | null;
+  };
+  updatedAt: string;
+}
+
+export interface MerchantDirectoryFilters {
+  category?: string;
+  governorate?: string;
+  coverage?: MerchantDirectoryCoverageLevel;
+}
+
+export interface MerchantDirectoryQuery extends MerchantDirectoryFilters {
+  view: MerchantDirectoryView;
+  page: number;
+}
+
+/** Raw server query values accepted by the shared directory selector. */
+export interface MerchantDirectoryQueryInput {
+  view?: unknown;
+  page?: unknown;
+  category?: unknown;
+  governorate?: unknown;
+  coverage?: unknown;
+}
+
+export interface MerchantDirectoryPagination {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface MerchantDirectoryAvailableFilters {
+  categories: readonly string[];
+  governorates: readonly string[];
+  coverage: readonly MerchantDirectoryCoverageLevel[];
+}
+
+export interface MerchantDirectoryResult {
+  items: readonly MerchantDirectoryEntry[];
+  pagination: MerchantDirectoryPagination;
+  availableFilters: MerchantDirectoryAvailableFilters;
+  snapshot: SnapshotInfo;
+}

@@ -1,0 +1,1748 @@
+{
+  "mode": "apply",
+  "created_at": "2026-08-31T00:41:12.365054+00:00",
+  "database": "/home/amr/Documents/project/data/merchant_intelligence.db",
+  "manifest": [
+    {
+      "target_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+      "retired_ids": [
+        "306c4864-694f-46ce-bb9a-0e18f9d31c3a",
+        "31c54405-381c-4364-a49c-a8a9244f7471",
+        "d08748d3-b6be-4185-a32e-e439d19d3c72"
+      ],
+      "canonical_name": null,
+      "category_override": null
+    },
+    {
+      "target_id": "842ad9fe-ecfc-46f4-b065-e945fb3aaa3d",
+      "retired_ids": [
+        "cdbc1046-a283-4207-8519-6829b2d8a451"
+      ],
+      "canonical_name": null,
+      "category_override": null
+    },
+    {
+      "target_id": "3af4b233-ad29-4155-b436-3573576e1daf",
+      "retired_ids": [
+        "0f9b3f71-e2b2-41fb-b834-61ad2375282c"
+      ],
+      "canonical_name": null,
+      "category_override": null
+    },
+    {
+      "target_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+      "retired_ids": [
+        "c5cbf814-b4d4-4e99-9532-367282905da1",
+        "bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7",
+        "76fa120c-d0c5-489c-a3c2-a5c33d8678a6",
+        "fc74448d-b496-4658-83e4-c938fa9413bf"
+      ],
+      "canonical_name": null,
+      "category_override": null
+    },
+    {
+      "target_id": "05abc4eb-760c-4842-a467-716d52b1bd04",
+      "retired_ids": [
+        "7d17483f-507c-4171-8b78-9247687ec489"
+      ],
+      "canonical_name": null,
+      "category_override": null
+    },
+    {
+      "target_id": "038a190f-731e-4adf-8b80-723276ce3a3d",
+      "retired_ids": [
+        "31492070-416e-4307-bbbb-4915b262950e",
+        "93d4fd27-adac-4157-a9a2-c0a0423ecd8e"
+      ],
+      "canonical_name": "CompuData Center",
+      "category_override": null
+    },
+    {
+      "target_id": "1687538d-eddd-4613-9761-59643d8a9e33",
+      "retired_ids": [
+        "e266ad28-7e04-4177-9b4e-1975e46fea07"
+      ],
+      "canonical_name": null,
+      "category_override": null
+    },
+    {
+      "target_id": "d3c830bb-4339-41ed-a636-1c7710ff9825",
+      "retired_ids": [
+        "804e0ef3-669d-4adb-9573-0f2229b954f2"
+      ],
+      "canonical_name": null,
+      "category_override": null
+    },
+    {
+      "target_id": "0d6413ef-542d-4c85-a9cd-b480bd0810b3",
+      "retired_ids": [
+        "06d03aac-055a-4733-a3eb-6874a544f3ea"
+      ],
+      "canonical_name": null,
+      "category_override": null
+    },
+    {
+      "target_id": "e536f972-8d6c-4513-a099-4a5457fceecf",
+      "retired_ids": [
+        "1cd85715-2084-4471-8e20-6e435c946271"
+      ],
+      "canonical_name": null,
+      "category_override": null
+    },
+    {
+      "target_id": "890f8666-c04c-441a-b4ab-78a29ae04f90",
+      "retired_ids": [
+        "3b2f3927-90df-4826-b256-d69dc32ff8d5"
+      ],
+      "canonical_name": null,
+      "category_override": null
+    },
+    {
+      "target_id": "eaa59b9e-835a-413d-86a7-b8d64372e09f",
+      "retired_ids": [
+        "550b1027-c781-4ca3-ab76-8a76fc19d816"
+      ],
+      "canonical_name": null,
+      "category_override": null
+    },
+    {
+      "target_id": "dab9cc64-1e22-4dcd-9461-1b7fc5cc6634",
+      "retired_ids": [
+        "53f064aa-0133-4986-9fc2-4a765762a1d4"
+      ],
+      "canonical_name": "Delta Computer Supplies — Alexandria",
+      "category_override": "Computer Hardware & Gaming Systems Retailer"
+    }
+  ],
+  "before_counts": {
+    "agent_runs": 797,
+    "checkpoints": 1,
+    "claim_evidence": 3763,
+    "claims": 2650,
+    "evidence": 3763,
+    "fb_group_registry": 31,
+    "merchant_aliases": 1924,
+    "merchant_analyses": 410,
+    "merchant_identifiers": 3077,
+    "merchant_links": 102,
+    "merchants": 370,
+    "pipeline_runs": 1,
+    "quality_metrics": 18,
+    "research_gaps": 12,
+    "schema_version": 1,
+    "sources": 2144,
+    "verification_tasks": 1737
+  },
+  "before": [
+    {
+      "id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+      "canonical_name": "B.TECH",
+      "normalized_name": "b tech",
+      "category": "Consumer Electronics & Household Appliances Retailer",
+      "city": "Giza (Haram / Faisal / Omraneya)",
+      "governorate": "Giza",
+      "identity_confidence": 0.98,
+      "state": "VERIFIED_HIGH_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:32:46.239707+00:00",
+      "updated_at": "2026-08-24T04:01:54.580875+00:00",
+      "dependent_counts": {
+        "claims": 72,
+        "evidence": 75,
+        "merchant_aliases": 15,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 42,
+        "verification_tasks": 34
+      },
+      "distinct_sources": 25,
+      "links": [
+        {
+          "id": "c59a5a1d-f37f-4d4e-abb7-1c5a2714c2a4",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "306c4864-694f-46ce-bb9a-0e18f9d31c3a",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same whatsapp identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:51:46.946912+00:00"
+        },
+        {
+          "id": "b5cd1141-5ccf-486f-a094-0df2d0878b74",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "31c54405-381c-4364-a49c-a8a9244f7471",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same whatsapp identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:53:43.609185+00:00"
+        },
+        {
+          "id": "6c404e5b-b0dc-422d-ae2f-5b8796ed57e6",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "c25a5a60-e885-4916-85aa-9618d9097d18",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.056072+00:00"
+        },
+        {
+          "id": "c06edb5e-6375-48f7-9722-a1a0b0740efc",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:49:35.574218+00:00"
+        },
+        {
+          "id": "41b28c4e-f1c4-4ea7-8477-9016c85ce5bf",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "name_identifier_conflict",
+          "confidence": 0.3,
+          "rationale": "name/city matched but candidate identifiers point elsewhere",
+          "created_at": "2026-08-23T20:49:35.581960+00:00"
+        }
+      ]
+    },
+    {
+      "id": "306c4864-694f-46ce-bb9a-0e18f9d31c3a",
+      "canonical_name": "B.TECH",
+      "normalized_name": "b tech",
+      "category": "Consumer Electronics, Home Appliances & Electronics Retail",
+      "city": "Assiut",
+      "governorate": "Assiut",
+      "identity_confidence": 0.85,
+      "state": "VERIFIED_HIGH_CONFIDENCE",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:51:46.937821+00:00",
+      "updated_at": "2026-08-24T06:05:11.353852+00:00",
+      "dependent_counts": {
+        "claims": 1,
+        "evidence": 1,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 5,
+        "verification_tasks": 0
+      },
+      "distinct_sources": 1,
+      "links": [
+        {
+          "id": "c59a5a1d-f37f-4d4e-abb7-1c5a2714c2a4",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "306c4864-694f-46ce-bb9a-0e18f9d31c3a",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same whatsapp identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:51:46.946912+00:00"
+        },
+        {
+          "id": "f2eef4c2-329b-469c-8329-d2a730663215",
+          "left_merchant_id": "306c4864-694f-46ce-bb9a-0e18f9d31c3a",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:51:46.948535+00:00"
+        }
+      ]
+    },
+    {
+      "id": "31c54405-381c-4364-a49c-a8a9244f7471",
+      "canonical_name": "B.TECH",
+      "normalized_name": "b tech",
+      "category": "Home Appliances & Consumer Electronics Retail Chain",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.75,
+      "state": "VERIFIED_HIGH_CONFIDENCE",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:53:43.602912+00:00",
+      "updated_at": "2026-08-24T06:15:28.672325+00:00",
+      "dependent_counts": {
+        "claims": 6,
+        "evidence": 15,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 6,
+        "verification_tasks": 3
+      },
+      "distinct_sources": 10,
+      "links": [
+        {
+          "id": "b5cd1141-5ccf-486f-a094-0df2d0878b74",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "31c54405-381c-4364-a49c-a8a9244f7471",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same whatsapp identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:53:43.609185+00:00"
+        },
+        {
+          "id": "8eeb38bd-62bc-40a6-8108-efb6e24e6751",
+          "left_merchant_id": "31c54405-381c-4364-a49c-a8a9244f7471",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:53:43.610343+00:00"
+        }
+      ]
+    },
+    {
+      "id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+      "canonical_name": "B.TECH",
+      "normalized_name": "b tech",
+      "category": "Consumer Electronics & Home Appliances Retailer",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.75,
+      "state": "MIXED_REPUTATION",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:28:02.492795+00:00",
+      "updated_at": "2026-08-25T09:49:43.679580+00:00",
+      "dependent_counts": {
+        "claims": 21,
+        "evidence": 32,
+        "merchant_aliases": 6,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 16,
+        "verification_tasks": 4
+      },
+      "distinct_sources": 21,
+      "links": [
+        {
+          "id": "c06edb5e-6375-48f7-9722-a1a0b0740efc",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:49:35.574218+00:00"
+        },
+        {
+          "id": "d26c9bab-a993-4318-a073-a055848dde1e",
+          "left_merchant_id": "1f271b65-9b0b-4d3f-b519-6c61d240f4ff",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:28:02.813299+00:00"
+        },
+        {
+          "id": "f2eef4c2-329b-469c-8329-d2a730663215",
+          "left_merchant_id": "306c4864-694f-46ce-bb9a-0e18f9d31c3a",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:51:46.948535+00:00"
+        },
+        {
+          "id": "8eeb38bd-62bc-40a6-8108-efb6e24e6751",
+          "left_merchant_id": "31c54405-381c-4364-a49c-a8a9244f7471",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:53:43.610343+00:00"
+        },
+        {
+          "id": "7980ce2a-ab76-41b3-9114-fd5e04f0f760",
+          "left_merchant_id": "4fa441a7-25b7-4710-9da0-689241c9fd2d",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.077923+00:00"
+        },
+        {
+          "id": "194dfaa8-9800-4b9a-bb9e-7c74ef35e704",
+          "left_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "right_merchant_id": "e756323c-cc6d-49b4-aa5d-7a33dfe1e124",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.115580+00:00"
+        },
+        {
+          "id": "40f90ea4-69fb-40d8-aa94-4c71ae1f4fcb",
+          "left_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "right_merchant_id": "fc638067-985a-490a-8064-94b35b6846f5",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:28:02.896633+00:00"
+        },
+        {
+          "id": "41b28c4e-f1c4-4ea7-8477-9016c85ce5bf",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "d08748d3-b6be-4185-a32e-e439d19d3c72",
+          "relation": "name_identifier_conflict",
+          "confidence": 0.3,
+          "rationale": "name/city matched but candidate identifiers point elsewhere",
+          "created_at": "2026-08-23T20:49:35.581960+00:00"
+        }
+      ]
+    },
+    {
+      "id": "842ad9fe-ecfc-46f4-b065-e945fb3aaa3d",
+      "canonical_name": "Fathalla Gomla Market",
+      "normalized_name": "fathalla gomla market",
+      "category": "Supermarket / Hypermarket / Wholesale & Retail",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.85,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:58:17.246390+00:00",
+      "updated_at": "2026-08-24T11:09:37.197441+00:00",
+      "dependent_counts": {
+        "claims": 31,
+        "evidence": 37,
+        "merchant_aliases": 12,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 14,
+        "verification_tasks": 5
+      },
+      "distinct_sources": 25,
+      "links": [
+        {
+          "id": "c525078a-92c3-42bf-a8fe-aeb0585b28a6",
+          "left_merchant_id": "842ad9fe-ecfc-46f4-b065-e945fb3aaa3d",
+          "right_merchant_id": "c25a5a60-e885-4916-85aa-9618d9097d18",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.262122+00:00"
+        }
+      ]
+    },
+    {
+      "id": "cdbc1046-a283-4207-8519-6829b2d8a451",
+      "canonical_name": "Fathalla Gomla Market",
+      "normalized_name": "fathalla gomla market",
+      "category": "Hypermarket & Wholesale Supermarket",
+      "city": "Tanta",
+      "governorate": "Gharbia",
+      "identity_confidence": 0.75,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:57:06.303831+00:00",
+      "updated_at": "2026-08-25T09:26:29.049879+00:00",
+      "dependent_counts": {
+        "claims": 1,
+        "evidence": 1,
+        "merchant_aliases": 5,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 6,
+        "verification_tasks": 0
+      },
+      "distinct_sources": 1,
+      "links": []
+    },
+    {
+      "id": "3af4b233-ad29-4155-b436-3573576e1daf",
+      "canonical_name": "Games 2 Egypt",
+      "normalized_name": "games 2 egypt",
+      "category": "Gaming & Console Retailer",
+      "city": "Giza",
+      "governorate": "Giza",
+      "identity_confidence": 0.92,
+      "state": "VERIFIED_HIGH_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:34:39.432246+00:00",
+      "updated_at": "2026-08-24T06:40:43.671032+00:00",
+      "dependent_counts": {
+        "claims": 2,
+        "evidence": 6,
+        "merchant_aliases": 3,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 27,
+        "verification_tasks": 2
+      },
+      "distinct_sources": 6,
+      "links": []
+    },
+    {
+      "id": "0f9b3f71-e2b2-41fb-b834-61ad2375282c",
+      "canonical_name": "Games 2 Egypt",
+      "normalized_name": "games 2 egypt",
+      "category": "Gaming retail & console store",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.8,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:29:11.738158+00:00",
+      "updated_at": "2026-08-24T04:32:05.334690+00:00",
+      "dependent_counts": {
+        "claims": 13,
+        "evidence": 16,
+        "merchant_aliases": 8,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 17,
+        "verification_tasks": 4
+      },
+      "distinct_sources": 9,
+      "links": [
+        {
+          "id": "bffa69ca-0d53-457a-8de4-09f8689e70fe",
+          "left_merchant_id": "0f9b3f71-e2b2-41fb-b834-61ad2375282c",
+          "right_merchant_id": "4fa441a7-25b7-4710-9da0-689241c9fd2d",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:29:12.155658+00:00"
+        },
+        {
+          "id": "bccd390f-9b1f-4db0-a64b-565fdbcb85cb",
+          "left_merchant_id": "0f9b3f71-e2b2-41fb-b834-61ad2375282c",
+          "right_merchant_id": "a518feda-64f8-48f9-bf98-c77d73c85bc7",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:14:29.259159+00:00"
+        }
+      ]
+    },
+    {
+      "id": "e6c3d479-b106-4cdb-a700-15e752033255",
+      "canonical_name": "Raya Shop",
+      "normalized_name": "raya",
+      "category": "Consumer Electronics & Mobile Devices Retailer",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.9,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:28:02.773363+00:00",
+      "updated_at": "2026-08-25T11:35:06.340727+00:00",
+      "dependent_counts": {
+        "claims": 10,
+        "evidence": 10,
+        "merchant_aliases": 15,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 29,
+        "verification_tasks": 0
+      },
+      "distinct_sources": 6,
+      "links": [
+        {
+          "id": "312cd122-63ce-4056-85b5-88327df00ebf",
+          "left_merchant_id": "76fa120c-d0c5-489c-a3c2-a5c33d8678a6",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:16:08.813229+00:00"
+        },
+        {
+          "id": "85244f51-4dd9-489d-b650-c0a5197a8130",
+          "left_merchant_id": "bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.094797+00:00"
+        },
+        {
+          "id": "e622894a-4210-4c19-aa40-749085009c1b",
+          "left_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same facebook identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:30:29.265432+00:00"
+        },
+        {
+          "id": "f574ace2-c0fa-49a8-a9fd-225ef7915b96",
+          "left_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "right_merchant_id": "fc74448d-b496-4658-83e4-c938fa9413bf",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:16:23.360569+00:00"
+        },
+        {
+          "id": "813783d7-92d1-4180-85ce-b896756c13ad",
+          "left_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "name_identifier_conflict",
+          "confidence": 0.3,
+          "rationale": "name/city matched but candidate identifiers point elsewhere",
+          "created_at": "2026-08-23T21:30:29.268607+00:00"
+        }
+      ]
+    },
+    {
+      "id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+      "canonical_name": "Raya Shop",
+      "normalized_name": "raya",
+      "category": "Mobile Phones, Electronics & Appliances Retailer",
+      "city": "Giza (Dokki / Mohandessin / Haram / Faisal)",
+      "governorate": "Giza",
+      "identity_confidence": 0.55,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:32:46.281094+00:00",
+      "updated_at": "2026-08-25T09:17:42.851202+00:00",
+      "dependent_counts": {
+        "claims": 10,
+        "evidence": 19,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 8,
+        "verification_tasks": 5
+      },
+      "distinct_sources": 18,
+      "links": [
+        {
+          "id": "f73eef2d-7568-4c60-b419-635a5a07630e",
+          "left_merchant_id": "76fa120c-d0c5-489c-a3c2-a5c33d8678a6",
+          "right_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same facebook identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:16:08.815112+00:00"
+        },
+        {
+          "id": "a8d416a5-6a9d-45e3-b1c6-b60fbfd1eafc",
+          "left_merchant_id": "bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7",
+          "right_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same facebook identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.095795+00:00"
+        },
+        {
+          "id": "e622894a-4210-4c19-aa40-749085009c1b",
+          "left_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same facebook identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:30:29.265432+00:00"
+        },
+        {
+          "id": "228c844b-2564-45c7-be8c-467938007e90",
+          "left_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "right_merchant_id": "fc74448d-b496-4658-83e4-c938fa9413bf",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same facebook identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:16:23.362614+00:00"
+        },
+        {
+          "id": "813783d7-92d1-4180-85ce-b896756c13ad",
+          "left_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "name_identifier_conflict",
+          "confidence": 0.3,
+          "rationale": "name/city matched but candidate identifiers point elsewhere",
+          "created_at": "2026-08-23T21:30:29.268607+00:00"
+        }
+      ]
+    },
+    {
+      "id": "bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7",
+      "canonical_name": "Raya Shop (Raya Trade & Distribution)",
+      "normalized_name": "raya raya trade distribution",
+      "category": "Consumer Electronics / Home Appliances / Mobile Retail",
+      "city": "6th of October",
+      "governorate": "Giza",
+      "identity_confidence": 0.7,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:58:17.086823+00:00",
+      "updated_at": "2026-08-26T10:10:14.304318+00:00",
+      "dependent_counts": {
+        "claims": 4,
+        "evidence": 9,
+        "merchant_aliases": 6,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 3,
+        "verification_tasks": 4
+      },
+      "distinct_sources": 7,
+      "links": [
+        {
+          "id": "b9ec3683-95df-4f84-8b55-d372d1ec282f",
+          "left_merchant_id": "bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7",
+          "right_merchant_id": "c25a5a60-e885-4916-85aa-9618d9097d18",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.097943+00:00"
+        },
+        {
+          "id": "a8d416a5-6a9d-45e3-b1c6-b60fbfd1eafc",
+          "left_merchant_id": "bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7",
+          "right_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same facebook identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.095795+00:00"
+        },
+        {
+          "id": "85244f51-4dd9-489d-b650-c0a5197a8130",
+          "left_merchant_id": "bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.094797+00:00"
+        }
+      ]
+    },
+    {
+      "id": "76fa120c-d0c5-489c-a3c2-a5c33d8678a6",
+      "canonical_name": "Raya Shop (راية شوب)",
+      "normalized_name": "raya راية شوب",
+      "category": "Consumer Electronics, Mobiles & Home Appliances Retailer",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.85,
+      "state": "MIXED_REPUTATION",
+      "first_seen_round": 3,
+      "created_at": "2026-08-23T21:16:08.803813+00:00",
+      "updated_at": "2026-08-24T10:15:07.131743+00:00",
+      "dependent_counts": {
+        "claims": 15,
+        "evidence": 16,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 3,
+        "verification_tasks": 4
+      },
+      "distinct_sources": 13,
+      "links": [
+        {
+          "id": "f73eef2d-7568-4c60-b419-635a5a07630e",
+          "left_merchant_id": "76fa120c-d0c5-489c-a3c2-a5c33d8678a6",
+          "right_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same facebook identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:16:08.815112+00:00"
+        },
+        {
+          "id": "312cd122-63ce-4056-85b5-88327df00ebf",
+          "left_merchant_id": "76fa120c-d0c5-489c-a3c2-a5c33d8678a6",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:16:08.813229+00:00"
+        }
+      ]
+    },
+    {
+      "id": "fc74448d-b496-4658-83e4-c938fa9413bf",
+      "canonical_name": "Raya Shop",
+      "normalized_name": "raya",
+      "category": "Electronics, Laptops & Mobile Retail",
+      "city": "6th of October",
+      "governorate": "Giza",
+      "identity_confidence": 0.75,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 3,
+      "created_at": "2026-08-23T21:16:23.349096+00:00",
+      "updated_at": "2026-08-25T13:15:05.255633+00:00",
+      "dependent_counts": {
+        "claims": 1,
+        "evidence": 1,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 6,
+        "verification_tasks": 0
+      },
+      "distinct_sources": 1,
+      "links": [
+        {
+          "id": "228c844b-2564-45c7-be8c-467938007e90",
+          "left_merchant_id": "c5cbf814-b4d4-4e99-9532-367282905da1",
+          "right_merchant_id": "fc74448d-b496-4658-83e4-c938fa9413bf",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same facebook identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:16:23.362614+00:00"
+        },
+        {
+          "id": "f574ace2-c0fa-49a8-a9fd-225ef7915b96",
+          "left_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "right_merchant_id": "fc74448d-b496-4658-83e4-c938fa9413bf",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same website identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:16:23.360569+00:00"
+        }
+      ]
+    },
+    {
+      "id": "05abc4eb-760c-4842-a467-716d52b1bd04",
+      "canonical_name": "Shaheen Center",
+      "normalized_name": "shaheen center",
+      "category": "Home Appliances, Electronics & Household Goods Retail Chain",
+      "city": "Giza",
+      "governorate": "Giza",
+      "identity_confidence": 0.7,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:41:07.679079+00:00",
+      "updated_at": "2026-08-26T10:10:14.103833+00:00",
+      "dependent_counts": {
+        "claims": 2,
+        "evidence": 14,
+        "merchant_aliases": 3,
+        "merchant_analyses": 3,
+        "merchant_identifiers": 7,
+        "verification_tasks": 38
+      },
+      "distinct_sources": 9,
+      "links": []
+    },
+    {
+      "id": "7d17483f-507c-4171-8b78-9247687ec489",
+      "canonical_name": "Shaheen Center",
+      "normalized_name": "shaheen center",
+      "category": "Electrical Appliances & Home Essentials",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.82,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:38:43.727658+00:00",
+      "updated_at": "2026-08-24T10:27:09.916401+00:00",
+      "dependent_counts": {
+        "claims": 2,
+        "evidence": 2,
+        "merchant_aliases": 5,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 11,
+        "verification_tasks": 0
+      },
+      "distinct_sources": 2,
+      "links": []
+    },
+    {
+      "id": "038a190f-731e-4adf-8b80-723276ce3a3d",
+      "canonical_name": "CompuData Egypt",
+      "normalized_name": "compudata egypt",
+      "category": "Computer Hardware & Networking",
+      "city": "Heliopolis",
+      "governorate": "Cairo",
+      "identity_confidence": 0.8,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:43:27.539485+00:00",
+      "updated_at": "2026-08-24T03:53:14.965992+00:00",
+      "dependent_counts": {
+        "claims": 11,
+        "evidence": 16,
+        "merchant_aliases": 5,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 6,
+        "verification_tasks": 36
+      },
+      "distinct_sources": 12,
+      "links": []
+    },
+    {
+      "id": "31492070-416e-4307-bbbb-4915b262950e",
+      "canonical_name": "CompuData",
+      "normalized_name": "compudata",
+      "category": "Gaming PC, Hardware & Computer Components",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.3,
+      "state": "IDENTITY_UNCERTAIN",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:38:43.743051+00:00",
+      "updated_at": "2026-08-24T06:15:28.659592+00:00",
+      "dependent_counts": {
+        "claims": 2,
+        "evidence": 9,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 4,
+        "verification_tasks": 4
+      },
+      "distinct_sources": 6,
+      "links": []
+    },
+    {
+      "id": "93d4fd27-adac-4157-a9a2-c0a0423ecd8e",
+      "canonical_name": "CompuData Center",
+      "normalized_name": "compudata center",
+      "category": "Computer Hardware & PC Components Retailer",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.35,
+      "state": "IDENTITY_UNCERTAIN",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T21:02:26.005817+00:00",
+      "updated_at": "2026-08-24T11:44:40.259677+00:00",
+      "dependent_counts": {
+        "claims": 2,
+        "evidence": 21,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 2,
+        "verification_tasks": 4
+      },
+      "distinct_sources": 14,
+      "links": []
+    },
+    {
+      "id": "1687538d-eddd-4613-9761-59643d8a9e33",
+      "canonical_name": "Compu Fast (كومبيو فاست)",
+      "normalized_name": "compu fast كومبيو فاست",
+      "category": "Computer Hardware & Gaming Peripherals Retailer",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.62,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 3,
+      "created_at": "2026-08-23T21:16:08.639617+00:00",
+      "updated_at": "2026-08-24T04:40:43.380939+00:00",
+      "dependent_counts": {
+        "claims": 2,
+        "evidence": 9,
+        "merchant_aliases": 3,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 4,
+        "verification_tasks": 6
+      },
+      "distinct_sources": 5,
+      "links": []
+    },
+    {
+      "id": "e266ad28-7e04-4177-9b4e-1975e46fea07",
+      "canonical_name": "Compu Fast",
+      "normalized_name": "compu fast",
+      "category": "mobile_laptop",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.15,
+      "state": "IDENTITY_UNCERTAIN",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:31:51.945318+00:00",
+      "updated_at": "2026-08-25T11:17:33.353954+00:00",
+      "dependent_counts": {
+        "claims": 2,
+        "evidence": 13,
+        "merchant_aliases": 3,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 1,
+        "verification_tasks": 3
+      },
+      "distinct_sources": 8,
+      "links": []
+    },
+    {
+      "id": "d3c830bb-4339-41ed-a636-1c7710ff9825",
+      "canonical_name": "Compu Science",
+      "normalized_name": "compu science",
+      "category": "IT Hardware & Laptop Retailer",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.9,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:28:02.745656+00:00",
+      "updated_at": "2026-08-25T10:01:53.971148+00:00",
+      "dependent_counts": {
+        "claims": 8,
+        "evidence": 15,
+        "merchant_aliases": 9,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 21,
+        "verification_tasks": 4
+      },
+      "distinct_sources": 10,
+      "links": []
+    },
+    {
+      "id": "804e0ef3-669d-4adb-9573-0f2229b954f2",
+      "canonical_name": "Compu Science (شركة كمبيو ساينس للكمبيوتر)",
+      "normalized_name": "compu science كمبيو ساينس للكمبيوتر",
+      "category": "Computer Hardware, Laptops & Components",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.8,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 3,
+      "created_at": "2026-08-23T21:23:54.784798+00:00",
+      "updated_at": "2026-08-24T10:49:10.359726+00:00",
+      "dependent_counts": {
+        "claims": 1,
+        "evidence": 1,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 5,
+        "verification_tasks": 0
+      },
+      "distinct_sources": 1,
+      "links": []
+    },
+    {
+      "id": "0d6413ef-542d-4c85-a9cd-b480bd0810b3",
+      "canonical_name": "Fixawy",
+      "normalized_name": "fixawy",
+      "category": "Home Tech, Appliances & Electronics Maintenance Platform",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.65,
+      "state": "REQUIRES_MANUAL_REVIEW",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:43:27.628292+00:00",
+      "updated_at": "2026-08-24T04:13:16.576205+00:00",
+      "dependent_counts": {
+        "claims": 30,
+        "evidence": 33,
+        "merchant_aliases": 4,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 8,
+        "verification_tasks": 31
+      },
+      "distinct_sources": 4,
+      "links": []
+    },
+    {
+      "id": "06d03aac-055a-4733-a3eb-6874a544f3ea",
+      "canonical_name": "Fixawy (فيكساوي)",
+      "normalized_name": "fixawy فيكساوي",
+      "category": "Home Maintenance, Electrical & Appliance Repair Services Platform",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.6,
+      "state": "REQUIRES_MANUAL_REVIEW",
+      "first_seen_round": 3,
+      "created_at": "2026-08-23T21:16:08.855508+00:00",
+      "updated_at": "2026-08-24T04:01:54.544380+00:00",
+      "dependent_counts": {
+        "claims": 35,
+        "evidence": 52,
+        "merchant_aliases": 3,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 3,
+        "verification_tasks": 36
+      },
+      "distinct_sources": 20,
+      "links": []
+    },
+    {
+      "id": "e536f972-8d6c-4513-a099-4a5457fceecf",
+      "canonical_name": "Games Spot Egypt (جيمز سبوت)",
+      "normalized_name": "games spot egypt جيمز سبوت",
+      "category": "Video Game Store & Console Retailer",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.9,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:29:13.259206+00:00",
+      "updated_at": "2026-08-25T11:17:33.366779+00:00",
+      "dependent_counts": {
+        "claims": 8,
+        "evidence": 13,
+        "merchant_aliases": 6,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 8,
+        "verification_tasks": 4
+      },
+      "distinct_sources": 8,
+      "links": [
+        {
+          "id": "b9ad82e5-fd6b-4b47-9bad-961e6ccea359",
+          "left_merchant_id": "1cd85715-2084-4471-8e20-6e435c946271",
+          "right_merchant_id": "e536f972-8d6c-4513-a099-4a5457fceecf",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:34:39.730708+00:00"
+        },
+        {
+          "id": "89952535-53cf-4627-93d4-f584539be02b",
+          "left_merchant_id": "1de28808-94b5-434b-af5d-50a0f60444c4",
+          "right_merchant_id": "e536f972-8d6c-4513-a099-4a5457fceecf",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:34:39.731679+00:00"
+        }
+      ]
+    },
+    {
+      "id": "1cd85715-2084-4471-8e20-6e435c946271",
+      "canonical_name": "Games Spot",
+      "normalized_name": "games spot",
+      "category": "Gaming retail & console store",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.75,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:29:12.057342+00:00",
+      "updated_at": "2026-08-24T05:07:49.640591+00:00",
+      "dependent_counts": {
+        "claims": 1,
+        "evidence": 1,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 5,
+        "verification_tasks": 1
+      },
+      "distinct_sources": 1,
+      "links": [
+        {
+          "id": "b9ad82e5-fd6b-4b47-9bad-961e6ccea359",
+          "left_merchant_id": "1cd85715-2084-4471-8e20-6e435c946271",
+          "right_merchant_id": "e536f972-8d6c-4513-a099-4a5457fceecf",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:34:39.730708+00:00"
+        }
+      ]
+    },
+    {
+      "id": "890f8666-c04c-441a-b4ab-78a29ae04f90",
+      "canonical_name": "Kheir Zaman",
+      "normalized_name": "kheir zaman",
+      "category": "Supermarket / Discount Grocery Retail Chain",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.9,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:58:17.154019+00:00",
+      "updated_at": "2026-08-24T11:18:01.528850+00:00",
+      "dependent_counts": {
+        "claims": 10,
+        "evidence": 14,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 6,
+        "verification_tasks": 4
+      },
+      "distinct_sources": 9,
+      "links": [
+        {
+          "id": "d991e518-1047-4af1-8599-16a52e0f2c48",
+          "left_merchant_id": "1de28808-94b5-434b-af5d-50a0f60444c4",
+          "right_merchant_id": "890f8666-c04c-441a-b4ab-78a29ae04f90",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.170257+00:00"
+        }
+      ]
+    },
+    {
+      "id": "3b2f3927-90df-4826-b256-d69dc32ff8d5",
+      "canonical_name": "Kheir Zaman (Tanta Branch)",
+      "normalized_name": "kheir zaman tanta branch",
+      "category": "supermarket",
+      "city": "Tanta",
+      "governorate": "Gharbia",
+      "identity_confidence": 0.8,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 3,
+      "created_at": "2026-08-23T21:19:15.519297+00:00",
+      "updated_at": "2026-08-24T06:40:43.675429+00:00",
+      "dependent_counts": {
+        "claims": 2,
+        "evidence": 3,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 1,
+        "verification_tasks": 2
+      },
+      "distinct_sources": 3,
+      "links": []
+    },
+    {
+      "id": "eaa59b9e-835a-413d-86a7-b8d64372e09f",
+      "canonical_name": "Spinneys Egypt",
+      "normalized_name": "spinneys egypt",
+      "category": "Supermarket & Hypermarket Chain",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.88,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:57:06.382735+00:00",
+      "updated_at": "2026-08-25T11:56:08.145076+00:00",
+      "dependent_counts": {
+        "claims": 3,
+        "evidence": 8,
+        "merchant_aliases": 5,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 9,
+        "verification_tasks": 4
+      },
+      "distinct_sources": 6,
+      "links": [
+        {
+          "id": "41dd57fe-0456-4697-ac64-27dcf7de1a58",
+          "left_merchant_id": "1ecfb4fa-3937-49a6-ab0b-592d0a16c799",
+          "right_merchant_id": "eaa59b9e-835a-413d-86a7-b8d64372e09f",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:59:30.432220+00:00"
+        }
+      ]
+    },
+    {
+      "id": "550b1027-c781-4ca3-ab76-8a76fc19d816",
+      "canonical_name": "Spinneys Egypt (Tanta Branch)",
+      "normalized_name": "spinneys egypt tanta branch",
+      "category": "supermarket_and_hypermarket",
+      "city": "Tanta",
+      "governorate": "Gharbia",
+      "identity_confidence": 0.9,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 3,
+      "created_at": "2026-08-23T21:19:15.251748+00:00",
+      "updated_at": "2026-08-26T10:10:14.284865+00:00",
+      "dependent_counts": {
+        "claims": 6,
+        "evidence": 6,
+        "merchant_aliases": 5,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 4,
+        "verification_tasks": 1
+      },
+      "distinct_sources": 4,
+      "links": []
+    },
+    {
+      "id": "dab9cc64-1e22-4dcd-9461-1b7fc5cc6634",
+      "canonical_name": "Delta Computer",
+      "normalized_name": "delta computer",
+      "category": "mobile_laptop",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.6,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:31:51.913837+00:00",
+      "updated_at": "2026-08-25T10:32:32.970234+00:00",
+      "dependent_counts": {
+        "claims": 8,
+        "evidence": 11,
+        "merchant_aliases": 3,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 4,
+        "verification_tasks": 4
+      },
+      "distinct_sources": 10,
+      "links": []
+    },
+    {
+      "id": "53f064aa-0133-4986-9fc2-4a765762a1d4",
+      "canonical_name": "Delta Computer Alexandria",
+      "normalized_name": "delta computer alexandria",
+      "category": "Computer Hardware & Gaming Systems Retailer",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.5,
+      "state": "IDENTITY_UNCERTAIN",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T21:02:26.028181+00:00",
+      "updated_at": "2026-08-24T08:30:47.071492+00:00",
+      "dependent_counts": {
+        "claims": 1,
+        "evidence": 1,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 3,
+        "verification_tasks": 1
+      },
+      "distinct_sources": 1,
+      "links": []
+    },
+    {
+      "id": "ab13792f-8499-4f6e-b139-17ff7c4ad0a3",
+      "canonical_name": "Delta Computer",
+      "normalized_name": "delta computer",
+      "category": "Computer Hardware & Laptop Retailer",
+      "city": "Mohandessin",
+      "governorate": "Giza",
+      "identity_confidence": 0.15,
+      "state": "IDENTITY_UNCERTAIN",
+      "first_seen_round": 4,
+      "created_at": "2026-08-23T21:27:47.006773+00:00",
+      "updated_at": "2026-08-25T07:09:46.842387+00:00",
+      "dependent_counts": {
+        "claims": 8,
+        "evidence": 12,
+        "merchant_aliases": 4,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 1,
+        "verification_tasks": 3
+      },
+      "distinct_sources": 9,
+      "links": []
+    }
+  ],
+  "after_counts": {
+    "agent_runs": 797,
+    "checkpoints": 1,
+    "claim_evidence": 3763,
+    "claims": 2644,
+    "evidence": 3763,
+    "fb_group_registry": 31,
+    "merchant_aliases": 1899,
+    "merchant_analyses": 410,
+    "merchant_identifiers": 3077,
+    "merchant_links": 87,
+    "merchants": 351,
+    "pipeline_runs": 1,
+    "quality_metrics": 18,
+    "research_gaps": 12,
+    "schema_version": 1,
+    "sources": 2144,
+    "verification_tasks": 1737
+  },
+  "after": [
+    {
+      "id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+      "canonical_name": "B.TECH",
+      "normalized_name": "b tech",
+      "category": "Consumer Electronics & Household Appliances Retailer",
+      "city": "Giza (Haram / Faisal / Omraneya)",
+      "governorate": "Giza",
+      "identity_confidence": 0.98,
+      "state": "VERIFIED_HIGH_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:28:02.492795+00:00",
+      "updated_at": "2026-08-31T00:41:12.391616+00:00",
+      "dependent_counts": {
+        "claims": 100,
+        "evidence": 123,
+        "merchant_aliases": 21,
+        "merchant_analyses": 5,
+        "merchant_identifiers": 69,
+        "verification_tasks": 41
+      },
+      "distinct_sources": 53,
+      "links": [
+        {
+          "id": "d26c9bab-a993-4318-a073-a055848dde1e",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "1f271b65-9b0b-4d3f-b519-6c61d240f4ff",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:28:02.813299+00:00"
+        },
+        {
+          "id": "7980ce2a-ab76-41b3-9114-fd5e04f0f760",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "4fa441a7-25b7-4710-9da0-689241c9fd2d",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.077923+00:00"
+        },
+        {
+          "id": "6c404e5b-b0dc-422d-ae2f-5b8796ed57e6",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "c25a5a60-e885-4916-85aa-9618d9097d18",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.056072+00:00"
+        },
+        {
+          "id": "194dfaa8-9800-4b9a-bb9e-7c74ef35e704",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "e756323c-cc6d-49b4-aa5d-7a33dfe1e124",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.115580+00:00"
+        },
+        {
+          "id": "40f90ea4-69fb-40d8-aa94-4c71ae1f4fcb",
+          "left_merchant_id": "0abffb14-4754-4d4a-8ec7-78a5732a9264",
+          "right_merchant_id": "fc638067-985a-490a-8064-94b35b6846f5",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:28:02.896633+00:00"
+        }
+      ]
+    },
+    {
+      "id": "842ad9fe-ecfc-46f4-b065-e945fb3aaa3d",
+      "canonical_name": "Fathalla Gomla Market",
+      "normalized_name": "fathalla gomla market",
+      "category": "Supermarket / Hypermarket / Wholesale & Retail",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.85,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:57:06.303831+00:00",
+      "updated_at": "2026-08-31T00:41:12.391616+00:00",
+      "dependent_counts": {
+        "claims": 32,
+        "evidence": 38,
+        "merchant_aliases": 14,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 20,
+        "verification_tasks": 5
+      },
+      "distinct_sources": 26,
+      "links": [
+        {
+          "id": "c525078a-92c3-42bf-a8fe-aeb0585b28a6",
+          "left_merchant_id": "842ad9fe-ecfc-46f4-b065-e945fb3aaa3d",
+          "right_merchant_id": "c25a5a60-e885-4916-85aa-9618d9097d18",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.262122+00:00"
+        }
+      ]
+    },
+    {
+      "id": "3af4b233-ad29-4155-b436-3573576e1daf",
+      "canonical_name": "Games 2 Egypt",
+      "normalized_name": "games 2 egypt",
+      "category": "Gaming & Console Retailer",
+      "city": "Giza",
+      "governorate": "Giza",
+      "identity_confidence": 0.92,
+      "state": "VERIFIED_HIGH_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:29:11.738158+00:00",
+      "updated_at": "2026-08-31T00:41:12.391616+00:00",
+      "dependent_counts": {
+        "claims": 15,
+        "evidence": 22,
+        "merchant_aliases": 9,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 44,
+        "verification_tasks": 6
+      },
+      "distinct_sources": 14,
+      "links": [
+        {
+          "id": "bffa69ca-0d53-457a-8de4-09f8689e70fe",
+          "left_merchant_id": "3af4b233-ad29-4155-b436-3573576e1daf",
+          "right_merchant_id": "4fa441a7-25b7-4710-9da0-689241c9fd2d",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:29:12.155658+00:00"
+        },
+        {
+          "id": "bccd390f-9b1f-4db0-a64b-565fdbcb85cb",
+          "left_merchant_id": "3af4b233-ad29-4155-b436-3573576e1daf",
+          "right_merchant_id": "a518feda-64f8-48f9-bf98-c77d73c85bc7",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T21:14:29.259159+00:00"
+        }
+      ]
+    },
+    {
+      "id": "e6c3d479-b106-4cdb-a700-15e752033255",
+      "canonical_name": "Raya Shop",
+      "normalized_name": "raya",
+      "category": "Consumer Electronics & Mobile Devices Retailer",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.9,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:28:02.773363+00:00",
+      "updated_at": "2026-08-31T00:41:12.391616+00:00",
+      "dependent_counts": {
+        "claims": 38,
+        "evidence": 55,
+        "merchant_aliases": 24,
+        "merchant_analyses": 6,
+        "merchant_identifiers": 49,
+        "verification_tasks": 13
+      },
+      "distinct_sources": 40,
+      "links": [
+        {
+          "id": "b9ec3683-95df-4f84-8b55-d372d1ec282f",
+          "left_merchant_id": "c25a5a60-e885-4916-85aa-9618d9097d18",
+          "right_merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.097943+00:00"
+        }
+      ]
+    },
+    {
+      "id": "05abc4eb-760c-4842-a467-716d52b1bd04",
+      "canonical_name": "Shaheen Center",
+      "normalized_name": "shaheen center",
+      "category": "Home Appliances, Electronics & Household Goods Retail Chain",
+      "city": "Giza",
+      "governorate": "Giza",
+      "identity_confidence": 0.82,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:38:43.727658+00:00",
+      "updated_at": "2026-08-31T00:41:12.391616+00:00",
+      "dependent_counts": {
+        "claims": 4,
+        "evidence": 16,
+        "merchant_aliases": 7,
+        "merchant_analyses": 4,
+        "merchant_identifiers": 18,
+        "verification_tasks": 38
+      },
+      "distinct_sources": 11,
+      "links": []
+    },
+    {
+      "id": "038a190f-731e-4adf-8b80-723276ce3a3d",
+      "canonical_name": "CompuData Center",
+      "normalized_name": "compudata center",
+      "category": "Computer Hardware & Networking",
+      "city": "Heliopolis",
+      "governorate": "Cairo",
+      "identity_confidence": 0.8,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:38:43.743051+00:00",
+      "updated_at": "2026-08-31T00:41:12.391616+00:00",
+      "dependent_counts": {
+        "claims": 13,
+        "evidence": 46,
+        "merchant_aliases": 12,
+        "merchant_analyses": 4,
+        "merchant_identifiers": 12,
+        "verification_tasks": 44
+      },
+      "distinct_sources": 27,
+      "links": []
+    },
+    {
+      "id": "1687538d-eddd-4613-9761-59643d8a9e33",
+      "canonical_name": "Compu Fast (كومبيو فاست)",
+      "normalized_name": "compu fast كومبيو فاست",
+      "category": "Computer Hardware & Gaming Peripherals Retailer",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.62,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:31:51.945318+00:00",
+      "updated_at": "2026-08-31T00:41:12.391616+00:00",
+      "dependent_counts": {
+        "claims": 3,
+        "evidence": 22,
+        "merchant_aliases": 6,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 5,
+        "verification_tasks": 9
+      },
+      "distinct_sources": 12,
+      "links": []
+    },
+    {
+      "id": "d3c830bb-4339-41ed-a636-1c7710ff9825",
+      "canonical_name": "Compu Science",
+      "normalized_name": "compu science",
+      "category": "IT Hardware & Laptop Retailer",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.9,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:28:02.745656+00:00",
+      "updated_at": "2026-08-31T00:41:12.391616+00:00",
+      "dependent_counts": {
+        "claims": 9,
+        "evidence": 16,
+        "merchant_aliases": 11,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 26,
+        "verification_tasks": 4
+      },
+      "distinct_sources": 11,
+      "links": []
+    },
+    {
+      "id": "0d6413ef-542d-4c85-a9cd-b480bd0810b3",
+      "canonical_name": "Fixawy",
+      "normalized_name": "fixawy",
+      "category": "Home Tech, Appliances & Electronics Maintenance Platform",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.65,
+      "state": "REQUIRES_MANUAL_REVIEW",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:43:27.628292+00:00",
+      "updated_at": "2026-08-31T00:41:12.391616+00:00",
+      "dependent_counts": {
+        "claims": 64,
+        "evidence": 85,
+        "merchant_aliases": 8,
+        "merchant_analyses": 4,
+        "merchant_identifiers": 11,
+        "verification_tasks": 67
+      },
+      "distinct_sources": 21,
+      "links": []
+    },
+    {
+      "id": "e536f972-8d6c-4513-a099-4a5457fceecf",
+      "canonical_name": "Games Spot Egypt (جيمز سبوت)",
+      "normalized_name": "games spot egypt جيمز سبوت",
+      "category": "Video Game Store & Console Retailer",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.9,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:29:12.057342+00:00",
+      "updated_at": "2026-08-31T00:41:12.391616+00:00",
+      "dependent_counts": {
+        "claims": 9,
+        "evidence": 14,
+        "merchant_aliases": 9,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 13,
+        "verification_tasks": 5
+      },
+      "distinct_sources": 9,
+      "links": [
+        {
+          "id": "89952535-53cf-4627-93d4-f584539be02b",
+          "left_merchant_id": "1de28808-94b5-434b-af5d-50a0f60444c4",
+          "right_merchant_id": "e536f972-8d6c-4513-a099-4a5457fceecf",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:34:39.731679+00:00"
+        }
+      ]
+    },
+    {
+      "id": "890f8666-c04c-441a-b4ab-78a29ae04f90",
+      "canonical_name": "Kheir Zaman",
+      "normalized_name": "kheir zaman",
+      "category": "Supermarket / Discount Grocery Retail Chain",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.9,
+      "state": "VERIFIED_MODERATE_CONFIDENCE",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:58:17.154019+00:00",
+      "updated_at": "2026-08-31T00:41:12.391616+00:00",
+      "dependent_counts": {
+        "claims": 11,
+        "evidence": 17,
+        "merchant_aliases": 7,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 7,
+        "verification_tasks": 6
+      },
+      "distinct_sources": 11,
+      "links": [
+        {
+          "id": "d991e518-1047-4af1-8599-16a52e0f2c48",
+          "left_merchant_id": "1de28808-94b5-434b-af5d-50a0f60444c4",
+          "right_merchant_id": "890f8666-c04c-441a-b4ab-78a29ae04f90",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:58:17.170257+00:00"
+        }
+      ]
+    },
+    {
+      "id": "eaa59b9e-835a-413d-86a7-b8d64372e09f",
+      "canonical_name": "Spinneys Egypt",
+      "normalized_name": "spinneys egypt",
+      "category": "Supermarket & Hypermarket Chain",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "identity_confidence": 0.9,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 2,
+      "created_at": "2026-08-23T20:57:06.382735+00:00",
+      "updated_at": "2026-08-31T00:41:12.391616+00:00",
+      "dependent_counts": {
+        "claims": 9,
+        "evidence": 14,
+        "merchant_aliases": 10,
+        "merchant_analyses": 3,
+        "merchant_identifiers": 13,
+        "verification_tasks": 5
+      },
+      "distinct_sources": 10,
+      "links": [
+        {
+          "id": "41dd57fe-0456-4697-ac64-27dcf7de1a58",
+          "left_merchant_id": "1ecfb4fa-3937-49a6-ab0b-592d0a16c799",
+          "right_merchant_id": "eaa59b9e-835a-413d-86a7-b8d64372e09f",
+          "relation": "identifier_collision",
+          "confidence": 0.15,
+          "rationale": "same address identifier appeared on two candidate merchants",
+          "created_at": "2026-08-23T20:59:30.432220+00:00"
+        }
+      ]
+    },
+    {
+      "id": "dab9cc64-1e22-4dcd-9461-1b7fc5cc6634",
+      "canonical_name": "Delta Computer Supplies — Alexandria",
+      "normalized_name": "delta computer supplies alexandria",
+      "category": "Computer Hardware & Gaming Systems Retailer",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "identity_confidence": 0.6,
+      "state": "INSUFFICIENT_DATA",
+      "first_seen_round": 1,
+      "created_at": "2026-08-23T20:31:51.913837+00:00",
+      "updated_at": "2026-08-31T00:41:12.391616+00:00",
+      "dependent_counts": {
+        "claims": 10,
+        "evidence": 12,
+        "merchant_aliases": 8,
+        "merchant_analyses": 2,
+        "merchant_identifiers": 7,
+        "verification_tasks": 5
+      },
+      "distinct_sources": 11,
+      "links": []
+    },
+    {
+      "id": "ab13792f-8499-4f6e-b139-17ff7c4ad0a3",
+      "canonical_name": "Delta Computer — Mohandessin",
+      "normalized_name": "delta computer mohandessin",
+      "category": "Computer Hardware & Laptop Retailer",
+      "city": "Mohandessin",
+      "governorate": "Giza",
+      "identity_confidence": 0.15,
+      "state": "IDENTITY_UNCERTAIN",
+      "first_seen_round": 4,
+      "created_at": "2026-08-23T21:27:47.006773+00:00",
+      "updated_at": "2026-08-31T00:41:12.391616+00:00",
+      "dependent_counts": {
+        "claims": 8,
+        "evidence": 12,
+        "merchant_aliases": 5,
+        "merchant_analyses": 1,
+        "merchant_identifiers": 1,
+        "verification_tasks": 3
+      },
+      "distinct_sources": 9,
+      "links": []
+    }
+  ]
+}
