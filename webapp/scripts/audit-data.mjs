@@ -4,6 +4,7 @@
  *
  * Usage:
  *   node scripts/audit-data.mjs <db-path> [--json] [--strict] [--v2]
+ *                               [--expect-schema <n>]
  *
  * Modes:
  *   (default)     Runs every fatal + warning check. Exits 1 on any fatal finding.
@@ -11,7 +12,18 @@
  *   --v2          Pre-v3 relaxation: an analysis payload without payload_version
  *                 is reported as a warning instead of a fatal finding.
  *   --strict      Snapshot/master gating mode: additionally fails (exit 1) when
- *                 schema_version is not the expected version (3, or 2 with --v2).
+ *                 schema_version is not the expected version.
+ *   --expect-schema <n>
+ *                 Expected schema version used by --strict gating. Defaults to
+ *                 3 (or 2 with --v2) when omitted, so v3 behaviour is unchanged.
+ *
+ * Schema v4 awareness: the sources.web_url / sources.access_kind,
+ * source_link_checks and merchant_briefs checks run only when those columns and
+ * tables exist, so a v3 database is audited exactly as before.
+ *
+ * Availability neutrality: an unreachable, redirected, rate-limited or
+ * access-limited source is recorded as an availability result, never as a data
+ * defect, and never as a judgement about the seller.
  *
  * This script NEVER writes to the database; it opens it read-only.
  */
@@ -49,6 +61,8 @@ const CLAIM_TYPES = new Set([
   'long_business_history', 'other',
 ]);
 const AUTHOR_TYPES = new Set(['customer', 'merchant', 'journalist', 'regulator', 'registry', 'anonymous', 'unknown']);
+const ACCESS_KINDS = new Set(['web', 'whois', 'offline', 'unknown']);
+const LINK_CHECK_STATUSES = new Set(['reachable', 'redirected', 'not_found', 'access_limited', 'server_error', 'network_error', 'not_checked']);
 
 const REQUIRED_TABLES = [
   'merchants', 'sources', 'evidence', 'claims', 'claim_evidence',
@@ -76,14 +90,42 @@ const MAX_SAMPLES = 15;
 // CLI
 // ---------------------------------------------------------------------------
 const args = process.argv.slice(2);
+let expectSchemaRaw = null;
+const positional = [];
+for (let i = 0; i < args.length; i += 1) {
+  const a = args[i];
+  if (a === '--expect-schema') {
+    expectSchemaRaw = i + 1 < args.length && !args[i + 1].startsWith('--') ? args[i + 1] : '';
+    i += 1;
+    continue;
+  }
+  if (a.startsWith('--expect-schema=')) {
+    expectSchemaRaw = a.slice('--expect-schema='.length);
+    continue;
+  }
+  if (a.startsWith('--')) continue;
+  positional.push(a);
+}
 const flags = new Set(args.filter((a) => a.startsWith('--')));
-const positional = args.filter((a) => !a.startsWith('--'));
 const asJson = flags.has('--json');
 const v2Relaxed = flags.has('--v2');
 const strict = flags.has('--strict');
 
+const USAGE = 'Usage: node scripts/audit-data.mjs <db-path> [--json] [--strict] [--v2] [--expect-schema <n>]\n';
+
+// Expected schema version: --expect-schema wins, then --v2 (2), else 3.
+let expectedVersion = v2Relaxed ? 2 : 3;
+if (expectSchemaRaw !== null && expectSchemaRaw !== undefined) {
+  const parsed = Number(expectSchemaRaw);
+  if (expectSchemaRaw === '' || !Number.isInteger(parsed) || parsed < 1) {
+    process.stderr.write(`audit-data: --expect-schema expects a positive integer${expectSchemaRaw === '' ? ', but no value was supplied' : `, got: ${expectSchemaRaw}`}\n`);
+    process.exit(2);
+  }
+  expectedVersion = parsed;
+}
+
 if (positional.length !== 1) {
-  process.stderr.write('Usage: node scripts/audit-data.mjs <db-path> [--json] [--strict] [--v2]\n');
+  process.stderr.write(USAGE);
   process.exit(2);
 }
 const dbPath = positional[0];
@@ -135,12 +177,26 @@ function urlScheme(url) {
   const m = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(String(url ?? ''));
   return m ? m[1].toLowerCase() : null;
 }
+// Strict absolute http/https URL test for browser-openable source links.
+// Never a prefix test: the value must parse as a URL, carry exactly the http or
+// https protocol, and expose a non-empty host.
+function isStrictHttpUrl(value) {
+  if (typeof value !== 'string' || value === '') return false;
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+  return parsed.hostname !== '';
+}
 
 // ---------------------------------------------------------------------------
 // Open read-only
 // ---------------------------------------------------------------------------
 const db = new Database(dbPath, { readonly: true, fileMustExist: true });
-const report = { db: path.resolve(dbPath), generated_at: new Date().toISOString(), schema_version: null, tables: {}, distributions: {}, findings: { fatal, warnings }, summary: { fatal: 0, warnings: 0 } };
+const report = { db: path.resolve(dbPath), generated_at: new Date().toISOString(), schema_version: null, expected_schema_version: expectedVersion, tables: {}, distributions: {}, findings: { fatal, warnings }, summary: { fatal: 0, warnings: 0 } };
 
 try {
   // -- required tables / columns -------------------------------------------
@@ -160,7 +216,6 @@ try {
     const row = db.prepare('SELECT version FROM schema_version ORDER BY version DESC LIMIT 1').get();
     report.schema_version = row ? row.version : null;
   }
-  const expectedVersion = v2Relaxed ? 2 : 3;
   if (report.schema_version === null || report.schema_version === undefined) {
     if (strict) addFatal('schema_version', 'schema_version row missing');
     else addWarn('schema_version', 'schema_version row missing or empty');
@@ -171,7 +226,7 @@ try {
   }
 
   // -- table counts --------------------------------------------------------
-  for (const t of [...REQUIRED_TABLES, 'snapshot_meta']) {
+  for (const t of [...REQUIRED_TABLES, 'snapshot_meta', 'source_link_checks', 'merchant_briefs']) {
     const n = tableCount(db, t);
     if (n !== null) report.tables[t] = n;
   }
@@ -360,6 +415,63 @@ try {
     if (badScheme.length) addWarn('unsupported_source_scheme', `${badScheme.length} sources use a scheme outside http/https/whois`, badScheme.map((r) => `${r.id}:${r.url.slice(0, 60)}`));
   }
 
+  // -- schema v4: source locator metadata ---------------------------------
+  // Skipped entirely on a v3 database, which has none of these columns.
+  const sourceCols = hasTable(db, 'sources') ? columnsOf(db, 'sources') : new Set();
+  const sourceUsable = sourceCols.has('id');
+  const hasWebUrl = sourceUsable && sourceCols.has('web_url');
+  const hasAccessKind = sourceUsable && sourceCols.has('access_kind');
+  if (hasWebUrl) {
+    const malformed = db.prepare("SELECT id, web_url FROM sources WHERE web_url IS NOT NULL AND web_url <> ''").all()
+      .filter((r) => !isStrictHttpUrl(r.web_url));
+    if (malformed.length) addFatal('malformed_web_url', `${malformed.length} sources carry a web_url that is not a strict absolute http/https URL with a non-empty host`, malformed.map((r) => `${r.id}:${String(r.web_url).slice(0, 60)}`));
+  }
+  if (hasWebUrl && hasAccessKind) {
+    const mismatch = db.prepare(`SELECT id, web_url, access_kind FROM sources WHERE
+      ((web_url IS NULL OR web_url = '') AND access_kind = 'web')
+      OR (web_url IS NOT NULL AND web_url <> '' AND access_kind <> 'web')`).all();
+    if (mismatch.length) addFatal('web_url_access_kind_mismatch', `${mismatch.length} sources disagree between access_kind and whether a web_url is present`, mismatch.map((r) => `${r.id}:access_kind=${r.access_kind},web_url=${r.web_url ? String(r.web_url).slice(0, 40) : '∅'}`));
+  }
+  if (hasAccessKind) {
+    const badKind = db.prepare(`SELECT id, access_kind FROM sources WHERE access_kind NOT IN (${[...ACCESS_KINDS].map(() => '?').join(',')})`).all(...ACCESS_KINDS);
+    if (badKind.length) addFatal('unknown_access_kind', `${badKind.length} sources carry an access_kind outside the controlled vocabulary web/whois/offline/unknown`, badKind.map((r) => `${r.id}:${r.access_kind}`));
+  }
+
+  // -- schema v4: source link checks --------------------------------------
+  // Availability only. not_found / access_limited / network_error record what
+  // the checker saw; none of them is a data defect or a seller judgement.
+  if (hasTable(db, 'source_link_checks')) {
+    const checkCols = columnsOf(db, 'source_link_checks');
+    if (ok('sources')) {
+      const orphan = db.prepare(`SELECT group_concat(lc.source_id) ids, count(*) n FROM source_link_checks lc LEFT JOIN sources s ON s.id = lc.source_id WHERE s.id IS NULL`).get();
+      if (orphan.n) addFatal('orphan_link_check', `${orphan.n} source_link_checks rows reference missing sources`, String(orphan.ids).split(','));
+    }
+    if (checkCols.has('status')) {
+      const statusRows = db.prepare('SELECT status AS value, count(*) AS count FROM source_link_checks GROUP BY status ORDER BY count DESC').all();
+      report.distributions.link_check_status = statusRows;
+      const badStatus = statusRows.filter((r) => !LINK_CHECK_STATUSES.has(r.value));
+      if (badStatus.length) addFatal('unknown_link_check_status', `${badStatus.length} source_link_checks status values fall outside the controlled vocabulary`, badStatus.map((r) => `${r.value}×${r.count}`));
+      const total = statusRows.reduce((a, r) => a + r.count, 0);
+      const perStatus = statusRows.map((r) => `${r.value}=${r.count}`).join(', ');
+      addWarn('link_check_distribution', total
+        ? `${total} source link checks recorded (${perStatus}); availability information only, never a judgement of any seller or source`
+        : 'no source link checks recorded yet; availability is simply unmeasured, which is not a defect');
+    }
+  }
+
+  // -- schema v4: merchant briefs -----------------------------------------
+  if (hasTable(db, 'merchant_briefs')) {
+    const briefCols = columnsOf(db, 'merchant_briefs');
+    if (ok('merchants')) {
+      const orphan = db.prepare(`SELECT group_concat(b.merchant_id) ids, count(*) n FROM merchant_briefs b LEFT JOIN merchants m ON m.id = b.merchant_id WHERE m.id IS NULL`).get();
+      if (orphan.n) addFatal('orphan_brief', `${orphan.n} merchant_briefs rows reference missing merchants`, String(orphan.ids).split(','));
+    }
+    if (briefCols.has('evidence_set_hash')) {
+      const missing = db.prepare("SELECT merchant_id FROM merchant_briefs WHERE evidence_set_hash IS NULL OR evidence_set_hash = ''").all();
+      if (missing.length) addFatal('brief_missing_hash', `${missing.length} merchant_briefs rows carry no evidence_set_hash, so their freshness cannot be bound to the live evidence set`, missing.map((r) => r.merchant_id));
+    }
+  }
+
   // -- unresolved identity links ------------------------------------------
   if (ok('merchant_links')) {
     const unresolved = db.prepare(`SELECT id, left_merchant_id, right_merchant_id, relation, rationale FROM merchant_links WHERE relation IN (${[...UNSAFE_IDENTITY_LINK_RELATIONS].map(() => '?').join(',')})`).all(...UNSAFE_IDENTITY_LINK_RELATIONS);
@@ -449,6 +561,18 @@ try {
       addWarn('snapshot_meta', `snapshot_meta exists but could not be read: ${e.message}`);
     }
   }
+
+  // -- availability-neutrality policy -------------------------------------
+  // Asserted by the checks above: nothing in this audit turns an unreachable,
+  // redirected, rate-limited or access-limited source into a data defect, and
+  // no warning text calls a seller untrustworthy because a link failed.
+  report.integrity_policy = {
+    availability_is_not_credibility: true,
+    unreachable_or_access_limited_classified_as_data_defect: false,
+    warnings_call_seller_untrustworthy_on_link_failure: false,
+    availability_statuses: [...LINK_CHECK_STATUSES],
+    statement: 'Link-check results — including not_found, access_limited and network_error — are availability records only. None of them is a data defect, and none of them is a judgement about the seller.',
+  };
 } finally {
   db.close();
 }
@@ -481,6 +605,7 @@ if (asJson) {
   if (d.claim_type) out.push(`  claim_type: ${d.claim_type.distinct} distinct; top: ${d.claim_type.top.map((r) => `${r.value}×${r.count}`).join(', ')}`);
   if (d.confidence_bands) out.push(`  confidence bands: ${Object.entries(d.confidence_bands).map(([k, v]) => `${k}=${v}`).join(', ')}`);
   if (d.publication_date_coverage) out.push(`  published_at: ${d.publication_date_coverage.missing_published_at}/${d.publication_date_coverage.total} missing; range ${d.publication_date_coverage.earliest_published_at ?? '—'} … ${d.publication_date_coverage.latest_published_at ?? '—'}; ${d.publication_date_coverage.merchants_without_dated_evidence} merchants without dated evidence`);
+  if (d.link_check_status?.length) out.push(`  link_check_status (availability only, never a credibility judgement): ${d.link_check_status.map((r) => `${r.value}=${r.count}`).join(', ')}`);
   if (report.snapshot_meta) out.push(`  snapshot_meta: app=${report.snapshot_meta.app_schema_version} src=${report.snapshot_meta.source_schema_version} generated_at=${report.snapshot_meta.generated_at}`);
   out.push('');
   out.push(`FATAL (${fatal.length})`);
@@ -488,6 +613,7 @@ if (asJson) {
   out.push(`WARNINGS (${warnings.length})`);
   for (const w of warnings) out.push(`  [${w.id}] ${w.check}: ${w.detail}`);
   out.push('');
+  if (report.integrity_policy) out.push(`  link checks: ${report.integrity_policy.statement}`);
   out.push(`summary: ${fatal.length} fatal, ${warnings.length} warnings → exit ${exitCode}`);
   process.stdout.write(`${out.join('\n')}\n`);
 }

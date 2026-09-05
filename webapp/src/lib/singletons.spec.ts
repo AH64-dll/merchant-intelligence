@@ -113,7 +113,7 @@ describe('singletons', () => {
         counts: Record<string, number>;
       };
       expect(info.appSchemaVersion).toBe(1);
-      expect(info.sourceSchemaVersion).toBe(3);
+      expect(info.sourceSchemaVersion).toBe(4);
       expect(info.generatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
       expect(Object.keys(info.counts).length).toBe(9);
     } else {
@@ -126,7 +126,7 @@ describe('singletons', () => {
           generated_at: string;
         };
         expect(meta.app_schema_version).toBe(1);
-        expect(meta.source_schema_version).toBe(3);
+        expect(meta.source_schema_version).toBe(4);
         expect(meta.generated_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
       } finally {
         conn.close();
@@ -161,7 +161,7 @@ function buildSnapshotFixture(meta: Partial<Meta> | null, opts?: { omitRow?: boo
   conn.exec(`CREATE TABLE snapshot_meta (${META_COLUMNS_SQL})`);
   if (!opts?.omitRow) {
     const row: Meta = {
-      id: 1, app_schema_version: 1, source_schema_version: 3,
+      id: 1, app_schema_version: 1, source_schema_version: 4,
       generated_at: '2026-08-29T00:00:00Z',
       source_max_evidence_captured_at: null, source_max_merchant_updated_at: null,
       merchants_count: 0, sources_count: 0, evidence_count: 0, claims_count: 0,
@@ -212,7 +212,7 @@ describe('snapshot manifest validation (validateSnapshotManifest)', () => {
 
   it('rejects an unknown source schema version', () => {
     const file = buildSnapshotFixture({ source_schema_version: 2 });
-    expect(validateManifest(file)).toMatch(/source_schema_version 2, expected 3/);
+    expect(validateManifest(file)).toMatch(/source_schema_version 2, expected 4/);
   });
 
   it('rejects a count mismatch between manifest and tables', () => {

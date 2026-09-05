@@ -1,3 +1,4 @@
+import { safeHttpUrl } from '@/components/display';
 import {
   assessEvidenceCoverage,
   assessIdentity,
@@ -237,17 +238,10 @@ function toEvidenceItem(row: DirectoryEvidenceRow): EvidenceItem {
     duplicateOf: row.duplicateOf,
     duplicateRootMerchantId: null,
     claimId: null,
+    citations: [],
+    isMeaningful: row.duplicateOf === null && row.summary.trim().length > 0,
+    isDuplicateChild: row.duplicateOf !== null,
   };
-}
-
-function safeHttpUrl(value: string): string | null {
-  const trimmed = value.trim();
-  try {
-    const parsed = new URL(trimmed);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? trimmed : null;
-  } catch {
-    return null;
-  }
 }
 
 function sourceKey(row: DirectoryEvidenceRow): string | null {

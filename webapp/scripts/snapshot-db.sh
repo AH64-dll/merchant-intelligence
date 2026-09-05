@@ -1,15 +1,21 @@
 #!/usr/bin/env bash
 # snapshot-db.sh — build the audited webapp snapshot from the authoritative master DB.
 #
-# Contract (Phase 2):
+# Contract (Phase 4):
 #   1. Open the master READ-ONLY; VACUUM INTO a unique temp file in the destination dir.
-#   2. Require source schema_version = 3.
+#   2. Require source schema_version = 4.
 #   3. Detect write drift via PRAGMA data_version + table counts before/after the copy;
 #      retry the whole copy up to 3 attempts, then fail without touching the destination.
-#   4. Run scripts/audit-data.mjs --strict against the temp copy; its exit must be 0.
-#   5. Add the snapshot_meta manifest (app_schema_version=1, source_schema_version=3,
+#   4. Run scripts/audit-data.mjs --strict --expect-schema 4 against the temp copy;
+#      its exit must be 0.
+#   5. Add the snapshot_meta manifest (app_schema_version=1, source_schema_version=4,
 #      UTC generated_at, source maxima, 9 counts) inside the temp copy ONLY.
 #   6. Atomically replace DEST_DB. Any failure leaves the previous snapshot untouched.
+#
+# Schema v4 projection: VACUUM INTO copies the master DB wholesale, so the
+# presentation-safe source columns (web_url, source_label, locator_note,
+# access_kind) and the source_link_checks / merchant_briefs tables are exported
+# whole, exactly as they exist in the source — no filtering, no rewriting.
 #
 # Env:
 #   SRC_DB  source master DB (default: repo data/merchant_intelligence.db)
@@ -90,8 +96,8 @@ while :; do
   src_schema="$(sed -n '2p' <<<"$source_state")"
   counts_before="$(sed -n '3p' <<<"$source_state")"
 
-  if [ "$src_schema" != "3" ]; then
-    die "source schema_version is '$src_schema', expected 3 (run the v3 migration first)"
+  if [ "$src_schema" != "4" ]; then
+    die "source schema_version is '$src_schema', expected 4 (run the v4 migration first)"
   fi
 
   # -- transactionally consistent copy --------------------------------------
@@ -118,7 +124,7 @@ while :; do
   fi
 
   # -- strict audit of the temp copy ----------------------------------------
-  if ! node "$AUDIT" "$TMP" --strict >"$TMP.audit"; then
+  if ! node "$AUDIT" "$TMP" --strict --expect-schema "$src_schema" >"$TMP.audit"; then
     cat "$TMP.audit" >&2
     die "strict audit failed against the copied snapshot; previous snapshot untouched"
   fi

@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 import type { MerchantDirectoryEntry } from '@/lib/types';
 import { MerchantSummaryCard } from './MerchantSummaryCard';
-import { formatDateAr, isSafeLink, sourceCategoryLabel } from './display';
+import { formatDateAr, safeHttpUrl, sourceCategoryLabel } from './display';
 
 /**
  * Directory card for the positive-evidence view: the shared seller summary
@@ -51,7 +51,7 @@ export function PositiveEvidenceCard({
           >
             الدليل كاملًا في صفحة البائع
           </Link>
-          {isSafeLink(highlight.sourceUrl) ? (
+          {safeHttpUrl(highlight.sourceUrl) !== null ? (
             <a
               href={highlight.sourceUrl}
               target="_blank"

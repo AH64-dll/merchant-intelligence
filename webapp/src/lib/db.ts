@@ -11,6 +11,7 @@ import { identifyIdentifierRole, isDisplayableIdentifier, isSearchableIdentifier
 import { deriveSourceCategory } from './taxonomy';
 import type {
   AnalysisPayload,
+  BriefView,
   ClaimItem,
   EvidenceItem,
   Identifier,
@@ -24,7 +25,9 @@ import type {
   Sentiment,
   SentimentCounts,
   SnapshotInfo,
+  SourceRefView,
 } from './types';
+import { PLACEHOLDER_SUMMARY } from './types';
 
 const SEARCHABLE_KINDS: readonly IdentifierKind[] = [
   'phone',
@@ -39,7 +42,7 @@ const SEARCHABLE_KINDS: readonly IdentifierKind[] = [
 ];
 
 const APP_SCHEMA_VERSION = 1;
-const SOURCE_SCHEMA_VERSION = 3;
+const SOURCE_SCHEMA_VERSION = 4;
 
 const MANIFEST_COUNT_KEYS = [
   'merchants',
@@ -150,6 +153,28 @@ interface ClaimEvidenceRow {
   evidence_id: string;
 }
 
+interface SourceRefRow {
+  id: number;
+  web_url: string | null;
+  source_label: string;
+  locator_note: string;
+  access_kind: string;
+  check_status: string | null;
+}
+
+interface EvidenceSourceLinkRow {
+  evidence_id: string;
+  source_id: number;
+}
+
+interface BriefRow {
+  evidence_set_hash: string;
+  payload_json: string;
+  generated_at: string;
+  model: string;
+  reviewed_at: string | null;
+}
+
 interface AnalysisRow {
   payload_json: string;
 }
@@ -181,6 +206,17 @@ interface SnapshotMetaRow {
   merchant_identifiers_count: number;
   merchant_aliases_count: number;
   merchant_links_count: number;
+}
+
+function toSourceRefView(row: SourceRefRow): SourceRefView {
+  return {
+    sourceId: row.id,
+    webUrl: row.web_url,
+    locatorNote: row.locator_note,
+    sourceLabel: row.source_label,
+    accessKind: str(row.access_kind) as SourceRefView['accessKind'],
+    checkStatus: row.check_status,
+  };
 }
 
 interface DirectoryEvidenceDbRow {
@@ -322,6 +358,9 @@ export class MerchantDb {
   private readonly db: DatabaseHandle;
   private readonly snapshotInfo: SnapshotInfo;
   private readonly stmtMerchants: Database.Statement;
+  private readonly stmtEvidenceSourceLinks: Database.Statement<[string]>;
+  private readonly stmtSourceRefs: Database.Statement<unknown[]>;
+  private readonly stmtBrief: Database.Statement<[string]>;
   private readonly stmtIndexIdentifiers: Database.Statement;
   private readonly stmtAliases: Database.Statement;
   private readonly stmtMerchantById: Database.Statement<[string]>;
@@ -381,6 +420,41 @@ export class MerchantDb {
     this.stmtEvidenceRoots = this.db.prepare(
       'SELECT id, merchant_id FROM evidence WHERE id = ?',
     );
+    // Citation lookups are batched: one grouped query over the merchant's
+    // evidence→source links (3763 evidence rows in the snapshot), then one
+    // parameterized fetch per distinct source id — never an N+1 scan.
+    this.stmtEvidenceSourceLinks = this.db.prepare(
+      `SELECT e.id AS evidence_id, e.source_id AS source_id
+       FROM evidence e
+       WHERE e.merchant_id = ?
+       ORDER BY e.source_id, e.id`,
+    );
+
+    const sourcesHasWebUrl = this.hasColumn('sources', 'web_url');
+    this.stmtSourceRefs = sourcesHasWebUrl
+      ? this.db.prepare(
+          `SELECT s.id, s.web_url, s.source_label, s.locator_note, s.access_kind,
+                  ${this.hasTable('source_link_checks') ? 'lc.status' : 'NULL'} AS check_status
+           FROM sources s
+           ${this.hasTable('source_link_checks') ? 'LEFT JOIN source_link_checks lc ON lc.source_id = s.id' : ''}
+           WHERE s.id = ?`,
+        )
+      : this.db.prepare(
+          `SELECT s.id, s.url AS web_url, '' AS source_label, '' AS locator_note,
+                  'web' AS access_kind, NULL AS check_status
+           FROM sources s
+           WHERE s.id = ?`,
+        );
+    this.stmtBrief = this.hasTable('merchant_briefs')
+      ? this.db.prepare(
+          `SELECT evidence_set_hash, payload_json, generated_at, model, reviewed_at
+           FROM merchant_briefs WHERE merchant_id = ?`,
+        )
+      : this.db.prepare(
+          `SELECT NULL AS evidence_set_hash, NULL AS payload_json, NULL AS generated_at,
+                  NULL AS model, NULL AS reviewed_at
+           WHERE ? IS NOT NULL`,
+        );
     this.stmtClaims = this.db.prepare(
       `SELECT id, claim_type, sentiment, summary, independent_source_count, mention_count
        FROM claims WHERE merchant_id = ?
@@ -431,6 +505,19 @@ export class MerchantDb {
        FROM evidence e
        JOIN sources s ON s.id = e.source_id
        ORDER BY e.merchant_id, e.id`,
+    );
+  }
+
+  private hasColumn(table: string, column: string): boolean {
+    const rows = this.db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+    return rows.some((row) => row.name === column);
+  }
+
+  private hasTable(name: string): boolean {
+    return (
+      this.db
+        .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?")
+        .get(name) !== undefined
     );
   }
 
@@ -520,6 +607,36 @@ export class MerchantDb {
     return [...byTarget.values()].map(({ row }) => row);
   }
 
+  /**
+   * Resolves citations for the merchant's evidence rows in two batched
+   * queries: the evidence→source link list, then the distinct source rows
+   * with their latest link-check status. All SQL is read-only and
+   * parameterized; no body or availability data is interpreted beyond status.
+   */
+  private citationsByEvidenceId(merchantId: string): Map<string, SourceRefView[]> {
+    const links = this.stmtEvidenceSourceLinks.all(merchantId) as EvidenceSourceLinkRow[];
+    const sourceIds = [...new Set(links.map((row) => row.source_id))];
+    const sourceById = new Map<number, SourceRefView>();
+    for (const sourceId of sourceIds) {
+      const row = this.stmtSourceRefs.get(sourceId) as SourceRefRow | undefined;
+      if (row !== undefined) {
+        sourceById.set(sourceId, toSourceRefView(row));
+      }
+    }
+    const byEvidence = new Map<string, SourceRefView[]>();
+    for (const link of links) {
+      const ref = sourceById.get(link.source_id);
+      if (ref === undefined) continue;
+      const list = byEvidence.get(link.evidence_id);
+      if (list === undefined) {
+        byEvidence.set(link.evidence_id, [ref]);
+      } else {
+        list.push(ref);
+      }
+    }
+    return byEvidence;
+  }
+
   getMerchantDetail(id: string): MerchantDetail | null {
     const merchantRow = this.stmtMerchantById.get(id) as MerchantRow | undefined;
     if (merchantRow === undefined) {
@@ -552,7 +669,14 @@ export class MerchantDb {
         }
       }
     }
-    const evidence: EvidenceItem[] = evidenceRows.map((row) => ({
+    const citationsByEvidence = this.citationsByEvidenceId(id);
+    const evidence: EvidenceItem[] = evidenceRows.map((row) => {
+      const isDuplicateChild = row.duplicate_of !== null;
+      const hasText =
+        row.summary.trim().length > 0 &&
+        row.summary.toLowerCase() !== PLACEHOLDER_SUMMARY.toLowerCase();
+      const hasQuote = row.quoted_excerpt.trim().length > 0;
+      return {
       id: row.id,
       claimType: row.claim_type,
       sentiment: row.sentiment,
@@ -581,7 +705,11 @@ export class MerchantDb {
         ? null
         : (duplicateRootMerchant.get(row.duplicate_of) ?? null),
       claimId: row.claim_id,
-    }));
+      citations: citationsByEvidence.get(row.id) ?? [],
+      isMeaningful: !isDuplicateChild && (hasText || hasQuote),
+      isDuplicateChild,
+      };
+    });
 
     const claimRows = this.stmtClaims.all(id) as ClaimRow[];
     const claimEvidenceRows = this.stmtClaimEvidence.all(id) as ClaimEvidenceRow[];
@@ -632,6 +760,28 @@ export class MerchantDb {
       confidence: row.confidence,
     }));
 
+    const briefRow = this.stmtBrief.get(id) as BriefRow | undefined;
+    const brief: BriefView | null =
+      briefRow === undefined || briefRow.payload_json === null
+        ? null
+        : {
+            payload: JSON.parse(briefRow.payload_json),
+            generatedAt: briefRow.generated_at,
+            model: briefRow.model,
+            reviewedAt: briefRow.reviewed_at,
+            hash: briefRow.evidence_set_hash,
+            // Phase 5 wiring: freshness requires a per-merchant current
+            // evidence-set hash exported by the snapshot (snapshot-db.sh,
+            // owned by SnapshotV4Export). Until the snapshot carries it, no
+            // brief can be verified against the live evidence set and every
+            // brief is reported as not fresh — never fake freshness.
+            isFresh: false,
+          };
+    const duplicateChildrenCount = evidence.filter((item) => item.isDuplicateChild).length;
+    const sourceOnlyCount = evidence.filter(
+      (item) => !item.isDuplicateChild && !item.isMeaningful,
+    ).length;
+
     return {
       merchant: {
         id: merchantRow.id,
@@ -653,6 +803,9 @@ export class MerchantDb {
       snapshot: this.snapshotInfo,
       duplicateEvidenceCount: evidence.length - nonDuplicate.length,
       related,
+      duplicateChildrenCount,
+      sourceOnlyCount,
+      brief,
     };
   }
 }

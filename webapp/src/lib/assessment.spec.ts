@@ -33,6 +33,9 @@ function evidence(overrides: Partial<EvidenceItem> = {}): EvidenceItem {
     duplicateOf: null,
     duplicateRootMerchantId: null,
     claimId: null,
+    citations: [],
+    isMeaningful: true,
+    isDuplicateChild: false,
     ...overrides,
     ...(overrides.id !== undefined ? {} : { id }),
   };

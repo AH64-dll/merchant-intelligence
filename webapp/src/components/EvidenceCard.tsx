@@ -3,7 +3,8 @@ import type { JSX } from 'react';
 import type { EvidenceItem } from '@/lib/types';
 import { reliabilityBandLabel, SENTIMENT_LABELS } from '@/lib/labels';
 import { authorTypeLabel } from '@/lib/taxonomy';
-import { formatDateAr, isSafeLink, sourceCategoryLabel, STALE_PUBLISHED_DAYS } from './display';
+import { formatDateAr, safeHttpUrl, sourceCategoryLabel, STALE_PUBLISHED_DAYS } from './display';
+import { SourceCitations } from './SourceCitations';
 
 function isStale(publishedAt: string): boolean {
   return Date.now() - new Date(publishedAt).getTime() > STALE_PUBLISHED_DAYS * 24 * 60 * 60 * 1000;
@@ -34,11 +35,15 @@ export function EvidenceCard({ evidence }: { evidence: EvidenceItem }): JSX.Elem
         <span aria-hidden="true">·</span>
         <span>فئة المصدر: {sourceCategoryLabel(evidence.sourceCategory)}</span>
         <span aria-hidden="true">·</span>
-        <span dir="auto">المنصة: <bdi>{evidence.platform}</bdi></span>
+        <span dir="auto">
+          المنصة: <bdi>{evidence.platform}</bdi>
+        </span>
         <span aria-hidden="true">·</span>
         <span>مصدر الدليل: {authorTypeLabel(evidence.authorType)}</span>
       </p>
-      <p dir="auto">{evidence.summary}</p>
+      {evidence.summary.trim().length > 0 ? (
+        <p dir="auto">{evidence.summary}</p>
+      ) : null}
       {evidence.quotedExcerpt.trim().length > 0 ? (
         <blockquote dir="auto" className="border-r-2 border-black pr-3">
           «{evidence.quotedExcerpt}»
@@ -52,23 +57,29 @@ export function EvidenceCard({ evidence }: { evidence: EvidenceItem }): JSX.Elem
           {formatDateAr(evidence.capturedAt)}
         </time>
       </p>
-      <p>
-        {isSafeLink(evidence.url) ? (
-          <a
-            href={evidence.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-            dir="ltr"
-          >
-            فتح المصدر الأصلي
-          </a>
-        ) : (
-          <span>
-            المصدر (نص فقط): <span className="ltr-isolate wrap-anywhere">{evidence.url}</span>
-          </span>
-        )}
-      </p>
+
+      {evidence.citations && evidence.citations.length > 0 ? (
+        <SourceCitations citations={evidence.citations} />
+      ) : (
+        <p>
+          {safeHttpUrl(evidence.url) !== null ? (
+            <a
+              href={evidence.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+              dir="ltr"
+            >
+              فتح المصدر الأصلي
+            </a>
+          ) : (
+            <span>
+              المصدر (نص فقط): <span className="ltr-isolate wrap-anywhere">{evidence.url}</span>
+            </span>
+          )}
+        </p>
+      )}
+
       <details>
         <summary className="min-h-[44px] inline-flex items-center">تفاصيل المصدر والتوثيق</summary>
         <ul className="mt-2 space-y-1 text-sm">

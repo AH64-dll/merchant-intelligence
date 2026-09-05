@@ -20,9 +20,9 @@ beforeAll(() => {
 });
 
 describe('snapshot manifest validation', () => {
-  it('exposes validated snapshot info with schema versions 3/1', () => {
+  it('exposes validated snapshot info with schema versions 4/1', () => {
     const info = db.getSnapshotInfo();
-    expect(info.sourceSchemaVersion).toBe(3);
+    expect(info.sourceSchemaVersion).toBe(4);
     expect(info.appSchemaVersion).toBe(1);
     expect(info.generatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(Object.keys(info.counts).sort()).toEqual(
@@ -100,7 +100,7 @@ describe('snapshot manifest validation', () => {
       .run();
     mem
       .prepare(
-        `INSERT INTO snapshot_meta VALUES (1, 1, 3, '2026-01-01T00:00:00Z', 99,0,0,0,0,0,0,0,0)`,
+        `INSERT INTO snapshot_meta VALUES (1, 1, 4, '2026-01-01T00:00:00Z', 99,0,0,0,0,0,0,0,0)`,
       )
       .run();
     expect(() => validateSnapshotManifest(mem)).toThrow(/merchants_count/);
@@ -274,6 +274,88 @@ describe('MerchantDb.getMerchantDetail — evidence', () => {
     for (const row of crossRoots) {
       const item = detail?.evidence.find((e) => e.id === row.id);
       expect(item?.duplicateRootMerchantId).toBe(row.root_merchant);
+    }
+  });
+});
+
+describe('MerchantDb.getMerchantDetail — citations and presentation flags', () => {
+  it('resolves citations per evidence row through the evidence→source links', () => {
+    const detail = db.getMerchantDetail(EVIDENCE_RICH_ID);
+    expect(detail).not.toBeNull();
+    const rows = raw
+      .prepare(
+        `SELECT id AS evidence_id, source_id FROM evidence WHERE merchant_id = ?`,
+      )
+      .all(EVIDENCE_RICH_ID) as { evidence_id: string; source_id: number }[];
+    const sqlByEvidence = new Map<string, Set<number>>();
+    for (const row of rows) {
+      const set = sqlByEvidence.get(row.evidence_id) ?? new Set<number>();
+      set.add(row.source_id);
+      sqlByEvidence.set(row.evidence_id, set);
+    }
+    for (const item of detail?.evidence ?? []) {
+      const expected = sqlByEvidence.get(item.id) ?? new Set<number>();
+      expect(item.citations.length).toBe(expected.size);
+      for (const citation of item.citations) {
+        expect(expected.has(citation.sourceId)).toBe(true);
+      }
+    }
+  });
+
+  it('exposes schema-v4 source fields with a valid check status from source_link_checks', () => {
+    const detail = db.getMerchantDetail(EVIDENCE_RICH_ID);
+    const withCitations = (detail?.evidence ?? []).find((item) => item.citations.length > 0);
+    expect(withCitations).toBeDefined();
+    for (const citation of withCitations?.citations ?? []) {
+      expect(typeof citation.sourceId).toBe('number');
+      expect(['web', 'whois', 'offline', 'unknown']).toContain(citation.accessKind);
+      expect(typeof citation.locatorNote).toBe('string');
+      expect(typeof citation.sourceLabel).toBe('string');
+      // Live audit has run: every web source carries an availability status
+      // (reachable/redirected/not_found/access_limited/server_error/network_error),
+      // or null when the source was not checked.
+      expect(
+        citation.checkStatus === null ||
+        ['reachable', 'redirected', 'not_found', 'access_limited', 'server_error', 'network_error', 'not_checked'].includes(citation.checkStatus),
+      ).toBe(true);
+    }
+  });
+
+  it('classifies isMeaningful / isDuplicateChild / source-only counts consistently', () => {
+    const detail = db.getMerchantDetail(EVIDENCE_RICH_ID);
+    expect(detail).not.toBeNull();
+    let dupChildren = 0;
+    let sourceOnly = 0;
+    for (const item of detail?.evidence ?? []) {
+      expect(item.isDuplicateChild).toBe(item.duplicateOf !== null);
+      const expectedMeaningful =
+        item.duplicateOf === null &&
+        ((item.summary.trim().length > 0 &&
+          item.summary.toLowerCase() !==
+            'source cited without a model-supplied summary.') ||
+          item.quotedExcerpt.trim().length > 0);
+      expect(item.isMeaningful).toBe(expectedMeaningful);
+      if (item.isDuplicateChild) dupChildren += 1;
+      else if (!item.isMeaningful) sourceOnly += 1;
+    }
+    expect(detail?.duplicateChildrenCount).toBe(dupChildren);
+    expect(detail?.sourceOnlyCount).toBe(sourceOnly);
+    const sqlDup = (
+      raw
+        .prepare('SELECT COUNT(*) AS n FROM evidence WHERE merchant_id = ? AND duplicate_of IS NOT NULL')
+        .get(EVIDENCE_RICH_ID) as { n: number }
+    ).n;
+    expect(detail?.duplicateChildrenCount).toBe(sqlDup);
+    expect(sqlDup).toBeGreaterThan(0);
+  });
+
+  it('returns the stored brief with isFresh=false semantics against the current v4 snapshot', () => {
+    const detail = db.getMerchantDetail(EVIDENCE_RICH_ID);
+    // The v4 snapshot carries merchant_briefs; freshness is not computed
+    // client-side (no per-merchant current hash in the snapshot), so
+    // isFresh stays false by contract even when a brief row exists.
+    if (detail?.brief) {
+      expect(detail.brief.isFresh).toBe(false);
     }
   });
 });
@@ -453,7 +535,7 @@ describe('MerchantDb.getMerchantDetail — structural branches', () => {
   it('exposes snapshot metadata on the detail view', () => {
     const detail = db.getMerchantDetail(B_TECH_ID);
     expect(detail?.snapshot.appSchemaVersion).toBe(1);
-    expect(detail?.snapshot.sourceSchemaVersion).toBe(3);
+    expect(detail?.snapshot.sourceSchemaVersion).toBe(4);
     expect(detail?.snapshot.generatedAt.length).toBeGreaterThan(0);
   });
 });

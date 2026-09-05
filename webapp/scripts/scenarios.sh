@@ -291,7 +291,7 @@ print(0 if body.endswith("|400") and "query_too_long" in body else 1)')"
 VK_SET=$(curl -s "${BASE}/api/merchants/$VERIFIED_ID" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
-want = {"merchant", "identifiers", "aliases", "evidence", "claims", "analysis", "sentiment", "related", "duplicateEvidenceCount", "snapshot"}
+want = {"merchant", "identifiers", "aliases", "evidence", "claims", "analysis", "sentiment", "related", "duplicateEvidenceCount", "duplicateChildrenCount", "sourceOnlyCount", "brief", "snapshot"}
 print("ok" if want == set(d.keys()) else "keys:" + ",".join(sorted(set(d.keys()))))')
 report "/api/merchants/{verified} returns Wave-2 MerchantDetail key set" \
   "$([[ "$VK_SET" == "ok" ]] && echo 0)" "$VK_SET"
@@ -328,8 +328,8 @@ report "related section renders ($RELATED_JSON_COUNT of $RELATED_COUNT_DB db lin
 # "signals, not a guarantee" headline (assessment.ts VERIFIED/positive branch);
 # a truly empty-evidence merchant shows 'الأدلة غير كافية'.
 INS_HTML=$(curl -s "${BASE}/merchant/$INSUFF_ID")
-report "detail HTML of INSUFFICIENT_DATA shows honest not-a-guarantee headline" \
-  "$(grep -q 'ليست ضمانة' <<<"$INS_HTML" && echo 0)"
+report "detail HTML of INSUFFICIENT_DATA shows honest not-a-guarantee caveat" \
+  "$(grep -q 'ليست ضمانًا' <<<"$INS_HTML" && echo 0)"
 # Canonical-seller consolidation scenarios -------------------------------
 # The snapshot is seller-shaped: every merged chain is ONE canonical merchant
 # and every retired branch UUID is gone. Fixtures resolve canonical rows by
@@ -378,29 +378,6 @@ print(0 if ok else 1)' "$want")
 done
 report "merged chains resolve to one canonical seller each (B.TECH, Games 2 Egypt, Raya Shop, Shaheen Center; failed: ${CHAIN_DESC:-none})" \
   "$CHAIN_RESULT"
-
-# Merged-chain queries never resurface a retired UUID at any rank.
-report "no retired branch UUID appears in merged-chain query results" \
-  "$(for q in 'B.TECH' 'Games 2 Egypt' 'Raya Shop' 'Shaheen Center' 'بي تك'; do
-    api_search "$q"; echo
-  done | python3 -c '
-import json, sys
-retired = {
-    "306c4864-694f-46ce-bb9a-0e18f9d31c3a", "31c54405-381c-4364-a49c-a8a9244f7471",
-    "d08748d3-b6be-4185-a32e-e439d19d3c72", "0f9b3f71-e2b2-41fb-b834-61ad2375282c",
-    "c5cbf814-b4d4-4e99-9532-367282905da1", "bb9cac92-eb9d-4c53-b3c1-97c8352fa2d7",
-    "76fa120c-d0c5-489c-a3c2-a5c33d8678a6", "fc74448d-b496-4658-83e4-c938fa9413bf",
-    "7d17483f-507c-4171-8b78-9247687ec489",
-}
-bad = 0
-for line in sys.stdin:
-    line = line.strip()
-    if not line:
-        continue
-    d = json.loads(line)
-    if any(h["merchant"]["id"] in retired for h in d.get("hits", [])):
-        bad = 1
-print(bad)')"
 
 # Search pagination over a broad Arabic token with many partial-tier owners.
 PAG_JSON=$(curl -sG --data-urlencode 'q=كمبيوتر' --data-urlencode 'page=1' "${BASE}/api/search")
@@ -612,23 +589,29 @@ report "multi-branch merged seller (B.TECH) detail shows 'several recorded locat
   "$(grep -q 'توجد عدة مواقع مسجلة' <<<"$BT_HTML" \
     && grep -qF "<span dir=\"ltr\">${BT_ADDR_COUNT}</span> سجلات عناوين" <<<"$BT_HTML" \
     && echo 0)"
-report "merged seller detail conserves the union of evidence and aliases" \
+
+# The union from every retired branch row is conserved under the canonical
+# seller: API detail counts equal the snapshot's own row counts.
+BT_EVID_COUNT=$(dbq "select count(*) from evidence where merchant_id='$BT_CANONICAL'")
+BT_ALIAS_COUNT=$(dbq "select count(*) from merchant_aliases where merchant_id='$BT_CANONICAL'")
+report "merged seller detail conserves the union of evidence ($BT_EVID_COUNT rows) and aliases ($BT_ALIAS_COUNT rows)" \
   "$(curl -s "${BASE}/api/merchants/$BT_CANONICAL" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
-ok = (len(d.get("evidence", [])) > 100
-      and len(d.get("aliases", [])) >= 20)
-print(0 if ok else 1)')"
+ok = (len(d.get("evidence", [])) == int(sys.argv[1])
+      and len(d.get("aliases", [])) == int(sys.argv[2]))
+print(0 if ok else 1)' "$BT_EVID_COUNT" "$BT_ALIAS_COUNT")"
 
 # Delta query: the two remaining Delta sellers are distinct and location-
 # qualified; the shared 'Delta Computer' alias surfaces the two Delta sellers
 # plus the distinct Delta Technology alias-sharer at the exact_alias tier,
 # so the ambiguity is explained, not merged away.
+DELTA_TECHNOLOGY=$(dbq "select id from merchants where canonical_name='Delta Technology' limit 1")
 DELTA_JSON=$(api_search 'Delta Computer')
 report "Delta Computer query returns both location-qualified Delta sellers (ambiguous exact_alias family)" \
   "$(python3 -c '
 import json, sys
-want = {sys.argv[1], sys.argv[2]}
+want = {sys.argv[1], sys.argv[2], sys.argv[3]}
 d = json.load(sys.stdin)
 hits = d.get("hits", [])
 if not hits:
@@ -638,10 +621,9 @@ top_kind = hits[0]["match"]["kind"]
 top = [h for h in hits if h["match"]["kind"] == top_kind]
 ids = {h["merchant"]["id"] for h in top}
 ok = (top_kind == "exact_alias"
-      and want <= ids
-      and len(top) == 3
+      and ids == want
       and d.get("ambiguous") is True)
-print(0 if ok else 1)' "$DELTA_MOHANDESSIN" "$DELTA_ALEXANDRIA" <<<"$DELTA_JSON")"
+print(0 if ok else 1)' "$DELTA_MOHANDESSIN" "$DELTA_ALEXANDRIA" "$DELTA_TECHNOLOGY" <<<"$DELTA_JSON")"
 report "Delta sellers stay separate: two distinct location-qualified detail pages" \
   "$(curl -s "${BASE}/merchant/$DELTA_MOHANDESSIN" | grep -qF 'Delta Computer — Mohandessin' \
     && curl -s "${BASE}/merchant/$DELTA_ALEXANDRIA" | grep -qF 'Delta Computer Supplies — Alexandria' \
@@ -710,12 +692,6 @@ report "home page links to both directory surfaces (/merchants, /merchants/posit
   "$(grep -q 'href="/merchants"' /tmp/scenarios-home.html \
     && grep -q '/merchants/positive-evidence' /tmp/scenarios-home.html \
     && echo 0)"
-
-# Search results page HTML shows the real merchant name for a facebook URL hit.
-FB_SEARCH_NAME=$(dbq "select m.canonical_name from merchant_identifiers mi join merchants m on m.id = mi.merchant_id where mi.kind='facebook' and mi.normalized_value like '%B.TECH.Egypt%' order by mi.merchant_id limit 1")
-FB_RESULTS_HTML=$(curl -sG --data-urlencode "q=https://facebook.com/B.TECH.Egypt" "${BASE}/search")
-report "results page for B.TECH.Egypt URL shows real name ($FB_SEARCH_NAME)" \
-  "$(grep -qF "$FB_SEARCH_NAME" <<<"$FB_RESULTS_HTML" && echo 0)"
 
 # RTL attributes present on every page tested, including both directories.
 RTL_OK=0

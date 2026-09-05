@@ -26,6 +26,45 @@ export type MerchantState =
   | 'IDENTITY_UNCERTAIN'
   | 'INSUFFICIENT_DATA';
 
+/**
+ * Generic fallback string historically fabricated for evidence rows without a
+ * model-supplied summary. Such rows are source records, not presentable
+ * factual statements; they must never count as meaningful evidence.
+ */
+export const PLACEHOLDER_SUMMARY = 'Source cited without a model-supplied summary.';
+
+/**
+ * Presentation-safe reference to one source row (schema v4 columns). `webUrl`
+ * is the exact browser-openable original URL or null; null never becomes an
+ * anchor. `checkStatus` comes from `source_link_checks` (availability only —
+ * never a credibility judgement); null means the source was never checked.
+ */
+export interface SourceRefView {
+  sourceId: number;
+  webUrl: string | null;
+  locatorNote: string;
+  sourceLabel: string;
+  accessKind: 'web' | 'whois' | 'offline' | 'unknown';
+  checkStatus: string | null;
+}
+
+/**
+ * A stored model-written brief. `isFresh` is a deterministic contract between
+ * the snapshot and the DB layer: it is true only when the stored
+ * evidence-set hash matches the hash the snapshot carries for the CURRENT
+ * evidence set. Until the snapshot export publishes per-merchant current
+ * hashes (Phase 5 wiring), db.ts marks every brief not fresh — a stale or
+ * unverifiable brief is never rendered as current.
+ */
+export interface BriefView {
+  payload: unknown;
+  generatedAt: string;
+  model: string;
+  reviewedAt: string | null;
+  hash: string;
+  isFresh: boolean;
+}
+
 export type InputKind = 'phone' | 'email' | 'url' | 'name';
 
 /**
@@ -131,6 +170,15 @@ export interface EvidenceItem {
   duplicateRootMerchantId: string | null;
   /** Claim this evidence is attributed to, when linked. */
   claimId: string | null;
+  /** Every linked source (no cap) as presentation-safe references. */
+  citations: SourceRefView[];
+  /**
+   * True when the row carries a non-empty summary or quoted excerpt AND is
+   * not a duplicate child — i.e. eligible for the main decision layer.
+   */
+  isMeaningful: boolean;
+  /** True when this row is a duplicate child (duplicate_of is not null). */
+  isDuplicateChild: boolean;
 }
 
 export interface ClaimItem {
@@ -176,6 +224,15 @@ export interface MerchantDetailBase {
   /** Count of duplicate evidence rows excluded from `sentiment`. */
   duplicateEvidenceCount: number;
   related: RelatedMerchant[];
+  /**
+   * Evidence rows that are source-only records (no usable summary or quote)
+   * or duplicate children — retained and countable, never presented as
+   * independent facts.
+   */
+  sourceOnlyCount: number;
+  duplicateChildrenCount: number;
+  /** Stored model brief; null when none exists. See BriefView.isFresh. */
+  brief: BriefView | null;
 }
 
 export interface SentimentCounts {

@@ -55,9 +55,9 @@ export function validateSnapshotManifest(dbPath: string): SnapshotInfo {
         `snapshot ${dbPath}: app_schema_version ${String(meta['app_schema_version'])}, expected 1 — rebuild with 'pnpm snapshot'`,
       );
     }
-    if (meta['source_schema_version'] !== 3) {
+    if (meta['source_schema_version'] !== 4) {
       throw new Error(
-        `snapshot ${dbPath}: source_schema_version ${String(meta['source_schema_version'])}, expected 3 — rebuild with 'pnpm snapshot'`,
+        `snapshot ${dbPath}: source_schema_version ${String(meta['source_schema_version'])}, expected 4 — rebuild with 'pnpm snapshot'`,
       );
     }
     const counts: Record<string, number> = {};
