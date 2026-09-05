@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from enum import StrEnum
 from typing import Any, Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
+from merchant_intel.sources import is_placeholder_summary, safe_http_url
 
 
 def utcnow() -> datetime:
@@ -163,11 +164,16 @@ class EvidenceItem(BaseModel):
     sentiment: Sentiment
     transaction_evidence: bool = False
     supporting_artifacts: list[str] = Field(default_factory=list)
+    supporting_urls: list[str] = Field(default_factory=list)
+    supporting_notes: list[str] = Field(default_factory=list)
     confidence: float = Field(ge=0.0, le=1.0)
     reliability_band: ReliabilityBand = ReliabilityBand.WEAK
     language: str = ""
     raw_quote: str = ""
     merchant_identifier_used: str = ""
+    source_only: bool = False
+    source_label: str = ""
+    source_note: str = ""
 
     @model_validator(mode="before")
     @classmethod
@@ -180,12 +186,19 @@ class EvidenceItem(BaseModel):
             data.get("source_platform") or data.get("platform") or data.get("source_type") or "web"
         )
         data["source_type"] = _stringify(data.get("source_type") or data.get("type") or "unknown")
-        data["summary"] = _stringify(
+        summary = _stringify(
             data.get("summary")
             or data.get("claim")
             or data.get("description")
             or data.get("text")
-            or "Source cited without a model-supplied summary."
+            or ""
+        )
+        raw_quote = _stringify(data.get("raw_quote") or data.get("quote") or "")
+        if is_placeholder_summary(summary):
+            summary = ""
+        data["summary"] = summary
+        data["source_only"] = bool(data.get("source_only", False)) or (
+            not summary.strip() and not raw_quote.strip()
         )
         sentiment = str(data.get("sentiment") or data.get("tone") or "neutral").lower()
         data["sentiment"] = sentiment if sentiment in {item.value for item in Sentiment} else "neutral"
@@ -230,6 +243,32 @@ class EvidenceItem(BaseModel):
     @classmethod
     def no_verdict_words(cls, value: str) -> str:
         return _reject_forbidden_labels(value)
+
+    @field_validator("source_label", "source_note", mode="before")
+    @classmethod
+    def coerce_source_metadata(cls, value: Any) -> str:
+        return "" if value is None else _stringify(value)
+
+    @model_validator(mode="after")
+    def split_supporting_artifacts(self) -> EvidenceItem:
+        """Derive typed link/list values without dropping any raw artifact.
+
+        Only a strict http(s) URL may ever become a link; every other value
+        (labels, javascript: values, bare text) stays a note.
+        """
+        if not self.supporting_artifacts:
+            return self
+        urls: list[str] = []
+        notes: list[str] = []
+        for raw in self.supporting_artifacts:
+            normalized = safe_http_url(raw)
+            if normalized:
+                urls.append(normalized)
+            else:
+                notes.append(raw)
+        self.supporting_urls = urls
+        self.supporting_notes = notes
+        return self
 
     @model_validator(mode="after")
     def band_matches_confidence(self) -> EvidenceItem:
