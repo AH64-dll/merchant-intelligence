@@ -28,12 +28,12 @@ omp:
   require_catalog: true
 
 models:
-  # Analysts run Gemini 3.7 Flash via Antigravity; verifiers run GPT 5.6
-  # Luna via Codex. Fail closed on provider pins (allow_fallback false).
+  # Analysts run Gemini 3.7 Flash via Antigravity; verifiers run GLM
+  # via Merge Gateway. Fail closed on provider pins (allow_fallback false).
   discovery: google-antigravity/gemini-3.7-flash
   coordinator: google-antigravity/gemini-3.7-flash
   analyst: google-antigravity/gemini-3.7-flash
-  verifier: openai-codex/gpt-5.6-luna
+  verifier: merge-gateway/glm-5.3-flash
   fallback: null
   gemini_provider: google-antigravity
   gpt_provider: openai-codex
