@@ -39,6 +39,8 @@ RATE_LIMIT_MARKERS = (
     "resource_exhausted",
     "too many requests",
     "quota",
+    "usage limit",
+    "usage_limit",
 )
 
 

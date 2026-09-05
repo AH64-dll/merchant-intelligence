@@ -1,10 +1,11 @@
-"""Migration and write-contract tests for the v3 schema.
+"""Migration and write-contract tests for the v3 and v4 schemas.
 
 Builds real v2 fixtures with the pre-migration schema (git history is the
 specification of v2: UNIQUE(kind, normalized_value) identifiers, unversioned
 analysis payloads, mixed-offset timestamps, chained duplicate_of pointers)
 and asserts the v3 migration preserves, normalizes, and canonicalizes without
-losing a single row.
+losing a single row. The v4 fixtures are degraded from the live schema and
+cover every source locator that has no browser-openable URL.
 """
 
 import json
@@ -17,6 +18,7 @@ from merchant_intel.database import SCHEMA_VERSION, Database
 from merchant_intel.ingest import ingest_evidence, resolve_merchant
 from merchant_intel.normalize import canonicalize_eg_phone
 from merchant_intel.schemas import EvidenceItem, MerchantCandidate, Identifiers
+from merchant_intel.sources import ACCESS_KINDS
 
 V2_IDENTIFIER_SCHEMA = """
 CREATE TABLE merchant_identifiers (
@@ -133,8 +135,8 @@ def test_v2_migrates_to_v3_preserving_rows_and_backfills(tmp_path):
     before.close()
 
     db = Database(path)
-    assert SCHEMA_VERSION == 3
-    assert db.query_one("SELECT MAX(version) AS v FROM schema_version")["v"] == 3
+    assert SCHEMA_VERSION == 4
+    assert db.query_one("SELECT MAX(version) AS v FROM schema_version")["v"] == 4
     after_counts = {
         table: db.query_one(f"SELECT COUNT(*) AS c FROM {table}")["c"]
         for table in pre_counts
@@ -460,3 +462,224 @@ def test_payload_version_enforced_on_new_analyses(tmp_path):
         MerchantAnalysis.model_validate({"payload_version": 2})
     with pytest.raises(pydantic.ValidationError):
         MerchantAnalysis.model_validate({"payload_version": "x"})
+
+
+# Every non-clean locator in data/merchant_intelligence.db, copied verbatim
+# (ids kept), plus two synthetic shapes: one clean web URL and one URL scheme
+# the classifier must reject. canonical_url is deliberately mangled for
+# id 1203 -- the real row is 'https://whois:turbo-computer.com' -- because
+# classification reads ``url`` only.
+V4_SOURCE_FIXTURES = [
+    # id, url, canonical_url, expected (web_url, locator_note, access_kind)
+    (1, "https://s.test/1", "https://s.test/1", ("https://s.test/1", "", "web")),
+    (
+        1081,
+        "whois://fitandfix.com (Verisign registry output)",
+        "whois://fitandfix.com (verisign registry output)",
+        (None, "fitandfix.com (Verisign registry output)", "whois"),
+    ),
+    (
+        1119,
+        "whois://ecc-alex.com",
+        "whois://ecc-alex.com",
+        (None, "ecc-alex.com", "whois"),
+    ),
+    (
+        1129,
+        "whois://elmhnds.com",
+        "whois://elmhnds.com",
+        (None, "elmhnds.com", "whois"),
+    ),
+    (
+        1203,
+        "whois:turbo-computer.com",
+        "https://whois:turbo-computer.com",
+        (None, "turbo-computer.com", "whois"),
+    ),
+    (
+        1442,
+        "https://whois.verisign-grs.com/ (record: highendstore.net)",
+        "https://whois.verisign-grs.com/ (record: highendstore.net)",
+        ("https://whois.verisign-grs.com/", "(record: highendstore.net)", "web"),
+    ),
+    (
+        1456,
+        "https://www.cpa.gov.eg (site-restricted query: راية / Raya / Rayashop)",
+        "https://www.cpa.gov.eg (site-restricted query: راية / raya / rayashop)",
+        (
+            "https://www.cpa.gov.eg",
+            "(site-restricted query: راية / Raya / Rayashop)",
+            "web",
+        ),
+    ),
+    (
+        1457,
+        "https://whois.verisign-grs.com/ (record: elfergany.com)",
+        "https://whois.verisign-grs.com/ (record: elfergany.com)",
+        ("https://whois.verisign-grs.com/", "(record: elfergany.com)", "web"),
+    ),
+    (
+        1466,
+        "https://cpa.gov.eg (site-restricted query: iGenius / آي جينيوس)",
+        "https://cpa.gov.eg (site-restricted query: igenius / آي جينيوس)",
+        (
+            "https://cpa.gov.eg",
+            "(site-restricted query: iGenius / آي جينيوس)",
+            "web",
+        ),
+    ),
+    (
+        1559,
+        "https://cpa.gov.eg/ar-eg/قضايا-وأحكام/PgrID/628/PageID/1"
+        " … PageID/7 (plus CategoryID/20 view)",
+        "https://cpa.gov.eg/ar-eg/قضايا-وأحكام/PgrID/628/PageID/1"
+        " … PageID/7 (plus categoryid/20 view)",
+        (
+            "https://cpa.gov.eg/ar-eg/قضايا-وأحكام/PgrID/628/PageID/1",
+            "… PageID/7 (plus CategoryID/20 view)",
+            "web",
+        ),
+    ),
+    (
+        1567,
+        "https://fixawy.com/ar/contact (also /ar/help, /ar, /en, /en/contact, /en/help)",
+        "https://fixawy.com/ar/contact (also /ar/help, /ar, /en, /en/contact, /en/help)",
+        (
+            "https://fixawy.com/ar/contact",
+            "(also /ar/help, /ar, /en, /en/contact, /en/help)",
+            "web",
+        ),
+    ),
+    (
+        2000,
+        "javascript:alert(1)",
+        "javascript:alert(1)",
+        (None, "javascript:alert(1)", "unknown"),
+    ),
+]
+
+
+def _v3_fixture(path: Path) -> None:
+    """Create a v4 database and degrade it back to the v3 shape."""
+    db = Database(path)
+    conn = db._conn
+    conn.execute("PRAGMA foreign_keys = OFF")
+    conn.execute("DROP TABLE merchant_briefs")
+    conn.execute("DROP TABLE source_link_checks")
+    for column in ("web_url", "source_label", "locator_note", "access_kind"):
+        conn.execute(f"ALTER TABLE sources DROP COLUMN {column}")
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("DELETE FROM schema_version")
+    conn.execute("INSERT INTO schema_version(version) VALUES (3)")
+    db.close()
+
+
+def _insert_v3_sources(path: Path) -> None:
+    """Insert the locator fixtures the v4 migration must classify."""
+    conn = sqlite3.connect(path)
+    for source_id, url, canonical_url, _expected in V4_SOURCE_FIXTURES:
+        conn.execute(
+            "INSERT INTO sources (id, url, canonical_url, platform, source_type,"
+            " first_seen_at, last_seen_at)"
+            " VALUES (?, ?, ?, 'web', 'other', '2026-01-01T00:00:00',"
+            " '2026-01-01T00:00:00')",
+            (source_id, url, canonical_url),
+        )
+    conn.commit()
+    conn.close()
+
+
+def test_migrate_v3_to_v4_classifies_locators_and_preserves_raw_urls(tmp_path):
+    path = tmp_path / "v3.db"
+    _v3_fixture(path)
+    _insert_v3_sources(path)
+
+    before = sqlite3.connect(path)
+    pre_rows = before.execute(
+        "SELECT id, url, canonical_url FROM sources ORDER BY id"
+    ).fetchall()
+    assert before.execute(
+        "SELECT COUNT(*) FROM sqlite_master WHERE name IN"
+        " ('source_link_checks', 'merchant_briefs')"
+    ).fetchone()[0] == 0
+    before.close()
+
+    db = Database(path)
+    assert SCHEMA_VERSION == 4
+    assert db.query_one("SELECT MAX(version) AS v FROM schema_version")["v"] == 4
+
+    # No source row is deleted, merged, or rewritten: url and canonical_url
+    # stay byte-identical, including the mangled canonical form of id 1203.
+    assert [
+        (row["id"], row["url"], row["canonical_url"])
+        for row in db.query("SELECT id, url, canonical_url FROM sources ORDER BY id")
+    ] == pre_rows
+
+    classified = {
+        row["id"]: (row["web_url"], row["locator_note"], row["access_kind"])
+        for row in db.query(
+            "SELECT id, web_url, locator_note, access_kind FROM sources"
+        )
+    }
+    for source_id, url, _canonical_url, expected in V4_SOURCE_FIXTURES:
+        assert classified[source_id] == expected, url
+    assert {kind for _id, (_web, _note, kind) in classified.items()} <= set(ACCESS_KINDS)
+    # source_label is never invented by the migration.
+    assert {row["source_label"] for row in db.query("SELECT source_label FROM sources")} == {""}
+
+    columns = {
+        table: [row["name"] for row in db.query(f"PRAGMA table_info({table})")]
+        for table in ("source_link_checks", "merchant_briefs")
+    }
+    assert columns["source_link_checks"] == [
+        "source_id",
+        "status",
+        "checked_at",
+        "final_url",
+        "http_status",
+        "detail",
+    ]
+    assert columns["merchant_briefs"] == [
+        "merchant_id",
+        "evidence_set_hash",
+        "payload_json",
+        "generated_at",
+        "model",
+        "reviewed_at",
+    ]
+    assert db.query_one(
+        "SELECT COUNT(*) AS c FROM sqlite_master WHERE type='index'"
+        " AND name='idx_link_checks_status'"
+    )["c"] == 1
+    db.close()
+
+
+def test_v4_migration_does_not_rerun_on_reopen(tmp_path):
+    """Open, close, reopen: the backfill lands once and is not recomputed."""
+    path = tmp_path / "v4.db"
+    _v3_fixture(path)
+    conn = sqlite3.connect(path)
+    conn.execute(
+        "INSERT INTO sources (url, canonical_url, platform, source_type,"
+        " first_seen_at, last_seen_at) VALUES"
+        " ('whois://elmhnds.com', 'whois://elmhnds.com', 'web', 'registry',"
+        " '2026-01-01T00:00:00', '2026-01-01T00:00:00')"
+    )
+    conn.commit()
+    conn.close()
+
+    first = Database(path)
+    expected = ("whois://elmhnds.com", None, "elmhnds.com", "whois")
+    assert tuple(
+        first.query_one("SELECT url, web_url, locator_note, access_kind FROM sources")
+    ) == expected
+    first.close()
+
+    reopened = Database(path)
+    assert reopened.query_one("SELECT MAX(version) AS v FROM schema_version")["v"] == 4
+    assert tuple(
+        reopened.query_one(
+            "SELECT url, web_url, locator_note, access_kind FROM sources"
+        )
+    ) == expected
+    reopened.close()

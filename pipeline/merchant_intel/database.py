@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Iterable, Iterator
 
 from merchant_intel.schemas import utcnow
+from merchant_intel.sources import classify_source_locator
 
 SCHEMA = """
 PRAGMA foreign_keys = ON;
@@ -125,8 +126,25 @@ CREATE TABLE IF NOT EXISTS sources (
     platform TEXT NOT NULL,
     source_type TEXT NOT NULL,
     first_seen_at TEXT NOT NULL,
-    last_seen_at TEXT NOT NULL
+    last_seen_at TEXT NOT NULL,
+    web_url TEXT,
+    source_label TEXT NOT NULL DEFAULT '',
+    locator_note TEXT NOT NULL DEFAULT '',
+    access_kind TEXT NOT NULL DEFAULT 'web'
 );
+
+CREATE TABLE IF NOT EXISTS source_link_checks (
+    source_id INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    checked_at TEXT NOT NULL,
+    final_url TEXT,
+    http_status INTEGER,
+    detail TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY(source_id),
+    FOREIGN KEY (source_id) REFERENCES sources(id)
+);
+CREATE INDEX IF NOT EXISTS idx_link_checks_status
+    ON source_link_checks(status, checked_at);
 
 CREATE TABLE IF NOT EXISTS claims (
     id TEXT PRIMARY KEY,
@@ -228,6 +246,16 @@ CREATE TABLE IF NOT EXISTS merchant_analyses (
 CREATE INDEX IF NOT EXISTS idx_analyses_merchant_round ON merchant_analyses(merchant_id, round_no DESC, id DESC);
 CREATE INDEX IF NOT EXISTS idx_analyses_run_merchant ON merchant_analyses(run_id, merchant_id);
 
+CREATE TABLE IF NOT EXISTS merchant_briefs (
+    merchant_id TEXT NOT NULL PRIMARY KEY,
+    evidence_set_hash TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    generated_at TEXT NOT NULL,
+    model TEXT NOT NULL DEFAULT '',
+    reviewed_at TEXT,
+    FOREIGN KEY (merchant_id) REFERENCES merchants(id)
+);
+
 CREATE TABLE IF NOT EXISTS quality_metrics (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     run_id TEXT NOT NULL,
@@ -247,7 +275,7 @@ CREATE TABLE IF NOT EXISTS fb_group_registry (
 );
 """
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 
 def _to_utc_iso(value: str | None) -> str | None:
@@ -303,6 +331,9 @@ class Database:
             if current < 3:
                 self._migrate_v2_to_v3()
                 current = 3
+            if current < 4:
+                self._migrate_v3_to_v4()
+                current = 4
             self._conn.execute("DELETE FROM schema_version")
             self._conn.execute(
                 "INSERT INTO schema_version(version) VALUES (?)", (SCHEMA_VERSION,)
@@ -476,6 +507,70 @@ class Database:
             if updates:
                 conn.executemany(
                     "UPDATE evidence SET duplicate_of=? WHERE id=?", updates
+                )
+
+    def _migrate_v3_to_v4(self) -> None:
+        """Add presentation-safe source locator metadata plus the derived
+        source-link check and seller brief tables.
+
+        Runs in one transaction: any failure aborts and rolls back the whole
+        migration. Classification reads ``sources.url`` only; ``url`` and
+        ``canonical_url`` keep their historical values and no source row is
+        deleted or merged, so a locator without a browser-openable URL stays
+        in the dataset as an audit record.
+        """
+        with self.transaction() as conn:
+            # executescript() commits implicitly, so all DDL/DML here is
+            # issued through execute() to keep the transaction intact.
+            # _ensure_column() runs on this same connection, so its ALTER
+            # TABLE statements join the open transaction.
+            self._ensure_column("sources", "web_url", "TEXT")
+            self._ensure_column("sources", "source_label", "TEXT NOT NULL DEFAULT ''")
+            self._ensure_column("sources", "locator_note", "TEXT NOT NULL DEFAULT ''")
+            self._ensure_column("sources", "access_kind", "TEXT NOT NULL DEFAULT 'web'")
+            conn.execute(
+                """CREATE TABLE IF NOT EXISTS source_link_checks (
+                       source_id INTEGER NOT NULL,
+                       status TEXT NOT NULL,
+                       checked_at TEXT NOT NULL,
+                       final_url TEXT,
+                       http_status INTEGER,
+                       detail TEXT NOT NULL DEFAULT '',
+                       PRIMARY KEY(source_id),
+                       FOREIGN KEY (source_id) REFERENCES sources(id)
+                   )"""
+            )
+            conn.execute(
+                """CREATE INDEX IF NOT EXISTS idx_link_checks_status
+                   ON source_link_checks(status, checked_at)"""
+            )
+            conn.execute(
+                """CREATE TABLE IF NOT EXISTS merchant_briefs (
+                       merchant_id TEXT NOT NULL PRIMARY KEY,
+                       evidence_set_hash TEXT NOT NULL,
+                       payload_json TEXT NOT NULL,
+                       generated_at TEXT NOT NULL,
+                       model TEXT NOT NULL DEFAULT '',
+                       reviewed_at TEXT,
+                       FOREIGN KEY (merchant_id) REFERENCES merchants(id)
+                   )"""
+            )
+            updates: list[tuple[str | None, str, str, int]] = []
+            for row in conn.execute("SELECT id, url FROM sources").fetchall():
+                locator = classify_source_locator(row["url"])
+                updates.append(
+                    (
+                        locator.web_url,
+                        locator.locator_note,
+                        locator.access_kind,
+                        row["id"],
+                    )
+                )
+            if updates:
+                conn.executemany(
+                    "UPDATE sources SET web_url=?, locator_note=?, access_kind=?"
+                    " WHERE id=?",
+                    updates,
                 )
 
     def _ensure_column(self, table: str, column: str, definition: str) -> None:

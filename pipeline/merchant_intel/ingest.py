@@ -23,6 +23,7 @@ from merchant_intel.schemas import (
     SolRoundOutput,
     utcnow,
 )
+from merchant_intel.sources import classify_source_locator
 
 
 def _utc_iso(value: datetime | None) -> str | None:
@@ -247,22 +248,59 @@ def resolve_merchant(db: Database, candidate: MerchantCandidate, round_no: int) 
     return merchant_id
 
 
+def _source_presentation(evidence: EvidenceItem) -> tuple[str | None, str, str, str]:
+    """Return (web_url, source_label, locator_note, access_kind) for a source.
+
+    Classification is driven by the raw locator only; a caller-supplied note
+    refines the split but never rewrites the locator itself.
+    """
+    locator = classify_source_locator(evidence.source_url)
+    note = (evidence.source_note or "").strip() or locator.locator_note
+    return (
+        locator.web_url,
+        (evidence.source_label or "").strip(),
+        note,
+        locator.access_kind,
+    )
+
+
 def _upsert_source(db: Database, evidence: EvidenceItem) -> int:
     canonical = canonicalize_url(evidence.source_url)
+    web_url, source_label, locator_note, access_kind = _source_presentation(evidence)
     existing = db.query_one("SELECT id FROM sources WHERE canonical_url=?", (canonical,))
     if existing:
         db.execute(
-            "UPDATE sources SET last_seen_at=? WHERE id=?", (_now(), existing["id"])
+            """UPDATE sources
+               SET last_seen_at=?,
+                   web_url=COALESCE(NULLIF(web_url, ''), ?),
+                   source_label=COALESCE(NULLIF(source_label, ''), ?),
+                   locator_note=COALESCE(NULLIF(locator_note, ''), ?),
+                   access_kind=COALESCE(NULLIF(access_kind, ''), ?)
+               WHERE id=?""",
+            (
+                _now(),
+                web_url,
+                source_label,
+                locator_note,
+                access_kind,
+                existing["id"],
+            ),
         )
         return int(existing["id"])
     cur = db.execute(
-        """INSERT INTO sources(url, canonical_url, platform, source_type, first_seen_at, last_seen_at)
-           VALUES (?, ?, ?, ?, ?, ?)""",
+        """INSERT INTO sources(url, canonical_url, platform, source_type,
+                               web_url, source_label, locator_note, access_kind,
+                               first_seen_at, last_seen_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             evidence.source_url,
             canonical,
             evidence.source_platform,
             evidence.source_type or "unknown",
+            web_url,
+            source_label,
+            locator_note,
+            access_kind,
             _now(),
             _now(),
         ),
