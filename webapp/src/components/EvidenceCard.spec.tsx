@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { EvidenceCard } from './EvidenceCard';
 import { FooterContent } from './SiteFooter';
-import { isSafeLink } from './display';
+import { safeHttpUrl } from './display';
 import type { EvidenceItem } from '../lib/types';
 
 function evidenceFixture(overrides: Partial<EvidenceItem> = {}): EvidenceItem {
@@ -30,6 +30,9 @@ function evidenceFixture(overrides: Partial<EvidenceItem> = {}): EvidenceItem {
     duplicateOf: null,
     duplicateRootMerchantId: null,
     claimId: null,
+    citations: [],
+    isMeaningful: true,
+    isDuplicateChild: false,
     ...overrides,
   };
 }
@@ -63,7 +66,7 @@ describe('EvidenceCard safe links', () => {
     const html = renderEvidence({ url: 'javascript:alert(1)' });
     expect(html).not.toContain('<a ');
     expect(html).not.toContain('href=');
-    expect(isSafeLink('javascript:alert(1)')).toBe(false);
+    expect(safeHttpUrl('javascript:alert(1)')).toBeNull();
   });
 });
 

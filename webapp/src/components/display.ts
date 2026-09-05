@@ -10,9 +10,25 @@ export const STALE_PUBLISHED_DAYS = 730;
 /** Snapshot age after which the footer warns the data may be out of date. */
 export const STALE_SNAPSHOT_DAYS = 7;
 
-/** Safe navigation: only http/https URLs ever become clickable anchors. */
-export function isSafeLink(url: string): boolean {
-  return url.startsWith('http://') || url.startsWith('https://');
+/**
+ * Strict safe-URL extraction: returns the href only when the value parses as
+ * an absolute URL with protocol exactly 'http:'/'https:' and a non-empty
+ * hostname. Anything else — relative values, annotated strings, protocol
+ * prefixes like `whois:`/`javascript:`, empty input — yields null and must
+ * never become a clickable anchor.
+ */
+export function safeHttpUrl(value: string | null | undefined): string | null {
+  if (value === null || value === undefined) return null;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    if (parsed.hostname.length === 0) return null;
+    return parsed.href;
+  } catch {
+    return null;
+  }
 }
 
 /** Arabic label for a derived source category (controlled taxonomy). */
