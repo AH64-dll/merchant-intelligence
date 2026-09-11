@@ -112,11 +112,13 @@ def extract_vendor(db: sqlite3.Connection, mid: str) -> dict:
         payload = json.loads(br["payload_json"])
         for key in ("identity_message", "reputation_message"):
             t = payload.get(key, {}).get("text", "")
-            if t.strip():
+            # Briefs are Arabic-authored → ar→en. Skip Latin-dominant fields
+            # (English brand blurbs) — queueing them for ar is an echo.
+            if t.strip() and arabic.search(t):
                 add("merchant_briefs", f"{mid}::{key}", "text", "ar", t, "en")
         for i, b in enumerate(payload.get("bullets", [])):
             t = b.get("text", "")
-            if t.strip():
+            if t.strip() and arabic.search(t):
                 add("merchant_briefs", f"{mid}::bullet_{i}", "text", "ar", t, "en")
 
     return doc
