@@ -156,6 +156,10 @@ def main() -> int:
             for fname in fields
         }
         for fname, src in fields.items():
+            # Align with extractor: Latin-dominant brief fields (English brand
+            # blurbs) are never queued for ar→en — skip them here too.
+            if not ARABIC_RE.search(src):
+                continue
             before = len(problems)
             # A number/URL counts as preserved if it appears in the same
             # field OR anywhere else in the same brief's translation.
