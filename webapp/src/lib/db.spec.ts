@@ -20,9 +20,9 @@ beforeAll(() => {
 });
 
 describe('snapshot manifest validation', () => {
-  it('exposes validated snapshot info with schema versions 4/1', () => {
+  it('exposes validated snapshot info with schema versions 5/1', () => {
     const info = db.getSnapshotInfo();
-    expect(info.sourceSchemaVersion).toBe(4);
+    expect(info.sourceSchemaVersion).toBe(5);
     expect(info.appSchemaVersion).toBe(1);
     expect(info.generatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(Object.keys(info.counts).sort()).toEqual(
@@ -100,7 +100,7 @@ describe('snapshot manifest validation', () => {
       .run();
     mem
       .prepare(
-        `INSERT INTO snapshot_meta VALUES (1, 1, 4, '2026-01-01T00:00:00Z', 99,0,0,0,0,0,0,0,0)`,
+        `INSERT INTO snapshot_meta VALUES (1, 1, 5, '2026-01-01T00:00:00Z', 99,0,0,0,0,0,0,0,0)`,
       )
       .run();
     expect(() => validateSnapshotManifest(mem)).toThrow(/merchants_count/);
@@ -535,7 +535,7 @@ describe('MerchantDb.getMerchantDetail — structural branches', () => {
   it('exposes snapshot metadata on the detail view', () => {
     const detail = db.getMerchantDetail(B_TECH_ID);
     expect(detail?.snapshot.appSchemaVersion).toBe(1);
-    expect(detail?.snapshot.sourceSchemaVersion).toBe(4);
+    expect(detail?.snapshot.sourceSchemaVersion).toBe(5);
     expect(detail?.snapshot.generatedAt.length).toBeGreaterThan(0);
   });
 });

@@ -3,12 +3,12 @@
 #
 # Contract (Phase 4):
 #   1. Open the master READ-ONLY; VACUUM INTO a unique temp file in the destination dir.
-#   2. Require source schema_version = 4.
+#   2. Require source schema_version = 5.
 #   3. Detect write drift via PRAGMA data_version + table counts before/after the copy;
 #      retry the whole copy up to 3 attempts, then fail without touching the destination.
-#   4. Run scripts/audit-data.mjs --strict --expect-schema 4 against the temp copy;
+#   4. Run scripts/audit-data.mjs --strict --expect-schema 5 against the temp copy;
 #      its exit must be 0.
-#   5. Add the snapshot_meta manifest (app_schema_version=1, source_schema_version=4,
+#   5. Add the snapshot_meta manifest (app_schema_version=1, source_schema_version=5,
 #      UTC generated_at, source maxima, 9 counts) inside the temp copy ONLY.
 #   6. Atomically replace DEST_DB. Any failure leaves the previous snapshot untouched.
 #
@@ -96,8 +96,8 @@ while :; do
   src_schema="$(sed -n '2p' <<<"$source_state")"
   counts_before="$(sed -n '3p' <<<"$source_state")"
 
-  if [ "$src_schema" != "4" ]; then
-    die "source schema_version is '$src_schema', expected 4 (run the v4 migration first)"
+  if [ "$src_schema" != "5" ]; then
+    die "source schema_version is '$src_schema', expected 5 (run the v5 migration first)"
   fi
 
   # -- transactionally consistent copy --------------------------------------

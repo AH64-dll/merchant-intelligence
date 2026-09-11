@@ -21,6 +21,7 @@ import {
 } from '@/lib/assessment';
 import { IDENTITY_LEVEL_LABELS } from '@/lib/labels';
 import { getDb } from '@/lib/singletons';
+import { getLocale } from '@/lib/i18n';
 import {
   categoryTags,
   CATEGORY_TAG_LABELS,
@@ -37,7 +38,8 @@ interface MerchantPageProps {
 
 export async function generateMetadata({ params }: MerchantPageProps): Promise<Metadata> {
   const { id } = await params;
-  const detail = getDb().getMerchantDetail(id);
+  const locale = await getLocale();
+  const detail = getDb().getMerchantDetailLocalized(id, locale);
   if (!detail) return { title: 'تاجر غير موجود' };
   return { title: detail.merchant.canonicalName };
 }
@@ -118,7 +120,8 @@ function selectImportantClaims(claims: ClaimItem[], evidence: EvidenceItem[]): C
 
 export default async function MerchantPage({ params }: MerchantPageProps) {
   const { id } = await params;
-  const detail = getDb().getMerchantDetail(id);
+  const locale = await getLocale();
+  const detail = getDb().getMerchantDetailLocalized(id, locale);
   if (!detail) notFound();
 
   const { merchant, snapshot } = detail;

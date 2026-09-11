@@ -42,7 +42,7 @@ const SEARCHABLE_KINDS: readonly IdentifierKind[] = [
 ];
 
 const APP_SCHEMA_VERSION = 1;
-const SOURCE_SCHEMA_VERSION = 4;
+const SOURCE_SCHEMA_VERSION = 5;
 
 const MANIFEST_COUNT_KEYS = [
   'merchants',
@@ -376,6 +376,7 @@ export class MerchantDb {
   private readonly stmtDirectoryMerchants: Database.Statement;
   private readonly stmtDirectoryLinks: Database.Statement;
   private readonly stmtDirectoryEvidence: Database.Statement;
+  private readonly stmtTranslations: Database.Statement<[string, string]> | null;
   private directoryProjection: MerchantDirectoryProjection | null = null;
 
   constructor(dbPath: string) {
@@ -407,6 +408,12 @@ export class MerchantDb {
     this.stmtDetailAliases = this.db.prepare(
       'SELECT alias FROM merchant_aliases WHERE merchant_id = ? ORDER BY alias',
     );
+    this.stmtTranslations = this.hasTable('translations')
+      ? this.db.prepare(
+          `SELECT record_id, field_name, content FROM translations
+           WHERE table_name = ? AND lang = ?`,
+        )
+      : null;
     this.stmtEvidence = this.db.prepare(
       `SELECT e.id, e.claim_type, e.sentiment, e.summary, e.quoted_excerpt, e.author_type,
               e.confidence, e.reliability_band, e.language, e.published_at, e.captured_at,
@@ -806,6 +813,35 @@ export class MerchantDb {
       duplicateChildrenCount,
       sourceOnlyCount,
       brief,
+    };
+  }
+  getMerchantDetailLocalized(id: string, locale: 'ar' | 'en'): MerchantDetail | null {
+    const detail = this.getMerchantDetail(id);
+    if (detail === null) return null;
+    if (this.stmtTranslations === null) return detail;
+
+    const evidenceTranslations = this.stmtTranslations.all('evidence', locale) as
+      { record_id: string; field_name: string; content: string }[];
+    const evidenceSummaryById: Record<string, string> = Object.fromEntries(
+      evidenceTranslations.filter(r => r.field_name === 'summary').map(r => [r.record_id, r.content]),
+    );
+
+    const claimTranslations = this.stmtTranslations.all('claims', locale) as
+      { record_id: string; field_name: string; content: string }[];
+    const claimSummaryById: Record<string, string> = Object.fromEntries(
+      claimTranslations.filter(r => r.field_name === 'summary').map(r => [r.record_id, r.content]),
+    );
+
+    return {
+      ...detail,
+      evidence: detail.evidence.map(e => ({
+        ...e,
+        summary: evidenceSummaryById[e.id] ?? e.summary,
+      })),
+      claims: detail.claims.map(c => ({
+        ...c,
+        summary: claimSummaryById[c.id] ?? c.summary,
+      })),
     };
   }
 }
