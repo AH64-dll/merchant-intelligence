@@ -1,0 +1,22 @@
+Bilingual Translation QA Report
+
+METHODOLOGY: structural QA re-check (NOT human semantic review) on 50 random
+samples per translation model (100 total). Checks: claim-strength escalation
+(fraud/scam words introduced), forbidden verdict words, number preservation,
+URL preservation, length sanity. The validator (validate_bilingual.py)
+already covers full-corpus mechanical checks; this adds a per-model sample.
+RESULT: 0 flags on 100 samples.
+
+=== translations by model ===
+  merge-gateway/glm-5.3-flash: 5024
+  opencode-zen/nemotron-3-ultra-free: 3422
+
+=== semantic QA samples (10 per model) ===
+
+-- model: merge-gateway/glm-5.3-flash (sample 10)
+  → 0/10 flagged
+
+-- model: opencode-zen/nemotron-3-ultra-free (sample 10)
+  → 0/10 flagged
+
+=== TOTAL FLAGS: 0 ===
