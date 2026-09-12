@@ -8,6 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "bench:search": "vitest run src/lib/search.bench.spec.ts",
     "snapshot": "bash scripts/snapshot-db.sh",
     "snapshot:verify": "node scripts/audit-data.mjs data/merchants.db --strict --expect-schema 5"

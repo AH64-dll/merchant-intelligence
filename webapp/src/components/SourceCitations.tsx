@@ -99,25 +99,29 @@ function resolveCitationItems(props: SourceCitationsProps): SourceCitationItem[]
     }
   }
 
-  // Deduplicate citations by canonical URL or key
+  // Deduplicate citations by their stable identity key
   const uniqueItems: SourceCitationItem[] = [];
   const seen = new Set<string>();
 
   for (const item of items) {
-    const key = item.webUrl
-      ? `url:${item.webUrl}`
-      : item.sourceId
-        ? `id:${item.sourceId}`
-        : item.rawUrl
-          ? `raw:${item.rawUrl}`
-          : `note:${item.locatorNote ?? ''}`;
-
+    const key = citationKey(item);
     if (seen.has(key)) continue;
     seen.add(key);
     uniqueItems.push(item);
   }
 
   return uniqueItems;
+}
+
+/**
+ * Stable identity for one citation — the same composite the dedup pass uses,
+ * so it is unique inside the rendered list where an array index is not.
+ */
+function citationKey(citation: SourceCitationItem): string {
+  if (citation.webUrl) return `url:${citation.webUrl}`;
+  if (citation.sourceId !== undefined) return `id:${citation.sourceId}`;
+  if (citation.rawUrl) return `raw:${citation.rawUrl}`;
+  return `note:${citation.locatorNote ?? ''}`;
 }
 
 function linkTextForCitation(citation: SourceCitationItem, safeUrl: string): string {
@@ -154,12 +158,12 @@ export function SourceCitations(props: SourceCitationsProps): JSX.Element {
   return (
     <div className={`space-y-1 ${className}`} dir="auto">
       <ul className="flex flex-wrap gap-x-3 gap-y-1.5 list-none p-0 m-0 text-xs">
-        {citations.map((citation, index) => {
+        {citations.map((citation) => {
           const safeUrl = safeHttpUrl(citation.webUrl ?? citation.rawUrl);
           if (safeUrl !== null) {
             const linkText = linkTextForCitation(citation, safeUrl);
             return (
-              <li key={index} className="inline-flex items-center gap-1.5 flex-wrap">
+              <li key={citationKey(citation)} className="inline-flex items-center gap-1.5 flex-wrap">
                 <a
                   href={safeUrl}
                   target="_blank"
@@ -179,11 +183,11 @@ export function SourceCitations(props: SourceCitationsProps): JSX.Element {
           }
 
           return (
-            <li key={index} className="inline-flex items-center gap-1.5 flex-wrap text-neutral-700">
+            <li key={citationKey(citation)} className="inline-flex items-center gap-1.5 flex-wrap text-neutral-700">
               <span>لا يتوفر رابط ويب قابل للفتح في السجل</span>
               {citation.locatorNote || citation.accessKind || citation.rawUrl ? (
                 <details className="inline-block text-[11px]">
-                  <summary className="cursor-pointer text-neutral-600 min-h-[24px] inline-flex items-center">
+                  <summary className="cursor-pointer text-neutral-600 min-h-[44px] inline-flex items-center">
                     بيانات المصدر
                   </summary>
                   <div className="mt-0.5 p-1.5 bg-neutral-50 border border-neutral-200 rounded text-[11px] space-y-0.5">

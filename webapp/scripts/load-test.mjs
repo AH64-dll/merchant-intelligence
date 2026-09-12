@@ -1,16 +1,50 @@
 #!/usr/bin/env node
 // Load test: many imaginary concurrent users hammering the production server.
-// Usage: node scripts/load-test.mjs <baseUrl> <durationSec> <concurrency>
-// Gates: zero failed requests, overall p95 < 800 ms, and a 5000-char hostile
-// query must neither error nor stall co-located normal traffic (p95 in its
-// 3 s window < 1500 ms).
+// Usage: node scripts/load-test.mjs <baseUrl> <durationSec> <concurrency> [--allow-remote]
+// Gates: zero failed requests, overall p95 < P95_BUDGET_MS (1000 ms), and a
+// 5000-char hostile query must neither error nor stall co-located normal
+// traffic (p95 in its 3 s window < 1500 ms).
+//
+// Safety: this is an attributable load generator. Non-loopback targets are
+// refused unless --allow-remote is passed explicitly.
 
-const base = process.argv[2] ?? 'http://127.0.0.1:3300';
-const durationSec = Number(process.argv[3] ?? 30);
-const concurrency = Number(process.argv[4] ?? 50);
+const P95_BUDGET_MS = 1000; // single source of truth for the documented + enforced p95 gate
+
+const allowRemote = process.argv.includes('--allow-remote');
+const argv = process.argv.slice(2).filter((a) => a !== '--allow-remote');
+const base = argv[0] ?? 'http://127.0.0.1:3300';
+const durationSec = Number(argv[1] ?? 30);
+const concurrency = Number(argv[2] ?? 50);
 
 if (!/^https?:\/\//.test(base)) {
   console.error('baseUrl must be http(s)://…');
+  process.exit(2);
+}
+
+function isLoopbackHost(host) {
+  const h = String(host ?? '').replace(/^\[|\]$/g, '').toLowerCase();
+  return (
+    h === 'localhost' ||
+    h.endsWith('.localhost') ||
+    h === '::1' ||
+    h === '::' ||
+    h === '0.0.0.0' ||
+    /^127(?:\.\d{1,3}){3}$/.test(h)
+  );
+}
+
+let baseHost = '';
+try {
+  baseHost = new URL(base).hostname;
+} catch {
+  // the scheme check above already accepted the URL; fall through to refusal
+}
+if (!allowRemote && !isLoopbackHost(baseHost)) {
+  console.error(
+    `refusing to load-test non-loopback target '${baseHost}': this would send ` +
+      `${concurrency} concurrent users plus 5KB hostile probes at a live host. ` +
+      'Pass --allow-remote to override.',
+  );
   process.exit(2);
 }
 
@@ -161,7 +195,7 @@ console.log(`co-located traffic p95 during hostile window: ${dosP95} ms`);
 
 const gatesOk =
   failures === 0 && // plan gate: zero 5xx / network failures
-  Number(p95) < 1000 && // plan gate: p95 <1000ms at 50 concurrent users (default argv[4])
+  Number(p95) < P95_BUDGET_MS && // plan gate: p95 <P95_BUDGET_MS at 50 concurrent users (default argv[4])
   dos.overCap.status === 400 &&
   dos.overCap.ms < 500 &&
   dos.underCap.status === 200 &&

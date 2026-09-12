@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
+import sys
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass
@@ -681,7 +683,6 @@ def merge_sellers(
     conn = db._conn
     _preflight(conn, manifest, expected_names, delta_rename)
     changed_ids = _all_ids(manifest) + ([delta_rename[0]] if delta_rename else [])
-    before_counts = _counts(conn)
     report: dict[str, object] = {
         "mode": "apply" if apply else "dry-run",
         "created_at": _now(),
@@ -695,8 +696,6 @@ def merge_sellers(
             }
             for group in manifest
         ],
-        "before_counts": before_counts,
-        "before": _merchant_snapshot(conn, changed_ids),
     }
     if apply:
         retired_ids = [item for group in manifest for item in group.retired_ids]
@@ -708,17 +707,29 @@ def merge_sellers(
         now = _now()
         with db.transaction() as tx:
             _preflight(tx, manifest, expected_names, delta_rename)
+            # The postcondition baseline is read inside the write transaction.
+            # A baseline taken before BEGIN can be stale relative to a
+            # concurrent commit and would roll back a legitimate merge.
+            before_counts = _counts(tx)
+            report["before_counts"] = before_counts
+            report["before"] = _merchant_snapshot(tx, changed_ids)
             for group in manifest:
                 target = tx.execute(
                     "SELECT * FROM merchants WHERE id=?", (group.target_id,)
                 ).fetchone()
-                assert target is not None
+                if target is None:
+                    raise ValueError(
+                        f"merge target merchant {group.target_id} is missing"
+                    )
                 members = [target]
                 for retired_id in group.retired_ids:
                     retired = tx.execute(
                         "SELECT * FROM merchants WHERE id=?", (retired_id,)
                     ).fetchone()
-                    assert retired is not None
+                    if retired is None:
+                        raise ValueError(
+                            f"merge retired merchant {retired_id} is missing"
+                        )
                     members.append(retired)
                     _merge_aliases_and_identifiers(tx, group.target_id, retired)
                     for table in (
@@ -775,6 +786,9 @@ def merge_sellers(
         report["after"] = _merchant_snapshot(
             conn, [group.target_id for group in manifest] + ([delta_rename[0]] if delta_rename else [])
         )
+    else:
+        report["before_counts"] = _counts(conn)
+        report["before"] = _merchant_snapshot(conn, changed_ids)
     if report_path is None:
         report_dir = db.path.parent / "merge-reports"
         report_dir.mkdir(exist_ok=True)
@@ -782,6 +796,33 @@ def merge_sellers(
         report_path = report_dir / f"seller-merge-{report['mode']}-{timestamp}.json"
     path = Path(report_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    # Write to a temp sibling and os.replace so a crash never leaves the only
+    # audit record truncated at the public path.
+    tmp_path = path.with_name(path.name + ".tmp")
+    try:
+        tmp_path.write_text(
+            json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        os.replace(tmp_path, path)
+    except OSError as exc:
+        try:
+            tmp_path.unlink()
+        except OSError:
+            pass
+        if apply:
+            # The merge committed before this write: say so loudly rather than
+            # letting the failure read as a rollback.
+            print(
+                f"error: the merge HAS ALREADY COMMITTED, but writing the "
+                f"report to {path} failed ({exc}); the audit record is "
+                f"incomplete and the merge is NOT rolled back",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                f"error: writing the dry-run report to {path} failed ({exc})",
+                file=sys.stderr,
+            )
+        raise
     report["report_path"] = str(path)
     return report

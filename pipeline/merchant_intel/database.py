@@ -273,9 +273,23 @@ CREATE TABLE IF NOT EXISTS fb_group_registry (
     joined INTEGER NOT NULL DEFAULT 1,
     checked_at TEXT NOT NULL DEFAULT ''
 );
+
+CREATE TABLE IF NOT EXISTS translations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    table_name TEXT NOT NULL,
+    record_id TEXT NOT NULL,
+    field_name TEXT NOT NULL,
+    lang TEXT NOT NULL,
+    content TEXT NOT NULL,
+    model TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(table_name, record_id, field_name, lang),
+    CHECK (lang IN ('ar','en'))
+);
+CREATE INDEX IF NOT EXISTS idx_translations_record ON translations(table_name, record_id);
 """
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 
 def _to_utc_iso(value: str | None) -> str | None:
@@ -309,22 +323,43 @@ class Database:
         self._conn.execute("PRAGMA foreign_keys = ON")
         self._conn.execute("PRAGMA journal_mode = WAL")
         self._conn.execute("PRAGMA busy_timeout = 10000")
-        self.init_schema()
+        try:
+            self.init_schema()
+        except BaseException:
+            # A failed migration must not leak the connection: the caller only
+            # sees the exception, so nothing else will ever close it.
+            self._conn.close()
+            raise
 
     def close(self) -> None:
         with self._lock:
             self._conn.close()
 
     def init_schema(self) -> None:
+        """Create or migrate the schema, refusing to touch a newer database.
+
+        The stored version is captured first so the on-disk row is rewritten
+        only when a migration actually ran: opening an up-to-date database
+        leaves its ``schema_version`` row and schema untouched. A database whose
+        version is newer than ``SCHEMA_VERSION`` is rejected before any
+        migration or version write, so this code never downgrades it.
+        """
         with self._lock:
             self._conn.executescript(SCHEMA)
             row = self._conn.execute(
                 "SELECT MAX(version) AS version FROM schema_version"
             ).fetchone()
-            current = int(row["version"] or 0) if row else 0
+            on_disk = int(row["version"] or 0) if row else 0
+            current = on_disk
             if current == 0:
                 self._conn.execute("INSERT INTO schema_version(version) VALUES (?)", (1,))
                 current = 1
+            if current > SCHEMA_VERSION:
+                raise RuntimeError(
+                    f"database schema version {current} is newer than this "
+                    f"code's SCHEMA_VERSION {SCHEMA_VERSION}; refusing to "
+                    "downgrade it"
+                )
             if current < 2:
                 self._migrate_v1_to_v2()
                 current = 2
@@ -334,10 +369,14 @@ class Database:
             if current < 4:
                 self._migrate_v3_to_v4()
                 current = 4
-            self._conn.execute("DELETE FROM schema_version")
-            self._conn.execute(
-                "INSERT INTO schema_version(version) VALUES (?)", (SCHEMA_VERSION,)
-            )
+            if current < 5:
+                self._migrate_v4_to_v5()
+                current = 5
+            if on_disk != SCHEMA_VERSION:
+                self._conn.execute("DELETE FROM schema_version")
+                self._conn.execute(
+                    "INSERT INTO schema_version(version) VALUES (?)", (SCHEMA_VERSION,)
+                )
             self._conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_evidence_content_fingerprint "
                 "ON evidence(content_fingerprint)"
@@ -573,6 +612,37 @@ class Database:
                     updates,
                 )
 
+    def _migrate_v4_to_v5(self) -> None:
+        """Add the persisted ``translations`` table and its lookup index.
+
+        ``translations`` holds one translated field per (table, record, field,
+        language) and constrains ``lang`` to ``ar``/``en``. Snapshots copy the
+        database wholesale, so the table must exist in the pipeline schema.
+        Runs in one transaction and creates the table and index only if they
+        are missing, so reopening a v5 database is a no-op.
+        """
+        with self.transaction() as conn:
+            # executescript() commits implicitly, so all DDL here is issued
+            # through execute() to keep the transaction intact.
+            conn.execute(
+                """CREATE TABLE IF NOT EXISTS translations (
+                       id INTEGER PRIMARY KEY AUTOINCREMENT,
+                       table_name TEXT NOT NULL,
+                       record_id TEXT NOT NULL,
+                       field_name TEXT NOT NULL,
+                       lang TEXT NOT NULL,
+                       content TEXT NOT NULL,
+                       model TEXT NOT NULL DEFAULT '',
+                       created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                       UNIQUE(table_name, record_id, field_name, lang),
+                       CHECK (lang IN ('ar','en'))
+                   )"""
+            )
+            conn.execute(
+                """CREATE INDEX IF NOT EXISTS idx_translations_record
+                   ON translations(table_name, record_id)"""
+            )
+
     def _ensure_column(self, table: str, column: str, definition: str) -> None:
         columns = {
             row["name"] for row in self._conn.execute(f"PRAGMA table_info({table})")
@@ -582,8 +652,15 @@ class Database:
 
     @contextmanager
     def transaction(self) -> Iterator[sqlite3.Connection]:
+        """Run a block in a single write transaction.
+
+        ``BEGIN IMMEDIATE`` takes the write lock up front instead of on the
+        first write: with a deferred transaction two processes can read the
+        same preconditions, then one dies with SQLITE_BUSY mid-transaction
+        after acting on stale state.
+        """
         with self._lock:
-            self._conn.execute("BEGIN")
+            self._conn.execute("BEGIN IMMEDIATE")
             try:
                 yield self._conn
             except Exception:

@@ -429,6 +429,41 @@ describe('positive highlight ordering', () => {
       { id: 'b-evidence' },
     )).toBe('a-evidence');
   });
+
+  it('skips the placeholder summary when a real documented positive exists', () => {
+    const rows = merchant('highlight');
+    const evidenceRows = [
+      evidence('highlight', {
+        id: 'placeholder',
+        summary: 'Source cited without a model-supplied summary.',
+        sourceUrl: 'https://one.example/placeholder',
+        canonicalSourceUrl: 'https://one.example/placeholder',
+        authorType: 'customer',
+        reliabilityBand: 'very_strong',
+        confidence: 1,
+      }),
+      evidence('highlight', {
+        id: 'documented',
+        summary: 'تجربة شراء موثقة',
+        sourceUrl: 'https://two.example/documented',
+        canonicalSourceUrl: 'https://two.example/documented',
+      }),
+    ];
+    const entry = projection(rows, evidenceRows).entries[0];
+    // The placeholder row ranks higher on every other factor but must not be
+    // presented as the highlighted documented positive evidence.
+    expect(entry.positiveHighlight?.evidenceId).toBe('documented');
+  });
+
+  it('omits the highlight entirely when every positive row is a placeholder', () => {
+    const rows = merchant('highlight');
+    const evidenceRows = positivePair('highlight').map((row) => ({
+      ...row,
+      summary: 'Source cited without a model-supplied summary.',
+    }));
+    const entry = projection(rows, evidenceRows).entries[0];
+    expect(entry.positiveHighlight).toBeNull();
+  });
 });
 
 describe('filtering, pagination, and query normalization', () => {

@@ -25,12 +25,23 @@ TOTAL=0
 
 cleanup() {
   if [[ -n "$SERVER_PID" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
-    local pgid
+    local pgid self_pgid
     pgid="$(ps -o pgid= -p "$SERVER_PID" | tr -d ' ')"
-    if [[ -n "$pgid" ]]; then
+    self_pgid="$(ps -o pgid= -p $$ | tr -d ' ')"
+    if [[ -n "$pgid" && "$pgid" != "$self_pgid" ]]; then
+      # setsid put the server in its own process group: signal that group.
       kill -TERM "-$pgid" 2>/dev/null
       sleep 2
       kill -KILL "-$pgid" 2>/dev/null
+    else
+      # pgid == our own group (setsid did not isolate the server), so a
+      # negative kill would terminate this script and its siblings. Fall back
+      # to killing the recorded PID and its children.
+      pkill -TERM -P "$SERVER_PID" 2>/dev/null
+      kill -TERM "$SERVER_PID" 2>/dev/null
+      sleep 2
+      pkill -KILL -P "$SERVER_PID" 2>/dev/null
+      kill -KILL "$SERVER_PID" 2>/dev/null
     fi
   fi
   rm -f "$LOG_FILE"
@@ -69,8 +80,8 @@ read -r HOST_OWNER < <(dbq "select distinct merchant_id from merchant_identifier
 HOST_OWNER_COUNT=$(dbq "select count(distinct merchant_id) from merchant_identifiers where kind='website' and normalized_value like '%${HOST_DOMAIN}%'")
 
 # Arabic aliases on two different merchants (tab-containing aliases excluded).
-read -r ALIAS1 ALIAS1_OWNER < <(dbq "select alias, merchant_id from merchant_aliases ma join merchants m on m.id = ma.merchant_id where ma.alias glob '*[^ -~]*' and ma.alias not like '%' || char(9) || '%' and length(ma.alias) <= 6 order by ma.alias, ma.merchant_id limit 1")
-read -r ALIAS2 ALIAS2_OWNER < <(dbq "select alias, merchant_id from merchant_aliases ma join merchants m on m.id = ma.merchant_id where ma.alias glob '*[^ -~]*' and ma.alias not like '%' || char(9) || '%' and length(ma.alias) > 6 order by length(ma.alias), ma.merchant_id limit 1")
+IFS=$'\t' read -r ALIAS1 ALIAS1_OWNER < <(dbq "select alias, merchant_id from merchant_aliases ma join merchants m on m.id = ma.merchant_id where ma.alias glob '*[^ -~]*' and ma.alias not like '%' || char(9) || '%' and length(ma.alias) <= 6 order by ma.alias, ma.merchant_id limit 1")
+IFS=$'\t' read -r ALIAS2 ALIAS2_OWNER < <(dbq "select alias, merchant_id from merchant_aliases ma join merchants m on m.id = ma.merchant_id where ma.alias glob '*[^ -~]*' and ma.alias not like '%' || char(9) || '%' and length(ma.alias) > 6 order by length(ma.alias), ma.merchant_id limit 1")
 
 VERIFIED_ID=$(dbq "select id from merchants where state='VERIFIED_HIGH_CONFIDENCE' order by id limit 1")
 OFFICIAL_ID=$(dbq "select id from merchants where state='OFFICIAL_WARNING' order by id limit 1")
@@ -78,10 +89,9 @@ OFFICIAL_ID=$(dbq "select id from merchants where state='OFFICIAL_WARNING' order
 # INSUFFICIENT_DATA row exercises the honest empty-verdict + notable-evidence
 # rendering, so the "no analysis" qualifier is dropped.
 INSUFF_ID=$(dbq "select id from merchants where state='INSUFFICIENT_DATA' order by id limit 1")
-ALIAS1=$(dbq "select alias from merchant_aliases where alias glob '*[^ -~]*' and alias not like '%' || char(9) || '%' and length(alias) <= 6 order by alias limit 1")
-ALIAS1_OWNER=$(dbq "select merchant_id from merchant_aliases where alias = '$ALIAS1' limit 1")
-ALIAS2=$(dbq "select alias from merchant_aliases where alias glob '*[^ -~]*' and alias not like '%' || char(9) || '%' and length(alias) > 6 order by length(alias) limit 1")
-ALIAS2_OWNER=$(dbq "select merchant_id from merchant_aliases where alias = '$ALIAS2' limit 1")
+# ALIAS1/ALIAS1_OWNER and ALIAS2/ALIAS2_OWNER are read in ONE query above.
+# Re-deriving the owner with `... where alias = '$ALIAS1'` interpolated a
+# DB-derived (apostrophe-bearing Arabic) string into SQL; removed.
 read -r FB_PAGE_URL FB_PAGE_OWNER_NAME < <(dbq "select mi.normalized_value, m.canonical_name from merchant_identifiers mi join merchants m on m.id = mi.merchant_id where mi.kind = 'facebook' and m.state = 'INSUFFICIENT_DATA' order by mi.merchant_id, mi.normalized_value limit 1")
 
 # A merchant that has related links (count checked both directions).

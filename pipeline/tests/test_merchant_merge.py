@@ -359,3 +359,64 @@ def test_late_failure_rolls_back_and_second_apply_fails_closed(tmp_path, monkeyp
     with pytest.raises(ValueError, match="missing"):
         _apply(db, manifest, names)
     db.close()
+
+
+def test_report_is_written_atomically(tmp_path) -> None:
+    """The audit report lands via a temp sibling, never a partial file."""
+    db, manifest, names = _fixture(tmp_path)
+    report_path = tmp_path / "reports" / "merge.json"
+    report = merge_sellers(
+        db,
+        manifest=manifest,
+        expected_names=names,
+        delta_rename=None,
+        report_path=report_path,
+    )
+    assert report["report_path"] == str(report_path)
+    assert report_path.exists()
+    assert not report_path.with_name(report_path.name + ".tmp").exists()
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    assert payload["mode"] == "dry-run"
+    assert payload["before_counts"]["merchants"] == 3
+    db.close()
+
+
+def test_missing_member_raises_value_error_not_assertion(tmp_path, monkeypatch) -> None:
+    """The retired-UUID guard must survive ``python -O`` (no ``assert``)."""
+    db, _manifest, _names = _fixture(tmp_path)
+    import merchant_intel.merchant_merge as module
+
+    # Skip preflight so the in-transaction guard is the one that fires, as it
+    # would if a concurrent writer deleted the row after validation.
+    monkeypatch.setattr(module, "_preflight", lambda *args, **kwargs: None)
+    with pytest.raises(ValueError):
+        _apply(db, (MergeGroup("target", ("ghost",)),), {})
+    # The failed apply rolled back: the target is untouched.
+    assert db.query_one("SELECT 1 FROM merchants WHERE id='target'") is not None
+    db.close()
+
+
+def test_report_write_failure_does_not_claim_rollback(
+    tmp_path, monkeypatch, capsys
+) -> None:
+    """A post-commit report failure is reported as committed, not rolled back."""
+    db, manifest, names = _fixture(tmp_path)
+    _evidence(db, "source", "e-source", "https://source.example", "report")
+    report_path = tmp_path / "reports" / "merge.json"
+
+    import merchant_intel.merchant_merge as module
+
+    def boom(*args, **kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(module.os, "replace", boom)
+    with pytest.raises(OSError, match="disk full"):
+        _apply(db, manifest, names, report_path=report_path)
+
+    assert "HAS ALREADY COMMITTED" in capsys.readouterr().err
+    # The merge really did commit...
+    assert db.query_one("SELECT 1 FROM merchants WHERE id='source'") is None
+    # ...and no truncated file was published at the public name.
+    assert not report_path.exists()
+    assert not report_path.with_name(report_path.name + ".tmp").exists()
+    db.close()

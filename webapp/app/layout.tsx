@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
-import { cookies } from 'next/headers';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
-import { getLocale, DIR_FOR, t, LOCALE_COOKIE } from '@/lib/i18n';
+import { getLocale, DIR_FOR, t } from '@/lib/i18n';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -42,7 +41,7 @@ export default async function RootLayout({
           </form>
         </div>
         <SiteHeader />
-        <main id="main-content" className="mx-auto w-full max-w-4xl px-4 py-6 flex-1">
+        <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-4xl px-4 py-6 flex-1">
           {children}
         </main>
         <SiteFooter />

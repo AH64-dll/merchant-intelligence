@@ -27,7 +27,8 @@ omp:
   require_catalog: true
 
 models:
-  # Gemini handles fast discovery and Sol analysis; Luna reviews and verifies it.
+  # NOTE: the committed repository `config.yaml` is authoritative; it pins
+  # verifier: merge-gateway/glm-5.3-flash. This file is only a template.
   discovery: google-antigravity/gemini-3.7-flash
   coordinator: google-antigravity/gemini-3.7-flash
   analyst: google-antigravity/gemini-3.7-flash

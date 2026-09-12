@@ -381,75 +381,6 @@ class Pipeline:
         self.state.completed_agents = []
         self._save()
         return False
-    async def _after_judgement(
-        self, judgement: CoordinatorJudgement, metrics: QualityMetrics
-    ) -> bool:
-        for gap in judgement.gaps:
-            self.db.execute(
-                """INSERT INTO research_gaps(run_id, round_no, gap_type, description, searches_json)
-                   VALUES (?, ?, ?, ?, ?)""",
-                (
-                    self.state.run_id,
-                    self.state.discovery_round,
-                    gap.type.value,
-                    gap.description,
-                    self.db.dumps(gap.recommended_next_searches),
-                ),
-            )
-        self.state.stage = "discovery"
-        self.state.discovery_round_status = "idle"
-        self.state.completed_agents = []
-        self._save()
-        return False
-        new_evidence = metrics.new_useful_evidence
-        if diminishing(self.state.prev_new_evidence, new_evidence, self.cfg.research.diminishing_ratio):
-            self.state.diminishing_streak += 1
-        else:
-            self.state.diminishing_streak = 0
-        self.state.prev_new_evidence = new_evidence
-
-        if judgement.dataset_foundation_ready and not reasons:
-            self.state.foundation_ready = True
-            self.state.stage = "analysis"
-            self.state.discovery_round_status = "idle"
-            self._save()
-            print("Coordinator: dataset foundation ready.", flush=True)
-            return True
-
-        stop_for_diminishing = (
-            self.state.diminishing_streak >= self.cfg.research.diminishing_streak
-            or judgement.diminishing_returns
-        )
-        if stop_for_diminishing or not judgement.continue_research:
-            self.state.foundation_ready = False
-            self.state.stage = "analysis"
-            self.state.discovery_round_status = "idle"
-            self.state.stop_reason = (
-                "discovery stopped at measurable diminishing returns"
-                if stop_for_diminishing
-                else "coordinator found no justified additional discovery; dataset remains incomplete"
-            )
-            self._save()
-            print(f"Coordinator: {self.state.stop_reason}.", flush=True)
-            for reason in reasons[:8]:
-                print(f"  - {reason}", flush=True)
-            return True
-
-        if self.state.discovery_round >= self.cfg.research.max_discovery_rounds:
-            self.state.foundation_ready = False
-            self.state.stage = "analysis"
-            self.state.discovery_round_status = "idle"
-            self.state.stop_reason = "maximum discovery rounds without meeting quality gates"
-            self._save()
-            return True
-
-        print("Coordinator: coverage insufficient; launching targeted gap searches.", flush=True)
-        for reason in reasons[:8]:
-            print(f"  - {reason}", flush=True)
-        self.state.discovery_round_status = "idle"
-        self.state.completed_agents = []
-        self._save()
-        return False
 
     def _latest_searches(self) -> list[str]:
         rows = self.db.query(
@@ -515,19 +446,12 @@ class Pipeline:
             self.state.completed_agents.append(assignment.agent_id)
             if result.session_id:
                 self.state.session_ids[assignment.agent_id] = result.session_id
-            prompt = render(
-                "sol.md",
-                goal=GOAL,
-                scope_hint=self.cfg.research.scope_hint,
-                packages=self._merchant_packages_for_ids(ids),
-            )
             return stats
 
     def _exclusions(self, limit: int = 60) -> str:
         rows = self.db.query(
             "SELECT canonical_name, city FROM merchants ORDER BY updated_at DESC LIMIT ?",
             (limit,),
-                    timeout_sec=self.cfg.omp.analysis_timeout_sec,
         )
         return "\n".join(f"- {row['canonical_name']} ({row['city']})" for row in rows) or "(none yet)"
 
@@ -735,6 +659,10 @@ class Pipeline:
             )
             after = int(after_row["n"]) if after_row else 0
             print(f"Remaining actionable verification tasks: {after}", flush=True)
+            if before - after > 0:
+                self.state.verification_no_progress_streak = 0
+            else:
+                self.state.verification_no_progress_streak += 1
             if self.state.verification_no_progress_streak >= self.cfg.research.diminishing_streak:
                 self.state.stage = "incomplete"
                 self.state.stop_reason = "verification reached diminishing returns; unresolved tasks preserved"
@@ -749,72 +677,79 @@ class Pipeline:
         async with self.sem:
             agent_id = f"luna-{self.state.verification_round}-{index:02d}"
             task_ids = [str(row["id"]) for row in rows]
-            mark_tasks_assigned(self.db, task_ids, agent_id, self.state.verification_round)
-            def _clip(value: object, limit: int) -> str:
-                text = str(value or "")
-                return text if len(text) <= limit else text[:limit] + "…"
-
-            tasks = [
-                {
-                    "task_id": row["id"],
-                    "merchant_id": row["merchant_id"],
-                    "title": _clip(row["title"], 150),
-                    "instruction": _clip(row["instruction"], 400),
-                    "already_used_sources": _clip(row["excluded_sources_json"], 300),
-                    "attempt": int(row["attempts"] or 0) + 1,
-                }
-                for row in rows
-            ]
-            prompt = render(
-                "luna.md",
-                goal=GOAL,
-                agent_id=agent_id,
-                tasks=self.db.dumps(tasks),
-            )
-            result = await self.client.run(
-                AgentRequest(
-                    prompt=prompt,
-                    model=self.client.model_for_role("verifier"),
-                    name=agent_id,
-                    role="verifier",
-                    goal=GOAL,
-                    workspace_id=f"{self.state.run_id}-verification-r{self.state.verification_round}-{index}",
-                    # 20 web-verifications per agent far exceeds the default
-                    # 900s budget; give verifiers the analysis window.
-                    timeout_sec=self.cfg.omp.analysis_timeout_sec,
-                )
-            )
-            self._log_agent("verification", agent_id, result, f"{len(rows)} narrow tasks", "verifier")
-            if not result.ok:
-                release_tasks(self.db, task_ids, result.error or "verifier failed")
-                self.state.failed_agents.append(agent_id)
-                self._save()
-                return None
             try:
-                parsed = _parse(LunaAgentOutput, result.payload, wrap_list_as="findings")
-                parsed.agent_id = agent_id
-            except ValueError as exc:
-                release_tasks(self.db, task_ids, str(exc))
-                log.warning("luna parse failed %s: %s", agent_id, exc)
-                self.state.failed_agents.append(agent_id)
+                mark_tasks_assigned(self.db, task_ids, agent_id, self.state.verification_round)
+                def _clip(value: object, limit: int) -> str:
+                    text = str(value or "")
+                    return text if len(text) <= limit else text[:limit] + "…"
+
+                tasks = [
+                    {
+                        "task_id": row["id"],
+                        "merchant_id": row["merchant_id"],
+                        "title": _clip(row["title"], 150),
+                        "instruction": _clip(row["instruction"], 400),
+                        "already_used_sources": _clip(row["excluded_sources_json"], 300),
+                        "attempt": int(row["attempts"] or 0) + 1,
+                    }
+                    for row in rows
+                ]
+                prompt = render(
+                    "luna.md",
+                    goal=GOAL,
+                    agent_id=agent_id,
+                    tasks=self.db.dumps(tasks),
+                )
+                result = await self.client.run(
+                    AgentRequest(
+                        prompt=prompt,
+                        model=self.client.model_for_role("verifier"),
+                        name=agent_id,
+                        role="verifier",
+                        goal=GOAL,
+                        workspace_id=f"{self.state.run_id}-verification-r{self.state.verification_round}-{index}",
+                        # 20 web-verifications per agent far exceeds the default
+                        # 900s budget; give verifiers the analysis window.
+                        timeout_sec=self.cfg.omp.analysis_timeout_sec,
+                    )
+                )
+                self._log_agent("verification", agent_id, result, f"{len(rows)} narrow tasks", "verifier")
+                if not result.ok:
+                    release_tasks(self.db, task_ids, result.error or "verifier failed")
+                    self.state.failed_agents.append(agent_id)
+                    self._save()
+                    return None
+                try:
+                    parsed = _parse(LunaAgentOutput, result.payload, wrap_list_as="findings")
+                    parsed.agent_id = agent_id
+                except ValueError as exc:
+                    release_tasks(self.db, task_ids, str(exc))
+                    log.warning("luna parse failed %s: %s", agent_id, exc)
+                    self.state.failed_agents.append(agent_id)
+                    self._save()
+                    return None
+                returned_ids = {finding.task_id for finding in parsed.findings}
+                release_tasks(
+                    self.db,
+                    [task_id for task_id in task_ids if task_id not in returned_ids],
+                    "verifier omitted this task from its response",
+                )
+                added = ingest_luna(
+                    self.db,
+                    parsed,
+                    agent_run_id=f"{self.state.run_id}:{agent_id}",
+                    round_no=self.state.verification_round,
+                )
+                if result.session_id:
+                    self.state.session_ids[agent_id] = result.session_id
                 self._save()
-                return None
-            returned_ids = {finding.task_id for finding in parsed.findings}
-            release_tasks(
-                self.db,
-                [task_id for task_id in task_ids if task_id not in returned_ids],
-                "verifier omitted this task from its response",
-            )
-            added = ingest_luna(
-                self.db,
-                parsed,
-                agent_run_id=f"{self.state.run_id}:{agent_id}",
-                round_no=self.state.verification_round,
-            )
-            if result.session_id:
-                self.state.session_ids[agent_id] = result.session_id
-            self._save()
-            return {"output": parsed, "new_evidence": added, "agent_id": agent_id}
+                return {"output": parsed, "new_evidence": added, "agent_id": agent_id}
+            finally:
+                # Any exception (including a Windows process-termination failure)
+                # must not strand rows in 'in_progress'. release_tasks only
+                # touches rows still marked in progress, so settled tasks are
+                # unaffected.
+                release_tasks(self.db, task_ids, "verifier did not settle this task")
 
     async def _sol_review(self, outputs: Iterable[LunaAgentOutput]) -> None:
         outputs = list(outputs)

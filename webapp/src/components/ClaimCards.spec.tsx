@@ -137,7 +137,7 @@ describe('IdentifierList', () => {
         ],
       }),
     );
-    expect(html).toContain('href="https://merchant.eg"');
+    expect(html).toContain('href="https://merchant.eg/"');
     expect(html).toContain('rel="noopener noreferrer"');
     expect(html).toContain('موقع تابع للتاجر');
   });

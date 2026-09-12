@@ -14,15 +14,47 @@ form works; the Netscape jar form does not.
 
 from __future__ import annotations
 
+import getpass
 import json
+import logging
+import os
 import random
 import re
 import sqlite3
 import subprocess
+import tempfile
 import time
 import urllib.parse
+from pathlib import Path
 
-DEFAULT_COOKIE_DB = "/tmp/.fbsess.sqlite"
+log = logging.getLogger("merchant_intel.fbsession")
+
+_FB_USER_FALLBACK = "user"
+
+
+def _user_tag() -> str:
+    """Filesystem-safe per-user tag; never fails."""
+    try:
+        raw = getpass.getuser()
+    except Exception:  # noqa: BLE001 — an env quirk must not break import
+        raw = _FB_USER_FALLBACK
+    return re.sub(r"[^A-Za-z0-9_.-]", "_", raw or "") or _FB_USER_FALLBACK
+
+
+def _private_cookie_dir() -> Path:
+    """Per-user, non-world-readable directory for the copied cookie jar.
+
+    Replaces the predictable, world-readable /tmp/.fbsess.sqlite, which is also
+    unopenable on Windows (sqlite3 cannot create the missing parent path).
+    """
+    return Path(tempfile.gettempdir()) / f"merchant-intel-fbsess-{_user_tag()}"
+
+
+def _default_cookie_db() -> str:
+    return str(_private_cookie_dir() / ".fbsess.sqlite")
+
+
+DEFAULT_COOKIE_DB = _default_cookie_db()
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0"
 
@@ -44,40 +76,116 @@ _TIME_LABEL_RE = re.compile(
 )
 _LOGIN_MARKERS = ("login", "log in", "join facebook", "you must log in")
 
+# Only these hosts are ever fetched; the "--" separator below is defence in
+# depth so a model-authored URL can never be read as a curl option.
+_FB_URL_PREFIXES = ("https://www.facebook.com/", "https://facebook.com/")
+# Bound the bytes curl may write into the parent's memory.
+_MAX_PAGE_BYTES = 5_000_000
+
+
+def _allowed_fb_url(url: str) -> bool:
+    return isinstance(url, str) and url.startswith(_FB_URL_PREFIXES)
+
+
+def _curl_escape(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def _unlink(path: str) -> None:
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
+
+
+def _curl_config_path(cookies: str) -> str | None:
+    """Write a 0600 curl config carrying the Cookie header.
+
+    The authenticated cookie never lands in the process argv (readable by any
+    local user via the process list, and liable to be captured in crash dumps
+    or audit logs)."""
+    try:
+        handle = tempfile.NamedTemporaryFile(
+            "w", encoding="utf-8", prefix="fbcurl-", suffix=".conf", delete=False
+        )
+    except OSError:
+        return None
+    path = handle.name
+    try:
+        with handle:
+            handle.write(f'header = "Cookie: {_curl_escape(cookies)}"\n')
+    except OSError:
+        _unlink(path)
+        return None
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
+    return path
+
+
 def load_cookie_header(db_path: str = DEFAULT_COOKIE_DB) -> str:
     """Return a Cookie header value from all facebook.com rows in the copied
     cookies.sqlite. Caller must copy the profile DB to a writable path first
-    (Zen holds a lock on the live file)."""
-    conn = sqlite3.connect(db_path)
+    (Zen holds a lock on the live file). Degrades to "" for a missing or
+    corrupt jar rather than crashing the caller."""
+    directory = _private_cookie_dir()
     try:
+        directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+        os.chmod(directory, 0o700)
+    except OSError:
+        pass
+    conn = None
+    try:
+        conn = sqlite3.connect(db_path)
         rows = conn.execute(
             "SELECT name, value FROM moz_cookies WHERE host LIKE '%facebook%'"
         ).fetchall()
+    except sqlite3.Error as exc:
+        log.warning("cookie jar %s unreadable: %s", db_path, exc)
+        return ""
     finally:
-        conn.close()
+        if conn is not None:
+            conn.close()
+    try:
+        os.chmod(db_path, 0o600)
+    except OSError:
+        pass
     return "; ".join(f"{name}={value}" for name, value in rows)
 
 def fb_get(url: str, *, timeout: int = 20, cookie_header: str | None = None) -> tuple[int, str]:
     """GET a Facebook URL with the session cookie header via curl.
     Returns (http_status, body); status 0 on transport failure.
     No POST/PUT/DELETE path exists by construction."""
+    if not _allowed_fb_url(url):
+        log.warning("refusing to fetch non-Facebook URL")
+        return 0, ""
     cookies = cookie_header if cookie_header is not None else load_cookie_header()
     # _CURL_HEADERS holds raw "Name: value" strings; each MUST be paired with
     # its own -H flag. Unpacking the tuple bare makes curl parse each header
     # string as an extra URL argument (verified failure: headers never sent,
     # FB serves HTTP 400).
     args = ["curl", "-s", "--compressed", "-L", "-A", USER_AGENT]
-    args += ["-H", f"Cookie: {cookies}"]
+    args += ["--max-time", str(timeout), "--max-filesize", str(_MAX_PAGE_BYTES)]
+    config_path = _curl_config_path(cookies) if cookies else None
+    if config_path:
+        args += ["--config", config_path]
     for header in _CURL_HEADERS:
         args += ["-H", header]
+    # "--" ends option parsing before the URL operand.
     args += [
         "-w", "\n<<FB_STATUS:%{http_code}>>",
+        "--",
         url,
     ]
     try:
-        proc = subprocess.run(args, capture_output=True, timeout=timeout)
-    except (subprocess.TimeoutExpired, OSError):
-        return 0, ""
+        try:
+            proc = subprocess.run(args, capture_output=True, timeout=timeout + 5)
+        except (subprocess.TimeoutExpired, OSError):
+            return 0, ""
+    finally:
+        if config_path:
+            _unlink(config_path)
     if proc.returncode != 0:
         return 0, ""
     raw = proc.stdout.decode("utf-8", errors="replace")

@@ -16,13 +16,23 @@ FAILED=0
 
 cleanup() {
   if [[ -n "$DEV_PID" ]] && kill -0 "$DEV_PID" 2>/dev/null; then
-    # Kill the whole process group so next dev's children die too.
-    local pgid
+    local pgid self_pgid
     pgid="$(ps -o pgid= -p "$DEV_PID" | tr -d ' ')"
-    if [[ -n "$pgid" ]]; then
+    self_pgid="$(ps -o pgid= -p $$ | tr -d ' ')"
+    if [[ -n "$pgid" && "$pgid" != "$self_pgid" ]]; then
+      # Kill the whole process group so next dev's children die too.
       kill -TERM "-$pgid" 2>/dev/null
       sleep 2
       kill -KILL "-$pgid" 2>/dev/null
+    else
+      # pgid == our own group (setsid did not isolate the dev server), so a
+      # negative kill would terminate this script and its siblings. Fall back
+      # to killing the recorded PID and its children.
+      pkill -TERM -P "$DEV_PID" 2>/dev/null
+      kill -TERM "$DEV_PID" 2>/dev/null
+      sleep 2
+      pkill -KILL -P "$DEV_PID" 2>/dev/null
+      kill -KILL "$DEV_PID" 2>/dev/null
     fi
   fi
   rm -f "$LOG_FILE"

@@ -13,6 +13,7 @@ import logging
 import os
 import re
 import signal
+import subprocess
 import time
 import uuid
 from dataclasses import dataclass, field, replace
@@ -27,7 +28,7 @@ from merchant_intel.omp.models import (
     parse_catalog,
     resolve_all_roles,
 )
-from merchant_intel.omp.probe import OmpCapabilities, probe_omp
+from merchant_intel.omp.probe import OmpCapabilities, _run_text, probe_omp
 
 log = logging.getLogger("merchant_intel.omp")
 RATE_LIMIT_MARKERS = (
@@ -58,6 +59,100 @@ def _event_rate_limited(events: list[dict[str, Any]]) -> bool:
 
 
 _SAFE_COMPONENT = re.compile(r"[^A-Za-z0-9_.-]+")
+
+# SIGKILL is absent on Windows; SIGTERM is the closest portable equivalent. The
+# timeout path reports the signal it used as a negative returncode.
+_SIGKILL = getattr(signal, "SIGKILL", signal.SIGTERM)
+
+# Bounded byte budget per captured stream. OMP streams JSON events + thinking
+# logs, so a runaway agent must not be allowed to grow the parent's RSS for the
+# whole timeout window. Bytes past the cap are drained (never stored) so the
+# child cannot deadlock on a full pipe; truncation is surfaced in the capture.
+_MAX_CAPTURE_BYTES = 8 * 1024 * 1024
+_READ_CHUNK = 64 * 1024
+
+# `omp models --json` is a short-lived probe; bound it like probe._run_text does.
+_MODELS_TIMEOUT_SEC = 40
+
+
+def _taskkill_argv(pid: int) -> list[str]:
+    """Windows tree-kill command for a child PID (pure; unit-testable)."""
+    return ["taskkill", "/T", "/F", "/PID", str(pid)]
+
+
+def _signal_tree(
+    proc: Any,
+    sig: int,
+    *,
+    force: bool = False,
+    use_process_group: bool | None = None,
+    is_windows: bool | None = None,
+) -> None:
+    """Best-effort signal to a child and its whole process tree. Never raises.
+
+    POSIX children are launched with start_new_session=True, so os.killpg
+    signals the child's own process group. Windows has no ``os.killpg`` (and no
+    ``signal.SIGKILL``), so the tree is killed with ``taskkill /T /F``. The
+    process object's own terminate()/kill() is the last resort on either OS.
+    A failure to signal must never mask the timeout path that called us.
+    """
+    pid = getattr(proc, "pid", None)
+    if pid is None:
+        return
+    if use_process_group is None:
+        use_process_group = hasattr(os, "killpg")
+    if use_process_group:
+        try:
+            os.killpg(pid, sig)
+            return
+        except (ProcessLookupError, PermissionError, OSError):
+            pass
+    if is_windows is None:
+        is_windows = os.name == "nt"
+    if is_windows:
+        try:
+            completed = subprocess.run(
+                _taskkill_argv(pid),
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=10,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            completed = None
+        if completed is not None and completed.returncode == 0:
+            return
+    try:
+        if force:
+            proc.kill()
+        else:
+            proc.terminate()
+    except (ProcessLookupError, OSError):
+        pass
+
+
+async def _drain_stream(stream: Any, cap: int) -> tuple[bytes, bool]:
+    """Read ``stream`` to EOF, retaining at most ``cap`` bytes.
+
+    Bytes beyond the cap are still consumed (so the child never blocks on a
+    full pipe) but discarded. The second element reports truncation.
+    """
+    if stream is None:
+        return b"", False
+    buf = bytearray()
+    truncated = False
+    while True:
+        chunk = await stream.read(_READ_CHUNK)
+        if not chunk:
+            break
+        if len(buf) < cap:
+            keep = chunk[: cap - len(buf)]
+            buf.extend(keep)
+            if len(keep) < len(chunk):
+                truncated = True
+        else:
+            truncated = True
+    return bytes(buf), truncated
 
 
 class OmpError(RuntimeError):
@@ -148,15 +243,15 @@ class OmpClient:
                 return parsed
         if not caps.models_invocation:
             return []
-        proc = await asyncio.create_subprocess_exec(
-            caps.binary,
-            *caps.models_invocation,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await proc.communicate()
-        text = stdout.decode("utf-8", "replace") or stderr.decode("utf-8", "replace")
-        return parse_catalog(text)
+        # Bounded like probe._run_text: a hung prompt/auth/network must not hang
+        # the whole pipeline at the top of every run.
+        try:
+            _code, stdout, stderr = await _run_text(
+                caps.binary, list(caps.models_invocation), timeout=_MODELS_TIMEOUT_SEC
+            )
+        except (TimeoutError, OSError):
+            return []
+        return parse_catalog(stdout or stderr)
 
     async def resolve_models(self) -> dict[str, str]:
         if self.resolved_models:
@@ -372,7 +467,9 @@ class OmpClient:
         self._procs[process_key] = proc
         try:
             try:
-                stdout_b, stderr_b = await asyncio.wait_for(proc.communicate(), timeout=timeout + 10)
+                stdout_b, stderr_b, out_trunc, err_trunc = await asyncio.wait_for(
+                    self._collect(proc, _MAX_CAPTURE_BYTES), timeout=timeout + 10
+                )
             except TimeoutError:
                 await self._terminate(proc)
                 return AgentResult(
@@ -385,13 +482,19 @@ class OmpClient:
                     argv=argv,
                     stdout="",
                     stderr="",
-                    returncode=-signal.SIGKILL,
+                    returncode=-_SIGKILL,
                     error=f"timeout after {timeout}s",
                 )
         finally:
             self._procs.pop(process_key, None)
         stdout = stdout_b.decode("utf-8", "replace")
         stderr = stderr_b.decode("utf-8", "replace")
+        if out_trunc:
+            stdout += f"\n...[output truncated at {_MAX_CAPTURE_BYTES} bytes]"
+            log.warning("omp stdout truncated to %d bytes for %s", _MAX_CAPTURE_BYTES, request.name)
+        if err_trunc:
+            stderr += f"\n...[output truncated at {_MAX_CAPTURE_BYTES} bytes]"
+            log.warning("omp stderr truncated to %d bytes for %s", _MAX_CAPTURE_BYTES, request.name)
         parsed = parse_jsonl(stdout)
         event_stream = bool(parsed.events)
         text = parsed.assistant_text
@@ -450,18 +553,39 @@ class OmpClient:
         for proc in processes:
             await self._terminate(proc)
 
+    @staticmethod
+    async def _collect(
+        proc: asyncio.subprocess.Process, cap: int
+    ) -> tuple[bytes, bytes, bool, bool]:
+        """Drain stdout/stderr under a byte cap, then reap the child."""
+        out = getattr(proc, "stdout", None)
+        err = getattr(proc, "stderr", None)
+        if out is None or err is None or not hasattr(proc, "wait"):
+            # Injected test-double processes implement only communicate().
+            stdout_b, stderr_b = await proc.communicate()
+            return stdout_b, stderr_b, False, False
+        out_task = asyncio.ensure_future(_drain_stream(out, cap))
+        err_task = asyncio.ensure_future(_drain_stream(err, cap))
+        try:
+            (stdout_b, out_trunc), (stderr_b, err_trunc) = await asyncio.gather(
+                out_task, err_task
+            )
+        except BaseException:
+            out_task.cancel()
+            err_task.cancel()
+            raise
+        await proc.wait()
+        return stdout_b, stderr_b, out_trunc, err_trunc
+
     async def _terminate(self, proc: asyncio.subprocess.Process) -> None:
         if proc.returncode is not None:
             return
-        try:
-            os.killpg(proc.pid, signal.SIGTERM)
-        except (ProcessLookupError, PermissionError, OSError):
-            proc.terminate()
+        _signal_tree(proc, signal.SIGTERM)
         try:
             await asyncio.wait_for(proc.wait(), timeout=self.omp.kill_grace_sec)
         except TimeoutError:
+            _signal_tree(proc, _SIGKILL, force=True)
             try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except (ProcessLookupError, PermissionError, OSError):
-                proc.kill()
-            await proc.wait()
+                await asyncio.wait_for(proc.wait(), timeout=self.omp.kill_grace_sec)
+            except (TimeoutError, ProcessLookupError, OSError):
+                pass

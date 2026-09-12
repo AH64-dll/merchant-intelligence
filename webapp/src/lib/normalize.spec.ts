@@ -152,6 +152,24 @@ describe('normalizeQueryUrl', () => {
     expect(result?.pathKeys).toContain('facebook.com/profile.php?id=100061858249234');
   });
 
+  it('never shares the profile.php path key across different numeric ids', () => {
+    const a = normalizeQueryUrl('https://facebook.com/profile.php?id=100061858249234');
+    const b = normalizeQueryUrl('https://facebook.com/profile.php?id=999999999999999');
+    expect(a?.pathKeys).toEqual(['facebook.com/profile.php?id=100061858249234']);
+    expect(a?.pathKeys).not.toContain('facebook.com/profile.php');
+    expect(b?.pathKeys).toEqual(['facebook.com/profile.php?id=999999999999999']);
+    expect(a?.pathKeys).not.toEqual(b?.pathKeys);
+  });
+
+  it('keys reserved /pages/ paths on the full path, never on the shared first segment', () => {
+    const result = normalizeQueryUrl('https://facebook.com/pages/BrandName/123456789');
+    expect(result?.kind).toBe('facebook');
+    expect(result?.pathKeys).toEqual(['facebook.com/pages/brandname/123456789']);
+    expect(result?.pathKeys).not.toContain('facebook.com/pages');
+    const other = normalizeQueryUrl('https://facebook.com/pages/OtherBrand/987654321');
+    expect(result?.pathKeys).not.toEqual(other?.pathKeys);
+  });
+
   it('lowercases instagram handles and keeps subpath keys', () => {
     const result = normalizeQueryUrl('https://Instagram.com/SomeShop/reels/');
     expect(result?.kind).toBe('instagram');

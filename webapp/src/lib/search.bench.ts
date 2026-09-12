@@ -9,10 +9,11 @@
  *   10x:      build <= 2.5s, heap <= 150MB, exact/name p99 <= 25ms, typo p99 <= 60ms
  *   100x:     build <= 10s, heap <= 500MB, p99 <= 250ms
  */
+import { fileURLToPath } from 'node:url';
 import { MerchantDb } from './db';
 import { SearchIndex } from './search';
 
-const DB_PATH = new URL('../../data/merchants.db', import.meta.url).pathname;
+const DB_PATH = fileURLToPath(new URL('../../data/merchants.db', import.meta.url));
 
 interface ScaleResult {
   label: string;

@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { MerchantDb } from './db';
 import type { IndexData } from './db';
@@ -10,7 +11,7 @@ const MTI_HOLDING_ID = '9af176b0-b896-4494-bcfb-d1ef85166ba5';
 const CONNECT_PHONE_ID = '0d73d05b-7fb3-4afb-b4ea-c74e2025f8b0';
 const ROPHAEL_ID = '0e348653-7777-4b8c-8a9b-9fc2d7b2b0ba';
 
-const DB_PATH = new URL('../../data/merchants.db', import.meta.url).pathname;
+const DB_PATH = fileURLToPath(new URL('../../data/merchants.db', import.meta.url));
 
 let index: SearchIndex;
 
@@ -435,6 +436,45 @@ describe('SearchIndex — synthetic in-memory index (collisions + ranking)', () 
       const result = idx.search(query);
       expect(result.hits.map((h) => h.merchant.id).sort()).toEqual(['fb-owner-1', 'fb-owner-2']);
     }
+  });
+
+  it('does not collide distinct facebook profile.php ids or reserved /pages/ paths', () => {
+    const idx = build({
+      merchants: [
+        merchant('fb-profile-a', 'Profile A'),
+        merchant('fb-profile-b', 'Profile B'),
+        merchant('fb-page-a', 'Page A'),
+      ],
+      identifiers: [
+        { merchantId: 'fb-profile-a', kind: 'facebook', normalized: 'https://facebook.com/profile.php?id=111111111' },
+        { merchantId: 'fb-profile-b', kind: 'facebook', normalized: 'https://facebook.com/profile.php?id=222222222' },
+        { merchantId: 'fb-page-a', kind: 'facebook', normalized: 'https://facebook.com/pages/BrandA/333333333' },
+      ],
+    });
+    expect(idx.search('facebook.com/profile.php?id=111111111').hits.map((h) => h.merchant.id))
+      .toEqual(['fb-profile-a']);
+    expect(idx.search('facebook.com/profile.php?id=222222222').hits.map((h) => h.merchant.id))
+      .toEqual(['fb-profile-b']);
+    // An unrelated /pages/ brand must never match the stored page.
+    expect(idx.search('facebook.com/pages/Unrelated/999999999').hits).toEqual([]);
+    expect(idx.search('facebook.com/pages/BrandA/333333333').hits.map((h) => h.merchant.id))
+      .toEqual(['fb-page-a']);
+  });
+
+  it('flags ambiguity across the phone and whatsapp buckets of one number', () => {
+    const idx = build({
+      merchants: [merchant('phone-owner', 'Phone Owner'), merchant('whatsapp-owner', 'WhatsApp Owner')],
+      identifiers: [
+        { merchantId: 'phone-owner', kind: 'phone', normalized: '+201000000777' },
+        { merchantId: 'whatsapp-owner', kind: 'whatsapp', normalized: '+201000000777' },
+      ],
+    });
+    const result = idx.search('01000000777');
+    expect(result.hits.map((h) => h.merchant.id).sort()).toEqual(['phone-owner', 'whatsapp-owner']);
+    // The two owners share the exact_identifier TIER but not the match kind;
+    // ambiguity must follow the tier, not the kind.
+    expect(result.hits[0]?.match.kind).not.toBe(result.hits[1]?.match.kind);
+    expect(result.ambiguous).toBe(true);
   });
 
   it('suppresses bare-host fallback for multi-owner unrelated websites', () => {

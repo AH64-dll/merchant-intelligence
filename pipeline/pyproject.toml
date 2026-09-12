@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "merchant-intelligence-pipeline"
+version = "0.1.0"
+description = "Provenance-preserving merchant research pipeline controller."
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2",
+    "PyYAML>=6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+]
+
+[tool.setuptools]
+packages = ["merchant_intel"]

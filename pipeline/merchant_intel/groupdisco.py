@@ -82,8 +82,12 @@ async def main() -> int:
     model = client.model_for_role("verifier")  # openai-codex/gpt-5.6-luna
     print(f"[groupdisco] model: {model}", flush=True)
 
+    # One shared semaphore per run so max_parallel_agents is honoured (a
+    # per-coroutine Semaphore never blocks).
+    semaphore = asyncio.Semaphore(max(1, cfg.concurrency.max_parallel_agents))
+
     async def one(i: int, scope_id: str, desc: str) -> dict | None:
-        async with asyncio.Semaphore(4):
+        async with semaphore:
             agent_id = f"groupdisco-l-{i:02d}"
             prompt = PROMPT_TEMPLATE.format(
                 goal=GOAL, scope_description=desc, agent_id=agent_id
@@ -112,19 +116,28 @@ async def main() -> int:
             print(f"[groupdisco] {agent_id} done: {len(groups)} groups", flush=True)
             return {"agent_id": agent_id, "scope": scope_id, "groups": groups}
 
-    results = await asyncio.gather(
-        *[one(i, sid, desc) for i, (sid, desc) in enumerate(SCOPES, start=1)]
-    )
-    ok = [r for r in results if r]
-    findings = {
-        "round": "groupdisco-1",
-        "agents": ok,
-        "total_groups": sum(len(r["groups"]) for r in ok),
-    }
-    with open("/tmp/groupdisco_proposals.json", "w", encoding="utf-8") as f:
-        json.dump(findings, f, ensure_ascii=False, indent=2)
-    print(f"[groupdisco] saved {findings['total_groups']} proposals to /tmp/groupdisco_proposals.json", flush=True)
-    await client.close()
+    ok: list[dict] = []
+    try:
+        results = await asyncio.gather(
+            *[one(i, sid, desc) for i, (sid, desc) in enumerate(SCOPES, start=1)],
+            return_exceptions=True,
+        )
+        for result in results:
+            if isinstance(result, BaseException):
+                print(f"[groupdisco] agent crashed: {result!r}", flush=True)
+            elif result:
+                ok.append(result)
+        findings = {
+            "round": "groupdisco-1",
+            "agents": ok,
+            "total_groups": sum(len(r["groups"]) for r in ok),
+        }
+        with open("/tmp/groupdisco_proposals.json", "w", encoding="utf-8") as f:
+            json.dump(findings, f, ensure_ascii=False, indent=2)
+        print(f"[groupdisco] saved {findings['total_groups']} proposals to /tmp/groupdisco_proposals.json", flush=True)
+    finally:
+        # Always clean up live omp children, even after an unexpected failure.
+        await client.close()
     return 0 if len(ok) >= 6 else 1
 
 

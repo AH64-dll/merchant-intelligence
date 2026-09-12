@@ -12,7 +12,7 @@ function EvidenceAnchors({ evidenceIds }: { evidenceIds: string[] }): ReactNode 
     <p className="text-xs text-neutral-600">
       الأدلة المرتبطة:{' '}
       {evidenceIds.slice(0, 5).map((evidenceId, index) => (
-        <span key={evidenceId}>
+        <span key={`${evidenceId}:${index}`}>
           {index > 0 ? ' · ' : ''}
           <a href={`#evidence-${evidenceId}`} className="underline" dir="ltr">
             دليل {index + 1}

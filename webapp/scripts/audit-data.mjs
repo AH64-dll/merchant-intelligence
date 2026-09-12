@@ -15,7 +15,8 @@
  *                 schema_version is not the expected version.
  *   --expect-schema <n>
  *                 Expected schema version used by --strict gating. Defaults to
- *                 3 (or 2 with --v2) when omitted, so v3 behaviour is unchanged.
+ *                 5 (or 2 with --v2) when omitted; the pipeline only ever
+ *                 produces v4/v5 and the snapshot gate requires 5.
  *
  * Schema v4 awareness: the sources.web_url / sources.access_kind,
  * source_link_checks and merchant_briefs checks run only when those columns and
@@ -113,8 +114,8 @@ const strict = flags.has('--strict');
 
 const USAGE = 'Usage: node scripts/audit-data.mjs <db-path> [--json] [--strict] [--v2] [--expect-schema <n>]\n';
 
-// Expected schema version: --expect-schema wins, then --v2 (2), else 3.
-let expectedVersion = v2Relaxed ? 2 : 3;
+// Expected schema version: --expect-schema wins, then --v2 (2), else 5.
+let expectedVersion = v2Relaxed ? 2 : 5;
 if (expectSchemaRaw !== null && expectSchemaRaw !== undefined) {
   const parsed = Number(expectSchemaRaw);
   if (expectSchemaRaw === '' || !Number.isInteger(parsed) || parsed < 1) {

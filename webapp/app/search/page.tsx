@@ -128,6 +128,7 @@ export default async function SearchPage({
   const page = Number.isFinite(parsedPage) && parsedPage >= 1 ? parsedPage : 1;
 
   const result = getIndex().search(q, page);
+  const totalPages = Math.max(1, Math.ceil(result.total / result.pageSize));
 
   return (
     <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 py-8">
@@ -154,13 +155,27 @@ export default async function SearchPage({
         </div>
       )}
 
-      {result.hits.length === 0 ? (
+      {result.total === 0 ? (
         <div className="border border-black p-4">
           <p>لا توجد نتائج مطابقة.</p>
           <p className="mt-2 text-sm">
             جرّب رقم هاتف مصري يبدأ بـ 01 أو +20، أو اسم التاجر كما يظهر في
             مصادره، أو رابط صفحته أو حسابه.
           </p>
+        </div>
+      ) : result.page > totalPages ? (
+        <div className="border border-black p-4">
+          <p>الصفحة المطلوبة خارج المدى.</p>
+          <p className="mt-2 text-sm">
+            العدد الإجمالي للنتائج <span dir="ltr">{result.total}</span> موزع
+            على <span dir="ltr">{totalPages}</span> صفحات.
+          </p>
+          <Link
+            href={`/search?${new URLSearchParams({ q, page: String(totalPages) }).toString()}`}
+            className="mt-2 inline-block min-h-[44px] border border-black px-3 py-2 underline underline-offset-2"
+          >
+            الانتقال إلى الصفحة الأخيرة
+          </Link>
         </div>
       ) : (
         <>
