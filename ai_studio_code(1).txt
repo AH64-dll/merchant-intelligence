@@ -1,0 +1,54 @@
+# OMNICHANNEL OSINT SEARCH PLAYBOOK FOR MERCHANT INTELLIGENCE
+
+Use this playbook during **Phase 1 (Enrichment)** and **Phase 2 (Discovery & Expansion)** to extract authentic user opinions, reviews, and complaints across social networks and the web.
+
+## 1. Multi-Platform Query Templates (Search Dorks)
+For each merchant (`{MERCHANT_NAME}` or `{MERCHANT_DOMAIN}`), execute targeted queries across the following channels:
+
+### Reddit
+- `site:reddit.com "{MERCHANT_NAME}" (review OR experience OR legit OR scam OR shipping OR service)`
+- `site:reddit.com "{MERCHANT_DOMAIN}"`
+
+### Facebook (Public Pages, Groups & Posts)
+- `site:facebook.com "{MERCHANT_NAME}" (reviews OR recommendation OR complaint OR experience)`
+- `site:facebook.com/groups "{MERCHANT_NAME}"`
+
+### X / Twitter
+- `site:x.com OR site:twitter.com "{MERCHANT_NAME}" (review OR support OR order OR scam OR service)`
+- `site:x.com "@{MERCHANT_HANDLE}"`
+
+### Review Aggregators & Consumer Platforms
+- `site:trustpilot.com "{MERCHANT_NAME}" OR "{MERCHANT_DOMAIN}"`
+- `site:sitejabber.com "{MERCHANT_NAME}"`
+- `"{MERCHANT_NAME}" "Google reviews" OR site:google.com/maps`
+
+### Video & Visual Social Platforms
+- `site:youtube.com "{MERCHANT_NAME}" review`
+- `site:tiktok.com "{MERCHANT_NAME}" review OR haul OR experience`
+- `site:instagram.com "{MERCHANT_NAME}"`
+
+### Regional & Bilingual Queries (If Applicable to Repo Market)
+- If the repository targets a specific region or language (e.g., MENA/Arabic or specific local markets), run parallel queries in both English and the local language:
+  - Example: `"{MERCHANT_NAME}" (تجربة OR تقييم OR نصب OR رايكم OR تعامل)`
+
+---
+
+## 2. Merchant Discovery Queries (For Phase 2 Scaling to 700)
+When discovering new merchants in the repository's niche:
+1. Search Reddit megathreads and recommendation posts:
+   - `site:reddit.com "best stores for {NICHE}" OR "where to buy {NICHE}" OR "trusted sellers {NICHE}"`
+   - `site:reddit.com "avoid" OR "blacklist" OR "review" {NICHE} stores`
+2. Search Trustpilot / Directory Categories within the target industry and region.
+3. Extract competitor mentions from existing merchant review threads (users frequently compare Merchant A to Merchant B and Merchant C in comments).
+
+---
+
+## 3. Evidence Extraction Rules
+For every discovered source:
+1. Verify the source actually refers to the exact merchant (avoid homonym collisions with unrelated brands).
+2. Extract:
+   - Direct URL / Permalink.
+   - Platform identifier (`reddit`, `facebook`, `x`, `trustpilot`, `google_reviews`, `youtube`, `tiktok`, `forum`, `other`).
+   - Authentic summary or verbatim excerpt of user opinions.
+   - Sentiment classification (`positive`, `negative`, `neutral`, `mixed`) or rating score as required by the repo's schema.
+   - Date/Timestamp (if available).
