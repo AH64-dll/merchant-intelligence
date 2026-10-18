@@ -1,0 +1,107 @@
+{
+  "phase": 1,
+  "batch_size": 10,
+  "remaining_below_quota": 66,
+  "merchants": [
+    {
+      "id": "89237bcb-b71d-429d-a92b-2a18383f1bfe",
+      "canonical_name": "سنتر سيد صالح للأجهزة الكهربائية بالإسماعيلية",
+      "normalized_name": "سنتر سيد صالح للأجهزة الكهربائية بالإسماعيلية",
+      "category": "Home Appliances & Electronics Retail",
+      "city": "Ismailia",
+      "governorate": "Ismailia",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "fa5628bd-ebac-40bd-9a1f-33ed5bad5720",
+      "canonical_name": "شركة أبوزيد للأجهزة الكهربائية المنيا",
+      "normalized_name": "أبوزيد للأجهزة الكهربائية المنيا",
+      "category": "Home Appliances & Bridal Packages",
+      "city": "Minya",
+      "governorate": "Minya",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "a64f070e-4279-4e24-8423-2bf301de0e3b",
+      "canonical_name": "شركة أولاد رشاد للأجهزة الكهربائية",
+      "normalized_name": "أولاد رشاد للأجهزة الكهربائية",
+      "category": "Home Appliances & Electronics",
+      "city": "El Maragha / Sohag",
+      "governorate": "Sohag",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "ac96c3de-756f-46a8-99af-8156e79aca81",
+      "canonical_name": "كمبيوتر ستورز سوهاج",
+      "normalized_name": "كمبيوتر ستورز سوهاج",
+      "category": "Computers, Laptops & Hardware",
+      "city": "Sohag",
+      "governorate": "Sohag",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "9e10c03c-8c65-416a-90e2-d8ef1e980c76",
+      "canonical_name": "لاب ستور مصر الإسكندرية",
+      "normalized_name": "لاب ستور مصر الإسكندرية",
+      "category": "Laptops & Hardware Maintenance",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "2af9a8d7-c117-4b39-93ca-76a341285cd4",
+      "canonical_name": "معرض السعد للأجهزة الكهربائية المنيا",
+      "normalized_name": "معرض السعد للأجهزة الكهربائية المنيا",
+      "category": "Home Appliances & Electronics",
+      "city": "Minya",
+      "governorate": "Minya",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "3849f708-ea4a-4ea3-905b-8d4badffc77a",
+      "canonical_name": "منشأة إعادة تدوير الأجهزة الكهربائية بحي البساتين",
+      "normalized_name": "منشأة إعادة تدوير الأجهزة الكهربائية بحي البساتين",
+      "category": "Consumer Electrical Appliances Refurbishing & Distribution Facility",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "7b9f0e79-fd76-4126-ab42-a23088383f9b",
+      "canonical_name": "موبايل سيتي بورسعيد",
+      "normalized_name": "موبايل سيتي بورسعيد",
+      "category": "Smartphones, Smart Devices & Accessories",
+      "city": "Port Said",
+      "governorate": "Port Said",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "5b41d1d9-3c2f-4b0a-84df-ede78a4af995",
+      "canonical_name": "مول الكمبيوتر (CompuMall Ismailia)",
+      "normalized_name": "مول الكمبيوتر compumall ismailia",
+      "category": "computer_laptop_retail",
+      "city": "Ismailia",
+      "governorate": "Ismailia",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "43bdb2f9-b6ae-45ca-99d9-7a82db0728ff",
+      "canonical_name": "Al-Ameen Electrical Appliances",
+      "normalized_name": "al ameen electrical appliances",
+      "category": "Electrical Appliances & Home Electronics Retail",
+      "city": "Port Said",
+      "governorate": "Port Said",
+      "current_sources": 2,
+      "sources_needed": 1
+    }
+  ]
+}

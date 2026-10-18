@@ -1,0 +1,107 @@
+{
+  "phase": 1,
+  "batch_size": 10,
+  "remaining_below_quota": 36,
+  "merchants": [
+    {
+      "id": "fff20389-d991-4180-9302-25ba871bd633",
+      "canonical_name": "MAX-repair Mansoura (ماكس ريبير لصيانة اللاب توب والإلكترونيات)",
+      "normalized_name": "max repair mansoura ماكس ريبير لصيانة اللاب توب والإلكترونيات",
+      "category": "Electronics & Laptop Motherboard Maintenance Specialist",
+      "city": "Mansoura",
+      "governorate": "Dakahlia",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "3227fc4a-aad3-4075-b15e-628739c6730b",
+      "canonical_name": "Macintosh Computer Services",
+      "normalized_name": "macintosh computer services",
+      "category": "Apple Device Repair & Hardware Service Center",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "1c2d0e5a-ca2e-423d-a125-991497221f84",
+      "canonical_name": "Makers Electronics",
+      "normalized_name": "makers",
+      "category": "electronic_components_and_robotics",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "33571409-fa9e-43e0-9264-544d4a9c81e9",
+      "canonical_name": "Mobile Shop",
+      "normalized_name": "mobile",
+      "category": "Mobile Phones, Tablets & Telecom Retailer",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "8a113d1f-da91-4637-99fb-fa2924bdec67",
+      "canonical_name": "New Vision",
+      "normalized_name": "new vision",
+      "category": "PC Components, Custom Builds & Laptops",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "1da9bfc0-7dce-4ad1-86be-0468512849d5",
+      "canonical_name": "Nour El Deen Market",
+      "normalized_name": "nour el deen market",
+      "category": "Supermarket & Grocery Retail",
+      "city": "Tanta",
+      "governorate": "Gharbia",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "98d901fa-551d-49f6-b1fb-4fa404377d9f",
+      "canonical_name": "O2Fix Mobile Repair",
+      "normalized_name": "o2fix mobile repair",
+      "category": "Mobile & Tablet Repair Service",
+      "city": "Mansoura",
+      "governorate": "Dakahlia",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "a51d5856-cb2f-40f7-a237-eeb506e7aa63",
+      "canonical_name": "Original Store",
+      "normalized_name": "original",
+      "category": "mobile_laptop",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "596ec728-a5c3-4fcd-a832-9246432492eb",
+      "canonical_name": "Original for Computer",
+      "normalized_name": "original for computer",
+      "category": "Computer Hardware, Imported PCs & Networking",
+      "city": "Giza (Mohandessin)",
+      "governorate": "Giza",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "13981c16-a8f3-4330-b393-31044d68e5b3",
+      "canonical_name": "Oscar Grand Stores",
+      "normalized_name": "oscar grand",
+      "category": "Hypermarket / Gourmet Supermarket / Department Store",
+      "city": "New Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    }
+  ]
+}

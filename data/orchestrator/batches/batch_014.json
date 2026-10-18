@@ -1,0 +1,107 @@
+{
+  "phase": 1,
+  "batch_size": 10,
+  "remaining_below_quota": 56,
+  "merchants": [
+    {
+      "id": "2d520fc0-f08d-4eef-9c3c-05298b6c4c02",
+      "canonical_name": "Arab Business Machine (ABM)",
+      "normalized_name": "arab business machine abm",
+      "category": "mobile_laptop",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "9ff0d5a0-7775-4b29-91d9-67ea69d2f31d",
+      "canonical_name": "Barakat Pharmacies",
+      "normalized_name": "barakat pharmacies",
+      "category": "Pharmacy & Healthcare Retail",
+      "city": "Assiut",
+      "governorate": "Assiut",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "9e4284c7-7887-452f-929c-330319a67203",
+      "canonical_name": "Build Technology",
+      "normalized_name": "build technology",
+      "category": "Computer Hardware, Custom PC Builds & Components",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "43e6e31b-eefe-4865-bca3-9412d2fbd0d1",
+      "canonical_name": "Compu Art",
+      "normalized_name": "compu art",
+      "category": "PC Gaming & Computer Hardware Retailer",
+      "city": "Giza (Mohandessin)",
+      "governorate": "Giza",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "1687538d-eddd-4613-9761-59643d8a9e33",
+      "canonical_name": "Compu Fast (كومبيو فاست)",
+      "normalized_name": "compu fast كومبيو فاست",
+      "category": "Computer Hardware & Gaming Peripherals Retailer",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "2438f8ac-04d8-4a03-9b30-7ec7fa639fa4",
+      "canonical_name": "Dr. Mahmoud Rashwan Pharmacy",
+      "normalized_name": "dr mahmoud rashwan pharmacy",
+      "category": "Independent Pharmacy & Health Retail",
+      "city": "Assiut",
+      "governorate": "Assiut",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "ceb4836a-9897-4805-a975-64215ca0d0a2",
+      "canonical_name": "East Asia Company",
+      "normalized_name": "east asia",
+      "category": "mobile_laptop",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "e1c2d265-1e7d-4669-9917-4a615450b037",
+      "canonical_name": "East Asia for Systems and Computers",
+      "normalized_name": "east asia for systems and computers",
+      "category": "Computers, Laptops, Printers & Networking Hardware",
+      "city": "Giza",
+      "governorate": "Giza",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "6e5d728a-81fa-4ac6-b162-0dc301cf1f94",
+      "canonical_name": "EgyGamer",
+      "normalized_name": "egygamer",
+      "category": "Online & retail gaming store",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "667d057b-5bdc-48b1-ac04-10166b17afae",
+      "canonical_name": "El Fergani Supermarket",
+      "normalized_name": "el fergani supermarket",
+      "category": "supermarket_and_hypermarket",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    }
+  ]
+}

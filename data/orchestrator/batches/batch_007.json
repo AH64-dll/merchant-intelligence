@@ -1,0 +1,67 @@
+{
+  "phase": 1,
+  "batch_size": 6,
+  "remaining_below_quota": 114,
+  "merchants": [
+    {
+      "id": "7f8c32c8-d43b-41ad-bd6b-481caece2e99",
+      "canonical_name": "Ideal Service for Import & Export",
+      "normalized_name": "ideal service for import export",
+      "category": "Unauthorized Appliance Maintenance & Electronics Repair",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "e59a250f-917b-4c4b-8463-26e763fc489e",
+      "canonical_name": "Joo Store",
+      "normalized_name": "joo",
+      "category": "Console Sales & Maintenance",
+      "city": "Mansoura",
+      "governorate": "Dakahlia",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "a1e7f651-cba4-41a7-873d-3425f4f83cd0",
+      "canonical_name": "Jumia Egypt",
+      "normalized_name": "jumia egypt",
+      "category": "General E-commerce & Electronics Marketplace",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "1d129b46-cf3f-4549-bb6d-60055e2d6937",
+      "canonical_name": "Lap X Tanta",
+      "normalized_name": "lap x tanta",
+      "category": "computers_and_laptops",
+      "city": "Tanta",
+      "governorate": "Gharbia",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "53a1873f-14cf-4feb-a19d-0756eaeb6023",
+      "canonical_name": "LapTop Center Mansoura (لاب توب سنتر)",
+      "normalized_name": "laptop center mansoura لاب توب سنتر",
+      "category": "Laptop Maintenance, Repair & Spare Parts Store",
+      "city": "Mansoura",
+      "governorate": "Dakahlia",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "8433146b-4231-4917-b298-749a38742b25",
+      "canonical_name": "M Store Assiut",
+      "normalized_name": "m assiut",
+      "category": "Mobile Phones, iPhones & Mobile Repair",
+      "city": "Assiut",
+      "governorate": "Assiut",
+      "current_sources": 1,
+      "sources_needed": 2
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "phase": 1,
+  "batch_size": 8,
+  "remaining_below_quota": 95,
+  "merchants": [
+    {
+      "id": "ccae2f77-02e5-4b43-a612-2cf62fe0e1eb",
+      "canonical_name": "Vezeeta",
+      "normalized_name": "vezeeta",
+      "category": "Healthtech, Telehealth & Pharmacy Delivery",
+      "city": "Giza",
+      "governorate": "Giza",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "3797031e-59ac-42a0-80bf-14eb74cc1b88",
+      "canonical_name": "X Mega Store",
+      "normalized_name": "x mega",
+      "category": "mobile_laptop",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "c8ce3f75-c4b5-48ad-9f76-ff1cb79ce27b",
+      "canonical_name": "Zoka Station (زوكا استيشن)",
+      "normalized_name": "zoka station زوكا استيشن",
+      "category": "Video Game Consoles & Gaming Retail",
+      "city": "Port Said",
+      "governorate": "Port Said",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "df2f0522-591a-465b-8ca1-ef2fe9f4374c",
+      "canonical_name": "e& Egypt",
+      "normalized_name": "e egypt",
+      "category": "Telecom Operator & Consumer Tech / Devices Retailer",
+      "city": "New Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "7fbb04fb-b843-4519-b2fe-5d624752bdea",
+      "canonical_name": "i2 Egypt",
+      "normalized_name": "i2 egypt",
+      "category": "Mobile Phones & Consumer Electronics Distributor",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "90268ed2-4d5a-4127-a445-01b33c17dc35",
+      "canonical_name": "iTouch Egypt",
+      "normalized_name": "itouch egypt",
+      "category": "Apple Products, MacBooks & Authorized Care",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "35fd534b-f7b8-4601-aaaf-a7b2bb236f5f",
+      "canonical_name": "أوفرلك (Awfarlak Egypt - Mansoura Branch)",
+      "normalized_name": "أوفرلك awfarlak egypt mansoura branch",
+      "category": "laptop_computer_workstations",
+      "city": "Mansoura",
+      "governorate": "Dakahlia",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "14600f81-2caf-4305-971e-3b3369856e16",
+      "canonical_name": "إي جي لابتوب سوهاج",
+      "normalized_name": "إي جي لابتوب سوهاج",
+      "category": "Laptops & Computer Hardware",
+      "city": "Sohag",
+      "governorate": "Sohag",
+      "current_sources": 1,
+      "sources_needed": 2
+    }
+  ]
+}

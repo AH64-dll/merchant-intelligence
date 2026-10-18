@@ -1,0 +1,107 @@
+{
+  "phase": 1,
+  "batch_size": 10,
+  "remaining_below_quota": 46,
+  "merchants": [
+    {
+      "id": "4e81f9b6-97d7-49eb-b0ff-cb3033f425e3",
+      "canonical_name": "El Sawah Computer",
+      "normalized_name": "el sawah computer",
+      "category": "Laptop & Workstation Computer Retail & Maintenance",
+      "city": "Mansoura",
+      "governorate": "Dakahlia",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "ec2002c6-ced3-4c65-aa57-21eae0ea9f23",
+      "canonical_name": "El Tarshouby Pharmacies",
+      "normalized_name": "el tarshouby pharmacies",
+      "category": "Pharmacy & Healthcare Retail Chain",
+      "city": "Mansoura",
+      "governorate": "Dakahlia",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "46aac086-aa29-461a-af80-8f9d64433538",
+      "canonical_name": "El-Moassasa El-Faransia",
+      "normalized_name": "el moassasa el faransia",
+      "category": "Laptops & Computer Systems",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "815ab80c-0216-479b-b368-34cf0818469a",
+      "canonical_name": "Elghazawy Group",
+      "normalized_name": "elghazawy group",
+      "category": "Home Appliances, Electronics & IT Retailer",
+      "city": "Zagazig",
+      "governorate": "Sharqia",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "2f9aeb82-3f01-4aca-9735-e777984de293",
+      "canonical_name": "Game Valley",
+      "normalized_name": "game valley",
+      "category": "Gaming retail & console store",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "db0cc2a5-2399-4cde-816a-99fd9bacdbee",
+      "canonical_name": "Gamer Shop EG (جيمر شوب)",
+      "normalized_name": "gamer eg جيمر شوب",
+      "category": "Video Game Store & PlayStation Maintenance",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "d34e829f-91bb-4e36-b2e8-1e331033727e",
+      "canonical_name": "Geeks Store",
+      "normalized_name": "geeks",
+      "category": "gaming_laptops_apple_workstations",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "d4e89907-459e-43cb-a272-2a80d42bf9ae",
+      "canonical_name": "Hi Tech for Computers (شركة هاي تك للكمبيوتر واللاب توب)",
+      "normalized_name": "hi tech for computers هاي تك للكمبيوتر واللاب توب",
+      "category": "Computer, Laptop & Hardware Maintenance Retailer",
+      "city": "Zagazig",
+      "governorate": "Sharqia",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "fffe0314-bb9d-491c-9fcd-16795f42765b",
+      "canonical_name": "I-Genius",
+      "normalized_name": "i genius",
+      "category": "mobile_laptop",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "dad453ca-f536-4f5c-bf21-4497b0c6435e",
+      "canonical_name": "IKEA Egypt (شركة إيكيا مصر - مجموعة الفطيم مصر)",
+      "normalized_name": "ikea egypt إيكيا مصر مجموعة الفطيم مصر",
+      "category": "Furniture, Home Electronics & Lighting Retail",
+      "city": "New Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "phase": 1,
+  "batch_size": 8,
+  "remaining_below_quota": 142,
+  "merchants": [
+    {
+      "id": "b838f458-9db4-405e-96a8-9683db42a1b5",
+      "canonical_name": "Core 2 Duo",
+      "normalized_name": "core 2 duo",
+      "category": "computer_hardware_retail",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "6ed9d0de-5a32-4ec9-9267-630336ce0820",
+      "canonical_name": "Cyber Tech For Laptop Used",
+      "normalized_name": "cyber tech for laptop used",
+      "category": "mobile_laptop",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "7f9fc65c-a14c-41b1-ac3b-376236e97b2a",
+      "canonical_name": "Delta Technology",
+      "normalized_name": "delta technology",
+      "category": "Computers, Laptops & Security Systems Retailer",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "7b744b97-a4e6-4eb9-b5aa-8e27e6c7d2ac",
+      "canonical_name": "Dr. Sameh Mourad Pharmacy",
+      "normalized_name": "dr sameh mourad pharmacy",
+      "category": "Pharmacy, Health & Cosmetics",
+      "city": "Assiut",
+      "governorate": "Assiut",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "a5097c9c-48ae-46c3-97b7-8786ad6ab9e4",
+      "canonical_name": "Dream Store",
+      "normalized_name": "dream",
+      "category": "Console Sales, Digital Gaming & Maintenance",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "a305443d-a2ce-422a-99f8-8402bbdf6518",
+      "canonical_name": "Dubizzle Egypt",
+      "normalized_name": "dubizzle egypt",
+      "category": "Online Classifieds & Electronics Marketplace",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "a26edce9-3071-470d-a5de-6639520170cd",
+      "canonical_name": "East Asia for Computer Systems",
+      "normalized_name": "east asia for computer systems",
+      "category": "Computer Hardware & Laptop Retailer",
+      "city": "Mohandessin",
+      "governorate": "Giza",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "fa6a58e8-b687-45ac-9eee-6837d183fa71",
+      "canonical_name": "Egy Golden Tech",
+      "normalized_name": "egy golden tech",
+      "category": "mobile_laptop",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 1,
+      "sources_needed": 2
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "phase": 1,
+  "batch_size": 8,
+  "remaining_below_quota": 108,
+  "merchants": [
+    {
+      "id": "99701d09-2e57-43bb-9960-e9bf08d232bb",
+      "canonical_name": "Nile Services Egypt",
+      "normalized_name": "nile services egypt",
+      "category": "Authorized Mobile & Electronics Warranty Service Center",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "42b80440-efd0-42f1-86eb-11599b5dc7c9",
+      "canonical_name": "Noor Tech Computer System (نور تك كمبيوتر سيستم - تكنولوجي مول)",
+      "normalized_name": "noor tech computer system نور تك كمبيوتر سيستم تكنولوجي مول",
+      "category": "Computer Hardware & PC Systems",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "29330545-3828-4c70-ac58-6e75f4c2a7c1",
+      "canonical_name": "One World Laptop Tanta (وان وورلد لاب توب)",
+      "normalized_name": "one world laptop tanta وان وورلد لاب توب",
+      "category": "Laptop & Tech Retailer",
+      "city": "Tanta",
+      "governorate": "Gharbia",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "523e4b5d-df61-4854-8f4a-7af269940c2a",
+      "canonical_name": "PC House Egypt",
+      "normalized_name": "pc house egypt",
+      "category": "Computer Hardware & Desktop Builds",
+      "city": "Nasr City",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "812d1ecd-35b5-4867-8de9-da1ba934a092",
+      "canonical_name": "RAM Electronics",
+      "normalized_name": "ram",
+      "category": "Electronic Components & Engineering Supplies Retailer",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "b8e79ab6-e078-4c5c-8105-bbd12a56d5f1",
+      "canonical_name": "Radio Talaat 2000",
+      "normalized_name": "radio talaat 2000",
+      "category": "Consumer Electronics, Audio & Home Appliances",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "e6c8ed78-c904-43c8-8826-f1760f8491e1",
+      "canonical_name": "Redington Egypt",
+      "normalized_name": "redington egypt",
+      "category": "mobile_laptop",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "1a40a509-25bf-4e84-9afb-4e6f6e09ddde",
+      "canonical_name": "Roshdy Pharmacies / Care Pharmacies (صيدليات رشدي / صيدليات كير)",
+      "normalized_name": "roshdy pharmacies care pharmacies صيدليات رشدي صيدليات كير",
+      "category": "Pharmacy Chain",
+      "city": "Tanta",
+      "governorate": "Gharbia",
+      "current_sources": 1,
+      "sources_needed": 2
+    }
+  ]
+}

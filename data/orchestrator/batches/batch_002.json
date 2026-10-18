@@ -1,0 +1,67 @@
+{
+  "phase": 1,
+  "batch_size": 6,
+  "remaining_below_quota": 147,
+  "merchants": [
+    {
+      "id": "379ecbb2-0273-4de5-8bc1-67946b75d0cc",
+      "canonical_name": "Awad Serag (شركة عوض سراج للتجارة والتوزيع)",
+      "normalized_name": "awad serag عوض سراج والتوزيع",
+      "category": "Consumer Electronics & Home Appliances Retailer",
+      "city": "Mansoura",
+      "governorate": "Dakahlia",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "6c7e1f0b-65b6-4707-b074-91b2c35d408c",
+      "canonical_name": "Cavo Center",
+      "normalized_name": "cavo center",
+      "category": "mobile_laptop",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "a2e8ed31-b088-471a-a35c-e5596d867fae",
+      "canonical_name": "City Mobile",
+      "normalized_name": "city mobile",
+      "category": "mobile_laptop",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "4dab699a-9d65-4922-a92f-a665cb222b07",
+      "canonical_name": "Compu Station",
+      "normalized_name": "compu station",
+      "category": "mobile_laptop",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "c6b896bf-2b1b-4abb-ab37-f44aa2000a6d",
+      "canonical_name": "CompuTrend",
+      "normalized_name": "computrend",
+      "category": "Computer Hardware & IT Systems",
+      "city": "Mohandessin",
+      "governorate": "Giza",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "0d73d05b-7fb3-4afb-b4ea-c74e2025f8b0",
+      "canonical_name": "Connect Phone",
+      "normalized_name": "connect phone",
+      "category": "mobile_laptop",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    }
+  ]
+}

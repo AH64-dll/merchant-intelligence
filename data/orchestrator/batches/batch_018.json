@@ -1,0 +1,107 @@
+{
+  "phase": 1,
+  "batch_size": 10,
+  "remaining_below_quota": 16,
+  "merchants": [
+    {
+      "id": "7a9e5413-1a30-408a-a8a6-026212c3667d",
+      "canonical_name": "Technical Technology Store (شركة تكنيكال للتكنولوجيا ومستلزمات الكمبيوتر)",
+      "normalized_name": "technical technology تكنيكال للتكنولوجيا ومستلزمات الكمبيوتر",
+      "category": "Computer Hardware, Laptops & Maintenance",
+      "city": "Port Said",
+      "governorate": "Port Said",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "66bfae6a-00fc-4759-9a1b-8a2dc2151d66",
+      "canonical_name": "Toyota Egypt (شركة تويوتا إيجيبت)",
+      "normalized_name": "toyota egypt تويوتا إيجيبت",
+      "category": "Automotive & Certified Maintenance Centers",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "3a9d98a4-e18a-450c-ad6e-0af10f008b98",
+      "canonical_name": "XO Store (أكس أوه أستور)",
+      "normalized_name": "xo أكس أوه أستور",
+      "category": "Video Game & Console Store / Maintenance",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "ff230153-fd4d-48f5-85d1-54bd340a7a03",
+      "canonical_name": "Zahran Market (Tanta Branch)",
+      "normalized_name": "zahran market tanta branch",
+      "category": "supermarket",
+      "city": "Tanta",
+      "governorate": "Gharbia",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "9d63bb43-710a-42cf-8300-c810ba283676",
+      "canonical_name": "Zanussi Egypt - Safeya Zaghloul Port Said",
+      "normalized_name": "zanussi egypt safeya zaghloul port said",
+      "category": "home_appliances_maintenance",
+      "city": "Port Said",
+      "governorate": "Port Said",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "ec9846d1-3cbe-4998-b857-78b5c3c75672",
+      "canonical_name": "الشربيني للأدوات والأجهزة الكهربائية الإسكندرية",
+      "normalized_name": "الشربيني للأدوات والأجهزة الكهربائية الإسكندرية",
+      "category": "Electrical Supplies & Appliances",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "58139b4e-13f4-438a-b46b-f1aaa9b5a363",
+      "canonical_name": "الطوخي للأجهزة الكهربائية بالإسماعيلية",
+      "normalized_name": "الطوخي للأجهزة الكهربائية بالإسماعيلية",
+      "category": "Home Appliances Retail",
+      "city": "Ismailia",
+      "governorate": "Ismailia",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "cd6eb3f7-1fea-4fde-b247-ac30e733d7b2",
+      "canonical_name": "بي سي جيمنج ستور بورسعيد",
+      "normalized_name": "بي سي جيمنج ستور بورسعيد",
+      "category": "Gaming PCs, Custom Builds & Open-Box Laptops",
+      "city": "Port Said",
+      "governorate": "Port Said",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "2b42a7c4-a926-41a8-b5f8-963aba14aca8",
+      "canonical_name": "شاهين للتكييف وفلاتر المياه (Shaheen Air Conditioning Mansoura)",
+      "normalized_name": "شاهين للتكييف وفلاتر المياه shaheen air conditioning mansoura",
+      "category": "home_appliances_water_filtration",
+      "city": "Mansoura",
+      "governorate": "Dakahlia",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "b612cd95-8ed9-48ec-93d5-aa62b4a12da9",
+      "canonical_name": "شركة المصري للكمبيوتر واللاب توب",
+      "normalized_name": "المصري للكمبيوتر واللاب توب",
+      "category": "Computers, Laptops & Maintenance",
+      "city": "Port Fouad",
+      "governorate": "Port Said",
+      "current_sources": 2,
+      "sources_needed": 1
+    }
+  ]
+}

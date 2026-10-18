@@ -1,0 +1,87 @@
+{
+  "phase": 1,
+  "batch_size": 8,
+  "remaining_below_quota": 136,
+  "merchants": [
+    {
+      "id": "195f3e2d-ac81-488e-a2af-faabfa53a5f3",
+      "canonical_name": "EgyChip",
+      "normalized_name": "egychip",
+      "category": "Electronics Repair Equipment & Component Supply",
+      "city": "Giza (Faisal / Haram)",
+      "governorate": "Giza",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "a760c4b1-d443-410f-acb4-b3091a4778a9",
+      "canonical_name": "Egypt Techno Trade (إيجيبت تكنوتريد للأنظمة الأمنية والمنازل الذكية)",
+      "normalized_name": "egypt techno trade إيجيبت تكنوتريد للأنظمة الأمنية والمنازل الذكية",
+      "category": "Smart Home Automation, Smart Locks & Security Systems",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "0b48a556-a449-4ef1-9710-09c677fcd4fc",
+      "canonical_name": "El Bahaey Home Appliances",
+      "normalized_name": "el bahaey home appliances",
+      "category": "home_appliances",
+      "city": "Port Said",
+      "governorate": "Port Said",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "a6f1286c-a93d-406f-b1c7-f1871f5550dd",
+      "canonical_name": "El Batal for Electrical Appliances",
+      "normalized_name": "el batal for electrical appliances",
+      "category": "Home Appliances & Consumer Electronics Retailer",
+      "city": "Giza (Imbaba / Hadayek Al Ahram)",
+      "governorate": "Giza",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "339858d5-0701-4024-b471-ab031f5cddcb",
+      "canonical_name": "El Ekhewa for Telecom (محل الأخوة للإتصالات وصيانة الآيفون)",
+      "normalized_name": "el ekhewa for telecom الأخوة للإتصالات وصيانة الآيفون",
+      "category": "Mobile Sales & Specialized iPhone Hardware Repair",
+      "city": "Assiut",
+      "governorate": "Assiut",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "e5b820ea-03c6-400a-812f-5f570af5f599",
+      "canonical_name": "El Malek for Computers / King Computers (الملك للحاسبات - تكنولوجي مول)",
+      "normalized_name": "el malek for computers king computers الملك للحاسبات تكنولوجي مول",
+      "category": "Desktop Computers, Laptops & Components",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "283ed815-1b8e-4b22-888f-f0bdf317db1a",
+      "canonical_name": "El-Menshawy Markets",
+      "normalized_name": "el menshawy markets",
+      "category": "Supermarket & Grocery Retail",
+      "city": "Tanta",
+      "governorate": "Gharbia",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "29ef2286-59f0-4b6f-b2ed-c39406a38c92",
+      "canonical_name": "Electro Bom",
+      "normalized_name": "electro bom",
+      "category": "electronic_components_and_replacement_parts",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 1,
+      "sources_needed": 2
+    }
+  ]
+}

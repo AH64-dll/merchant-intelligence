@@ -1,0 +1,107 @@
+{
+  "phase": 1,
+  "batch_size": 10,
+  "remaining_below_quota": 26,
+  "merchants": [
+    {
+      "id": "523e4b5d-df61-4854-8f4a-7af269940c2a",
+      "canonical_name": "PC House Egypt",
+      "normalized_name": "pc house egypt",
+      "category": "Computer Hardware & Desktop Builds",
+      "city": "Nasr City",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "47b9ce32-4ceb-45a2-89ec-fc50625f245d",
+      "canonical_name": "Paragon Computer & Laptop",
+      "normalized_name": "paragon computer laptop",
+      "category": "mobile_laptop",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "22029a86-b291-42a9-8b68-a0d2a8f00724",
+      "canonical_name": "RS Store",
+      "normalized_name": "rs",
+      "category": "Consumer Electronics & Mobile Retail",
+      "city": "Assiut",
+      "governorate": "Assiut",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "87694abd-1789-4b39-bec6-0b7effed67f8",
+      "canonical_name": "Sigma Store",
+      "normalized_name": "sigma",
+      "category": "Gaming retail & console store",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "424640bc-a3c7-4b44-9de3-6bafedaa2b1d",
+      "canonical_name": "Silicon Computer & Systems (سيليكون كمبيوتر الإسكندرية)",
+      "normalized_name": "silicon computer systems سيليكون كمبيوتر الإسكندرية",
+      "category": "Computer Hardware, Custom PC Assembly & Gaming Tech",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "21f347e1-5c68-46de-a108-e04208fd0fa1",
+      "canonical_name": "Smart Home for Electrical Appliances",
+      "normalized_name": "smart home for electrical appliances",
+      "category": "Home Appliances & Electronics Retailer",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "dfa5eef4-83cf-4727-a8e9-98236a797c6f",
+      "canonical_name": "Smart Home for Electrical Appliances - Damietta (سمارت هوم للأجهزة الكهربائية - دمياط)",
+      "normalized_name": "smart home for electrical appliances damietta سمارت هوم للأجهزة الكهربائية دمياط",
+      "category": "Home Appliances & Consumer Electronics Retail",
+      "city": "Damietta",
+      "governorate": "Damietta",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "97377500-9fa5-4de1-9e7e-e3ce009c220f",
+      "canonical_name": "Soft Laptop",
+      "normalized_name": "soft laptop",
+      "category": "laptops_openbox_gaming_hardware",
+      "city": "Tanta",
+      "governorate": "Gharbia",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "9a2e1155-6ff2-4b98-9729-effb94607280",
+      "canonical_name": "Square Tech",
+      "normalized_name": "square tech",
+      "category": "pc_hardware",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "f689ce11-2118-4c0c-9c15-1fb6d4acc65d",
+      "canonical_name": "Tabarak TechnoShop (تبارك تكنوشوب)",
+      "normalized_name": "tabarak technoshop تبارك تكنوشوب",
+      "category": "Laptops, Workstations & Mobile Accessories",
+      "city": "Mansoura",
+      "governorate": "Dakahlia",
+      "current_sources": 2,
+      "sources_needed": 1
+    }
+  ]
+}

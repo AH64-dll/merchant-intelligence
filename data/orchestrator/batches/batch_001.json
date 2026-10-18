@@ -1,0 +1,57 @@
+{
+  "phase": 1,
+  "batch_size": 5,
+  "remaining_below_quota": 150,
+  "merchants": [
+    {
+      "id": "e6882051-74a2-41e3-87f2-7755c49b8a53",
+      "canonical_name": "AIO for Computers & Security Systems (عملاق الأجهزة الأمنية والحاسبات)",
+      "normalized_name": "aio for computers security systems عملاق الأجهزة الأمنية والحاسبات",
+      "category": "PC Systems, Trade-In, Maintenance & Security Systems",
+      "city": "Assiut",
+      "governorate": "Assiut",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "16ce8427-a88d-4b1b-a2dd-db7751c493d5",
+      "canonical_name": "Abdeen Pharmacies",
+      "normalized_name": "abdeen pharmacies",
+      "category": "Pharmacy & Healthcare Retail",
+      "city": "Assiut",
+      "governorate": "Assiut",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "a6df7841-9245-43b5-8d9a-9a08a7bbc6b7",
+      "canonical_name": "Al Mostafa Laptop (المصطفى لاب توب)",
+      "normalized_name": "al mostafa laptop المصطفى لاب توب",
+      "category": "Import Laptop Retailer",
+      "city": "Zagazig",
+      "governorate": "Sharqia",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "0db637d8-9597-464b-8a85-2480ef7501cf",
+      "canonical_name": "Al Shamel for Computer Supplies",
+      "normalized_name": "al shamel for computer supplies",
+      "category": "PC Hardware & Budget Gaming Builds",
+      "city": "Al Warraq",
+      "governorate": "Giza",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "7d02d015-8d65-491d-8dd2-ed39c77858db",
+      "canonical_name": "Almostafa Store",
+      "normalized_name": "almostafa",
+      "category": "mobile_laptop",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    }
+  ]
+}

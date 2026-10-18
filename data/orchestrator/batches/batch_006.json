@@ -1,0 +1,67 @@
+{
+  "phase": 1,
+  "batch_size": 6,
+  "remaining_below_quota": 120,
+  "merchants": [
+    {
+      "id": "a33f7a60-7a1b-4b9c-b5b0-211d8e28e4d8",
+      "canonical_name": "Game Band Store",
+      "normalized_name": "game band",
+      "category": "Console Sales, Games Loading & Service",
+      "city": "Giza",
+      "governorate": "Giza",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "6dd11388-cba7-442e-908d-c02a09685801",
+      "canonical_name": "Game Station Store",
+      "normalized_name": "game station",
+      "category": "Console sales, accounts & repair",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "8fd7643d-9bd9-4836-bb92-fe3f1c22e8a6",
+      "canonical_name": "Giza Store Mobile",
+      "normalized_name": "giza mobile",
+      "category": "Mobile Phones & Consumer Electronics Retailer",
+      "city": "Giza (Giza Square)",
+      "governorate": "Giza",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "17af7b06-643e-4cb8-880e-779ec39d3343",
+      "canonical_name": "Global High Technology",
+      "normalized_name": "global high technology",
+      "category": "Computer Hardware & Spare Parts Retailer",
+      "city": "Mansoura",
+      "governorate": "Dakahlia",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "ca48f90b-4c16-429e-9253-44e9382874d8",
+      "canonical_name": "Gourmet Egypt",
+      "normalized_name": "gourmet egypt",
+      "category": "Premium Supermarket / Gourmet Delicatessen Retail",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "376fea08-4181-4552-8954-e4cb2749ce58",
+      "canonical_name": "Green Line Computer",
+      "normalized_name": "green line computer",
+      "category": "Computer, Laptop & Hardware Maintenance",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 1,
+      "sources_needed": 2
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "phase": 1,
+  "batch_size": 8,
+  "remaining_below_quota": 128,
+  "merchants": [
+    {
+      "id": "0c785e3e-c682-4ad6-9847-7eaca19c6721",
+      "canonical_name": "Electrostar for Engineering Industries",
+      "normalized_name": "electrostar for engineering industries",
+      "category": "Refrigeration, Freezers & Home Appliances Manufacturer",
+      "city": "6th of October",
+      "governorate": "Giza",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "6dce3acb-166f-4948-8aaa-630ffa1e08fa",
+      "canonical_name": "Ellota Store",
+      "normalized_name": "ellota",
+      "category": "smartphones_electronics_retail",
+      "city": "Port Said",
+      "governorate": "Port Said",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "fb483657-5f62-4721-aa55-0946e24d8f72",
+      "canonical_name": "Elsalam Market",
+      "normalized_name": "elsalam market",
+      "category": "Supermarket & Grocery Retail",
+      "city": "Tanta",
+      "governorate": "Gharbia",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "7c3b829c-a2d6-4352-bc6a-b5f06b71085a",
+      "canonical_name": "Eltourky Stores",
+      "normalized_name": "eltourky",
+      "category": "Mobile Phones & Electronics Retail",
+      "city": "Assiut",
+      "governorate": "Assiut",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "990258c8-52f0-4f26-8e7b-fc0d266d2378",
+      "canonical_name": "Ezzat Gad Store",
+      "normalized_name": "ezzat gad",
+      "category": "mobile_laptop",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "7ca96184-bc83-41fc-a5e1-09d433a41e3f",
+      "canonical_name": "First Computer Tanta",
+      "normalized_name": "first computer tanta",
+      "category": "computers_and_repair",
+      "city": "Tanta",
+      "governorate": "Gharbia",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "5559798b-3de9-4f9f-b5b5-6fb3cbabcace",
+      "canonical_name": "G Mobile Store",
+      "normalized_name": "g mobile",
+      "category": "mobile_laptop",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "48420ec2-2aa1-4ceb-95fd-bfeb2b16f605",
+      "canonical_name": "G-Tech for Information Technology (جي تك لتكنولوجيا المعلومات - Gammal Tech)",
+      "normalized_name": "g tech for information technology جي تك لتكنولوجيا المعلومات gammal tech",
+      "category": "IT Solutions, Computer Systems & Software",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    }
+  ]
+}

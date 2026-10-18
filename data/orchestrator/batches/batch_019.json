@@ -1,0 +1,67 @@
+{
+  "phase": 1,
+  "batch_size": 6,
+  "remaining_below_quota": 6,
+  "merchants": [
+    {
+      "id": "27674c46-3a70-4bc4-ab12-0ce4aca3b34f",
+      "canonical_name": "شركة سمارت هوم للأجهزة الكهربائية",
+      "normalized_name": "سمارت هوم للأجهزة الكهربائية",
+      "category": "Electrical & Home Appliances",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "412c5b3d-dbd9-465d-b4ca-3066dd854bb2",
+      "canonical_name": "كمبيوسيتي بورسعيد",
+      "normalized_name": "كمبيوسيتي بورسعيد",
+      "category": "Computers, Laptops & Security Systems",
+      "city": "Port Said",
+      "governorate": "Port Said",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "3f719c59-b57b-4315-8873-e486a33246ee",
+      "canonical_name": "مارادونا ستورز للأجهزة الكهربائية والمنزلية بالإسماعيلية",
+      "normalized_name": "مارادونا ستورز للأجهزة الكهربائية والمنزلية بالإسماعيلية",
+      "category": "Home Appliances & Electronics Retail Mall",
+      "city": "Ismailia",
+      "governorate": "Ismailia",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "e97d8bec-5cd5-41b9-838d-231bcda86cc6",
+      "canonical_name": "مركز محمد جمال التجاري للأجهزة الكهربائية بالسويس",
+      "normalized_name": "مركز محمد جمال التجاري للأجهزة الكهربائية بالسويس",
+      "category": "Home Appliances Retail",
+      "city": "Suez",
+      "governorate": "Suez",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "2c0809ec-6873-45c5-8684-18ad193c344b",
+      "canonical_name": "معرض منصور للأجهزة الكهربائية سوهاج",
+      "normalized_name": "معرض منصور للأجهزة الكهربائية سوهاج",
+      "category": "Home Appliances",
+      "city": "Sohag",
+      "governorate": "Sohag",
+      "current_sources": 2,
+      "sources_needed": 1
+    },
+    {
+      "id": "a9a856fe-7f67-4041-b815-bf8b7c4db363",
+      "canonical_name": "ميتا بلس تكنولوجي بورسعيد",
+      "normalized_name": "ميتا بلس تكنولوجي بورسعيد",
+      "category": "Laptops, Workstations & Gaming Accessories",
+      "city": "Port Said",
+      "governorate": "Port Said",
+      "current_sources": 2,
+      "sources_needed": 1
+    }
+  ]
+}

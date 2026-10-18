@@ -1,0 +1,87 @@
+{
+  "phase": 1,
+  "batch_size": 8,
+  "remaining_below_quota": 103,
+  "merchants": [
+    {
+      "id": "38d5dbd1-313e-4a52-acb0-f50f53c49c34",
+      "canonical_name": "Samsung Electronics Egypt",
+      "normalized_name": "samsung egypt",
+      "category": "Consumer Electronics & Mobile Phones Manufacturer & Service Provider",
+      "city": "Beni Suef",
+      "governorate": "Beni Suef",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "2a6fc1e7-9b2f-4515-995b-36440c15251d",
+      "canonical_name": "Shams Computer Services",
+      "normalized_name": "shams computer services",
+      "category": "Imported Laptops, PCs & Hardware",
+      "city": "Helwan",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "dc50ea61-a3fd-486b-bb27-a274cb1df799",
+      "canonical_name": "Sharaby Computer (شركة شرابي للكمبيوتر واللاب توب)",
+      "normalized_name": "sharaby computer شرابي للكمبيوتر واللاب توب",
+      "category": "Computer, Laptop & Workstation Retailer",
+      "city": "Damanhour",
+      "governorate": "Beheira",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "98e83f64-7837-4173-b7df-0fb2dce03c9c",
+      "canonical_name": "Smart Home Egypt",
+      "normalized_name": "smart home egypt",
+      "category": "Home & Electrical Appliances Retail",
+      "city": "El Obour",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "9ec00c35-c71f-42cb-bd11-7f3f1347aa91",
+      "canonical_name": "Spider Computer & Systems",
+      "normalized_name": "spider computer systems",
+      "category": "Computer Hardware, Networking & Systems",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "30cb2ae2-708d-42b3-9f34-cd9585000281",
+      "canonical_name": "Time Computer",
+      "normalized_name": "time computer",
+      "category": "Computer & Laptop Sales and Maintenance",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "b9e3741a-71c1-48ce-9309-d8ab8cd6fa94",
+      "canonical_name": "Tokyo Store (طوكيو ستور)",
+      "normalized_name": "tokyo طوكيو ستور",
+      "category": "PlayStation Store & Maintenance",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "49d50e96-4d74-42a5-9ed3-3ba54ab93b9d",
+      "canonical_name": "United Engineering Establishment",
+      "normalized_name": "united engineering establishment",
+      "category": "Home Appliance Repair & Electronics Maintenance",
+      "city": "Nasr City",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    }
+  ]
+}

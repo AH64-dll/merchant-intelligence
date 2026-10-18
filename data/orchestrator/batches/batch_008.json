@@ -1,0 +1,67 @@
+{
+  "phase": 1,
+  "batch_size": 6,
+  "remaining_below_quota": 110,
+  "merchants": [
+    {
+      "id": "9af176b0-b896-4494-bcfb-d1ef85166ba5",
+      "canonical_name": "MTI Holding (MM Group for Industry and International Trade S.A.E.)",
+      "normalized_name": "mti holding mm group for industry and international trade s a e",
+      "category": "Consumer Electronics & Home Appliances Distributor / Retailer (Panasonic Authorized Agent & Showroom)",
+      "city": "Cairo",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "9bba25aa-9247-4627-ae2f-847fa0122199",
+      "canonical_name": "Mac City Store Egypt",
+      "normalized_name": "mac city egypt",
+      "category": "Apple Devices Sales, Trade-in & Repair",
+      "city": "Nasr City",
+      "governorate": "Cairo",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "8dc75d76-bbcf-480b-ad9f-e569f60fd861",
+      "canonical_name": "Matrix Store El Mahalla",
+      "normalized_name": "matrix el mahalla",
+      "category": "Console Sales & Service",
+      "city": "El Mahalla El Kubra",
+      "governorate": "Gharbia",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "4e2900ca-e71e-480a-ba98-76bd638b7512",
+      "canonical_name": "Miraco Carrier",
+      "normalized_name": "miraco carrier",
+      "category": "Air Conditioning & Refrigeration Manufacturer & Service Provider",
+      "city": "Abu Rawash",
+      "governorate": "Giza",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "4ba6cb30-3a78-4f9f-b610-9cd62f2322f9",
+      "canonical_name": "Modern Company for Computer & Laptop (الشركة العصرية للكمبيوتر واللاب توب)",
+      "normalized_name": "modern for computer laptop الشركة العصرية للكمبيوتر واللاب توب",
+      "category": "Laptops, Desktop PCs, Monitors & Computer Maintenance",
+      "city": "Qena",
+      "governorate": "Qena",
+      "current_sources": 1,
+      "sources_needed": 2
+    },
+    {
+      "id": "a4a2bccb-1dd3-4420-b3aa-41b50c8efdf8",
+      "canonical_name": "Nasa for Trade & Distribution (شركة ناسا للتوكيلات والتوزيع - الإسكندرية)",
+      "normalized_name": "nasa for trade distribution ناسا للتوكيلات والتوزيع الإسكندرية",
+      "category": "Consumer Electronics & Telecommunications Authorized Distributor & Service Center",
+      "city": "Alexandria",
+      "governorate": "Alexandria",
+      "current_sources": 1,
+      "sources_needed": 2
+    }
+  ]
+}

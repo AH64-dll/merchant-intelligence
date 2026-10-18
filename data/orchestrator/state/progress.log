@@ -1,0 +1,33 @@
+ts=2026-10-17T17:30:00Z iter=0 baseline_merchants=351 baseline_below_quota=150
+ts=2026-10-17T17:35:00Z iter=1 batch=001 size=5 written=11 below_quota=147 total=351
+ts=2026-10-17T17:34:17Z iter=2 batch=002 written=15 below_quota=142 total=351
+ts=2026-10-17T17:36:47Z iter=3 batch=003 written=14 below=136
+ts=2026-10-17T17:38:28Z iter=4 batch=004 written=16 below=128
+ts=2026-10-18T02:51:50Z iter=5 batch=005 written=16 below=120
+ts=2026-10-18T02:53:25Z iter=6 batch=006 written=12 below=114
+ts=2026-10-18T04:16:26Z iter=7 batch=007 written=10 below=110
+ts=2026-10-18T04:17:56Z iter=8 batch=008 written=4 below=108
+ts=2026-10-18T04:20:10Z iter=9 batch=009 written=12
+ts=2026-10-18T04:22:13Z iter=10 batch=010 written=16
+ts=2026-10-18T04:24:17Z iter=11 batch=011 written=12
+ts=2026-10-18T06:02:48Z iter=12 batch=012 written=16 below=81
+ts=2026-10-18T06:32:51Z iter=13 batch=013 written=21
+ts=2026-10-18T06:34:46Z iter=14 batch=014 written=20
+ts=2026-10-18T06:41:12Z iter=15 batch=015 written=20
+ts=2026-10-18T06:42:26Z iter=16 batch=016 written=17 below=41
+ts=2026-10-18T06:45:11Z iter=17 batch=017 written=20 below=31
+ts=2026-10-18T06:51:14Z iter=18 batch=018 written=20 below=21
+ts=2026-10-18T06:55:34Z iter=20 discovery_001 new_merchants=5 total=356
+ts=2026-10-18T06:59:03Z iter=21 discovery_002 new_merchants=7 total=363
+ts=2026-10-18T07:00:33Z iter=22 discovery_003 new_merchants=9 total=372
+ts=2026-10-18T07:12:43Z iter=23 discovery_004 new_merchants=7 total=379
+ts=2026-10-18T07:22:09Z iter=24 delta_001 new=12 total=403
+ts=2026-10-18T11:07:10Z iter=25 upper_001 new=6 total=412
+ts=2026-10-18T11:10:44Z iter=26 upper_002 new=6 total=418
+ts=2026-10-18T11:17:58Z iter=27 alex_001 new=8 total=426
+ts=2026-10-18T11:30:33Z iter=28 cairo_001 new=8 total=434
+ts=2026-10-18T11:38:36Z iter=29 cairo_002 new=8 total=442
+ts=2026-10-18T11:46:59Z iter=30 giza_001 new=8 total=450
+ts=2026-10-18T13:27:03Z iter=31 delta_003 new=1 total=451
+ts=2026-10-18T13:35:25Z iter=32 delta_003b new=8 total=459
+ts=2026-10-18T13:41:48Z iter=33 upper_003 new=8 total=467

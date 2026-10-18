@@ -1,0 +1,42 @@
+{
+  "4a00924d-3f97-457c-8060-5a4619cf21e5": {
+    "canonical_name": "الاستشارية للحاسبات (Al Estisharia for Computers)",
+    "city": "Port Said",
+    "candidates": []
+  },
+  "b83ccde6-f2b1-47c6-8611-2c2eeaf65374": {
+    "canonical_name": "البطل ستورز (El-Batal Stores Ismailia)",
+    "city": "Ismailia",
+    "candidates": []
+  },
+  "f8a65f3e-df9d-401f-b2a1-f649a5770cad": {
+    "canonical_name": "الذهبية للكمبيوتر والتكنولوجيا (Elzahbia Technology Suez)",
+    "city": "Suez",
+    "candidates": []
+  },
+  "4c6f675e-8a80-413e-a666-25eb08049933": {
+    "canonical_name": "الريان للكمبيوتر (Al Ryan Computer Store)",
+    "city": "Suez",
+    "candidates": []
+  },
+  "a138ac3d-3b69-4b74-a276-67391f4e0026": {
+    "canonical_name": "الشركة المتحدة لبيع قطع غيار وصيانة الأجهزة المنزلية (United Company for Spare Parts & Maintenance)",
+    "city": "مدينة نصر (Nasr City)",
+    "candidates": []
+  },
+  "9b5ae71b-de91-45db-8c70-58d656f9b40e": {
+    "canonical_name": "الشيخ ستور للإلكترونيات والكمبيوتر الإسكندرية",
+    "city": "Alexandria",
+    "candidates": []
+  },
+  "6ef9f6aa-9f1d-4684-907e-379b8bc58b47": {
+    "canonical_name": "العاطى ستور للإلكترونيات والكمبيوتر الإسكندرية",
+    "city": "Alexandria",
+    "candidates": []
+  },
+  "581b8d75-2a03-4fa4-9654-e1a52cdc7ef7": {
+    "canonical_name": "المهدي للكمبيوتر وكاميرات المراقبة المنيا",
+    "city": "Minya",
+    "candidates": []
+  }
+}
