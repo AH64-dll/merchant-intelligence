@@ -45,3 +45,5 @@ ts=2026-10-19T06:02:55Z iter=44 dakahlia_001 new=8 total=571
 ts=2026-10-19T06:09:02Z iter=45 cairo_005 new=8 total=579
 ts=2026-10-19T06:21:24Z iter=46 upper_006 new=8 total=587
 ts=2026-10-19T06:21:36Z iter=46b upper_006 fixed new=8 total=587 below=0
+ts=2026-10-19T06:29:29Z iter=47 giza_003 new=8 total=595
+ts=2026-10-19T06:35:50Z iter=48 alex_004 new=8 total=603
