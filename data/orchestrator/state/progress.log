@@ -35,3 +35,5 @@ ts=2026-10-18T15:45:17Z iter=34 cairo_003 new=8 total=475
 ts=2026-10-18T15:48:21Z iter=35 alex_002 new=8 total=490
 ts=2026-10-18T15:54:04Z iter=36 upper_004 new=8 total=498
 ts=2026-10-19T04:57:53Z iter=37 giza_002+delta_004 new=17 total=515
+ts=2026-10-19T05:07:07Z iter=38 delta_005 new=8 total=523
+ts=2026-10-19T05:18:17Z iter=39 upper_005 new=8 total=531
