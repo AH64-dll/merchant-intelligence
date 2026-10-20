@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 _DIR = Path(__file__).resolve().parent / "prompts"
+
+_PLACEHOLDER = re.compile(r"\{([^{}]+)\}")
 
 _FALLBACK = {
     "system.md": (
@@ -33,9 +36,17 @@ def load_prompt(name: str) -> str:
 
 
 def render(name: str, **kwargs: object) -> str:
-    """Substitute only known placeholders; JSON braces are literal prompt text."""
+    """Substitute only known placeholders; JSON braces are literal prompt text.
+
+    Substitution is single-pass, so a value that happens to contain another
+    ``{key}`` is inserted verbatim and never re-scanned.
+    """
     template = load_prompt(name)
-    for key, value in kwargs.items():
-        template = template.replace("{" + key + "}", str(value))
-    return template
+    values = {key: str(value) for key, value in kwargs.items()}
+
+    def _replace(match: "re.Match[str]") -> str:
+        key = match.group(1)
+        return values[key] if key in values else match.group(0)
+
+    return _PLACEHOLDER.sub(_replace, template)
 

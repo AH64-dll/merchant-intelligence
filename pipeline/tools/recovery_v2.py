@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Recovery v2.1: per-file base-from-latest-snapshot + forward edit replay."""
 from __future__ import annotations
-import json, re
+import json, os, re, sys
 from pathlib import Path
 
 SRC = Path('/home/amr/.omp/agent/sessions/-tmp/2026-08-23T12-44-04-275Z_01a02ea6-4733-7000-97bc-3c1f9afac8f4.jsonl')
@@ -11,6 +11,12 @@ TARGETS = [
     'merchant_intel/pipeline.py', 'merchant_intel/schemas.py', 'merchant_intel/omp/client.py',
     'merchant_intel/omp/mock.py', 'tests/test_models.py',
 ]
+
+# Register store for CUT/PUT `@name` transfers. Previously this name was never
+# bound in this module, so every CUT/PUT raised NameError that a blanket
+# `except Exception: pass` swallowed and the run still reported success.
+registers: dict[str, list[str]] = {}
+problems: list[str] = []
 
 def norm(p: str) -> str | None:
     p = re.sub(r'#[A-Za-z0-9]+\s*$', '', p.strip())
@@ -52,7 +58,7 @@ def resolve_block(lines: list[str], n: int) -> int:
         return last
     return n
 
-def apply_ops(cur: list[str], rows: list[str]):
+def apply_ops(cur: list[str], rows: list[str], target: str):
     i = 0
     while i < len(rows):
         line = rows[i]; s = line.strip()
@@ -95,8 +101,10 @@ def apply_ops(cur: list[str], rows: list[str]):
                 else:
                     a = int(nums[0]); b = int(nums[1]) if len(nums) > 1 else a
                     cur[a - 1:b] = payload
-        except Exception:
-            pass
+        except Exception as e:
+            # Collect instead of swallowing: a failed op means the
+            # reconstruction is wrong, and it must not be written silently.
+            problems.append(f'{target}: {kind} {spec0!r} -> {e}')
         i = j
 
 # ---- pass 1: ordered toolCall events ----
@@ -208,13 +216,22 @@ for target in ([t for t in TARGETS if t in __import__('sys').argv[1:]] or (TARGE
             for key in order:
                 if key != target:
                     continue
-                apply_ops(base, sections[key])
+                apply_ops(base, sections[key], target)
                 applied += 1
         elif kind == 'write':
             base = list(data)
     dest = OUT / target
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text('\n'.join(base) + '\n')
+    # Atomic: never overwrite a real source file with a partial write.
+    tmp = dest.parent / (dest.name + '.tmp')
+    tmp.write_text('\n'.join(base) + '\n')
+    os.replace(tmp, dest)
     report.append(f'{target}: base={len(base)}ln post_edits={applied}')
 
 print('\n'.join(report))
+print('--- problems ---')
+for u in problems[:30]:
+    print(u)
+if problems:
+    # A mangled reconstruction must not be presented as a success.
+    sys.exit(1)

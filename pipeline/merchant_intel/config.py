@@ -137,7 +137,54 @@ class AppConfig:
             },
         }
 
-def _merge(dc: Any, data: dict[str, Any]) -> Any:
+# Integer fields whose value is a count/size/limit and must stay strictly
+# positive; other numeric fields (ratios, thresholds) legitimately accept 0.
+_POSITIVE_INT_FIELDS = {
+    "concurrency.max_parallel_agents",
+    "concurrency.discovery_agents",
+    "concurrency.smoke_discovery_agents",
+    "concurrency.min_luna_agents",
+    "concurrency.max_luna_agents",
+    "concurrency.luna_tasks_per_agent",
+    "research.max_discovery_rounds",
+    "research.max_verification_rounds",
+    "research.analysis_batch_size",
+    "research.max_task_attempts",
+    "research.stale_after_days",
+}
+
+
+def _coerce(path: str, current: Any, value: Any) -> Any:
+    """Coerce a raw YAML scalar to the field's numeric type at load time.
+
+    Numeric fields are consumed as numbers deep inside a run; a bad value
+    must fail here with the config path rather than surfacing later as
+    ``timedelta(days="abc")`` or ``asyncio.Semaphore("many")``.
+    """
+    if isinstance(current, bool) or not isinstance(value, (int, float, str)):
+        return value
+    if isinstance(current, int):
+        if isinstance(value, float) and not value.is_integer():
+            raise ValueError(f"{path} must be an integer, got {value!r}")
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            try:
+                number = int(str(value).strip())
+            except (TypeError, ValueError):
+                raise ValueError(f"{path} must be an integer, got {value!r}") from None
+        if path in _POSITIVE_INT_FIELDS and number <= 0:
+            raise ValueError(f"{path} must be a positive integer, got {value!r}")
+        return number
+    if isinstance(current, float):
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            raise ValueError(f"{path} must be a number, got {value!r}") from None
+    return value
+
+
+def _merge(dc: Any, data: dict[str, Any], _path: str = "") -> Any:
     if not data:
         return dc
     kwargs = dict(dc.__dict__)
@@ -145,10 +192,11 @@ def _merge(dc: Any, data: dict[str, Any]) -> Any:
         if key not in kwargs:
             continue
         current = kwargs[key]
+        path = f"{_path}.{key}" if _path else key
         if hasattr(current, "__dataclass_fields__") and isinstance(value, dict):
-            kwargs[key] = _merge(current, value)
+            kwargs[key] = _merge(current, value, path)
         else:
-            kwargs[key] = value
+            kwargs[key] = _coerce(path, current, value)
     return type(dc)(**kwargs)
 
 
@@ -195,9 +243,9 @@ SMOKE_OVERLAY: dict[str, Any] = {
 
 
 def _apply_raw(cfg: AppConfig, raw: dict[str, Any]) -> AppConfig:
-    cfg.omp = _merge(cfg.omp, raw.get("omp") or {})
-    cfg.models = _merge(cfg.models, raw.get("models") or {})
-    cfg.concurrency = _merge(cfg.concurrency, raw.get("concurrency") or {})
+    cfg.omp = _merge(cfg.omp, raw.get("omp") or {}, "omp")
+    cfg.models = _merge(cfg.models, raw.get("models") or {}, "models")
+    cfg.concurrency = _merge(cfg.concurrency, raw.get("concurrency") or {}, "concurrency")
     # Accept the user's compact `agents:` naming as an alias for concurrency.
     agents = raw.get("agents") or {}
     if agents:
@@ -210,9 +258,9 @@ def _apply_raw(cfg: AppConfig, raw: dict[str, Any]) -> AppConfig:
             "max_parallel": "max_parallel_agents",
         }
         values = {mapped[k]: v for k, v in agents.items() if k in mapped}
-        cfg.concurrency = _merge(cfg.concurrency, values)
-    cfg.research = _merge(cfg.research, raw.get("research") or {})
-    cfg.quality_gates = _merge(cfg.quality_gates, raw.get("quality_gates") or {})
+        cfg.concurrency = _merge(cfg.concurrency, values, "concurrency")
+    cfg.research = _merge(cfg.research, raw.get("research") or {}, "research")
+    cfg.quality_gates = _merge(cfg.quality_gates, raw.get("quality_gates") or {}, "quality_gates")
     # Friendly alias used in the original objective.
     model_aliases = raw.get("models") or {}
     if "discovery_coordinator" in model_aliases:
@@ -236,10 +284,10 @@ def load_config(path: str | Path | None = None, *, smoke: bool = False) -> AppCo
         if path is not None:
             raise FileNotFoundError(candidate)
         if smoke:
-            cfg.omp = _merge(cfg.omp, SMOKE_OVERLAY["omp"])
-            cfg.concurrency = _merge(cfg.concurrency, SMOKE_OVERLAY["concurrency"])
-            cfg.research = _merge(cfg.research, SMOKE_OVERLAY["research"])
-            cfg.quality_gates = _merge(cfg.quality_gates, SMOKE_OVERLAY["quality_gates"])
+            cfg.omp = _merge(cfg.omp, SMOKE_OVERLAY["omp"], "omp")
+            cfg.concurrency = _merge(cfg.concurrency, SMOKE_OVERLAY["concurrency"], "concurrency")
+            cfg.research = _merge(cfg.research, SMOKE_OVERLAY["research"], "research")
+            cfg.quality_gates = _merge(cfg.quality_gates, SMOKE_OVERLAY["quality_gates"], "quality_gates")
         return cfg
     raw = yaml.safe_load(candidate.read_text(encoding="utf-8")) or {}
     if not isinstance(raw, dict):
@@ -247,8 +295,8 @@ def load_config(path: str | Path | None = None, *, smoke: bool = False) -> AppCo
     cfg = _apply_raw(cfg, raw)
     cfg.root = candidate.resolve().parent
     if smoke:
-        cfg.omp = _merge(cfg.omp, SMOKE_OVERLAY["omp"])
-        cfg.concurrency = _merge(cfg.concurrency, SMOKE_OVERLAY["concurrency"])
-        cfg.research = _merge(cfg.research, SMOKE_OVERLAY["research"])
-        cfg.quality_gates = _merge(cfg.quality_gates, SMOKE_OVERLAY["quality_gates"])
+        cfg.omp = _merge(cfg.omp, SMOKE_OVERLAY["omp"], "omp")
+        cfg.concurrency = _merge(cfg.concurrency, SMOKE_OVERLAY["concurrency"], "concurrency")
+        cfg.research = _merge(cfg.research, SMOKE_OVERLAY["research"], "research")
+        cfg.quality_gates = _merge(cfg.quality_gates, SMOKE_OVERLAY["quality_gates"], "quality_gates")
     return cfg

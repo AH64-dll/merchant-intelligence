@@ -259,10 +259,11 @@ export class SearchIndex {
         const cb = this.merchantsById.get(b.merchantId);
         const confidenceDelta = (cb?.identityConfidence ?? 0) - (ca?.identityConfidence ?? 0);
         if (confidenceDelta !== 0) return confidenceDelta;
-        return a.merchantId.localeCompare(b.merchantId);
+        return compareCodeUnits(a.merchantId, b.merchantId);
       });
 
     const allHits: SearchHit[] = [];
+    const hitTiers: SearchTier[] = [];
     for (const { merchantId, hit } of ranked) {
       const merchant = this.merchantsById.get(merchantId);
       if (merchant === undefined) continue;
@@ -270,13 +271,17 @@ export class SearchIndex {
         merchant,
         match: { kind: hit.matchedOn, value: hit.matchedValue, label: MATCH_LABELS[hit.matchedOn] },
       });
+      hitTiers.push(hit.tier);
     }
 
     const boundedPage = Math.max(1, Math.floor(page));
     const boundedSize = Math.max(1, Math.floor(pageSize));
     const start = (boundedPage - 1) * boundedSize;
-    const topTier = allHits[0]?.match.kind;
-    const ambiguous = topTier !== undefined && allHits.filter((h) => h.match.kind === topTier).length > 1;
+    // Ambiguity is a property of the tier, not the match kind: one phone
+    // lookup spans the phone and whatsapp buckets, so two distinct owners can
+    // share the exact_identifier tier while carrying different kinds.
+    const topTier = hitTiers[0];
+    const ambiguous = topTier !== undefined && hitTiers.filter((tier) => tier === topTier).length > 1;
 
     return {
       query,
@@ -545,4 +550,11 @@ function mergeHit(best: Map<string, BestHit>, merchantId: string, hit: BestHit):
 
 function compareQuality(a: HitQuality, b: HitQuality): number {
   return a.fuzzyTokens - b.fuzzyTokens || a.extraTokens - b.extraTokens || a.editDistance - b.editDistance;
+}
+
+/** Deterministic code-unit comparison; locale/ICU-independent (unlike localeCompare). */
+function compareCodeUnits(a: string, b: string): number {
+  if (a < b) return -1;
+  if (a > b) return 1;
+  return 0;
 }

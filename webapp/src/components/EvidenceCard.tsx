@@ -27,6 +27,9 @@ function PublishedDate({ publishedAt }: { publishedAt: string | null }) {
 export function EvidenceCard({ evidence }: { evidence: EvidenceItem }): JSX.Element {
   const isDuplicate = evidence.duplicateOf !== null;
   const crossMerchant = evidence.duplicateRootMerchantId !== null;
+  // Bind the validated href, never the raw stored value: a scheme guard that
+  // does not feed the anchor is a latent footgun.
+  const safeUrl = safeHttpUrl(evidence.url);
 
   return (
     <article id={`evidence-${evidence.id}`} className="border border-black p-3 space-y-2">
@@ -62,9 +65,9 @@ export function EvidenceCard({ evidence }: { evidence: EvidenceItem }): JSX.Elem
         <SourceCitations citations={evidence.citations} />
       ) : (
         <p>
-          {safeHttpUrl(evidence.url) !== null ? (
+          {safeUrl !== null ? (
             <a
-              href={evidence.url}
+              href={safeUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="underline"

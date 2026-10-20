@@ -12,7 +12,13 @@
  * memory against cache-flooding via arbitrary query strings.
  */
 const cache = new Map<string, { body: string; contentType: string }>();
-const MAX_ENTRIES = Number(process.env.RENDER_CACHE_MAX ?? 512);
+// A non-numeric/invalid override must not become NaN: `cache.size >= NaN` is
+// always false and eviction would never run, letting the Map grow unbounded.
+const RENDER_CACHE_MAX_RAW = Number(process.env.RENDER_CACHE_MAX ?? 512);
+const MAX_ENTRIES =
+  Number.isSafeInteger(RENDER_CACHE_MAX_RAW) && RENDER_CACHE_MAX_RAW > 0
+    ? RENDER_CACHE_MAX_RAW
+    : 512;
 
 export function renderCacheGet(
   key: string,

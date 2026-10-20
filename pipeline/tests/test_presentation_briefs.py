@@ -35,8 +35,13 @@ from merchant_intel.schemas import MerchantCandidate
 # --------------------------------------------------------------------------
 
 
+REPO_CONFIG = Path(__file__).resolve().parents[2] / "config.yaml"
+
+
 def _config(tmp_path: Path):
-    cfg = load_config(smoke=True)
+    # Load the repository config by absolute path so the assertions below hold
+    # regardless of the CWD pytest is invoked from.
+    cfg = load_config(REPO_CONFIG, smoke=True)
     cfg.root = tmp_path
     cfg.database_path = "mi.db"
     cfg.export_dir = "export"

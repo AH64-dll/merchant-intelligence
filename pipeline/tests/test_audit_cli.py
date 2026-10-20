@@ -343,7 +343,7 @@ def test_backfill_apply_writes_once_and_then_noops(tmp_path):
 
     assert code == 0
     assert payload["mode"] == "apply"
-    assert payload["schema_version"] == 4
+    assert payload["schema_version"] == 5
     assert payload["by_access_kind"]["web"] == 8
     assert payload["by_access_kind"]["whois"] == 10
 
@@ -355,7 +355,7 @@ def test_backfill_apply_writes_once_and_then_noops(tmp_path):
     ).fetchall()
     version = conn.execute("SELECT MAX(version) FROM schema_version").fetchone()[0]
     conn.close()
-    assert version == 4
+    assert version == 5
     assert len(rows) == 18
     for row in rows:
         locator = classify_source_locator(row["url"])

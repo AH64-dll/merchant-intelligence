@@ -261,8 +261,10 @@ export function assessReputation(
   // OFFICIAL_WARNING requires linked warning evidence; the stored state alone
   // never justifies the label.
   if (warningEvidence.length > 0) {
-    const oldest = datedWarnings.reduce<number | null>(
-      (acc, entry) => (acc === null || entry.ageDays < acc ? entry.ageDays : acc),
+    // "Oldest" is the MAXIMUM age — the reduce must keep the larger ageDays,
+    // and the rendered date must be that same entry's date.
+    const oldestWarning = datedWarnings.reduce<{ item: EvidenceItem; ageDays: number } | null>(
+      (acc, entry) => (acc === null || entry.ageDays > acc.ageDays ? entry : acc),
       null,
     );
     const warningIds = warningEvidence.map((item) => item.id);
@@ -271,7 +273,7 @@ export function assessReputation(
         kind: 'OFFICIAL_WARNING',
         headline: 'إشارة رسمية سابقة (قديمة)',
         explanation:
-          `رصدت جهة عامة تحذيرًا يتعلق بهذا التاجر، وأقدم تحذير مؤرخ بتاريخ ${staleWarnings[0].item.publishedAt?.slice(0, 10) ?? 'غير معروف'} — راجع المصدر الأصلي قبل اتخاذ أي قرار.`,
+          `رصدت جهة عامة تحذيرًا يتعلق بهذا التاجر، وأقدم تحذير مؤرخ بتاريخ ${oldestWarning?.item.publishedAt?.slice(0, 10) ?? 'غير معروف'} — راجع المصدر الأصلي قبل اتخاذ أي قرار.`,
         evidenceIds: warningIds,
         caveat: 'هذا تحذير رسمي مؤرخ وليس إدانة؛ تحقق من المصدر وما إذا كان التحذير ما زال ساريًا.',
       };
@@ -284,7 +286,7 @@ export function assessReputation(
       evidenceIds: warningIds,
       caveat:
         'هذه إشارة رسمية مؤرخة وليست إدانة. افتح المصدر الأصلي واقرأ التفاصيل بنفسك.' +
-        (oldest !== null ? ` أقدم إشارة قبل ${oldest} يومًا.` : ''),
+        (oldestWarning !== null ? ` أقدم إشارة قبل ${oldestWarning.ageDays} يومًا.` : ''),
     };
   }
   if (state === 'OFFICIAL_WARNING') {

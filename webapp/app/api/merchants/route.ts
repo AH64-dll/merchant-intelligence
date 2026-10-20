@@ -88,16 +88,23 @@ export async function GET(request: Request): Promise<Response> {
     const key = `api-merchants:${directoryQueryCacheKey(input)}`;
     const cached = renderCacheGet(key);
     if (cached !== undefined) {
-      return new Response(cached.body, { headers: { 'content-type': cached.contentType } });
+      return new Response(cached.body, {
+        headers: { 'content-type': cached.contentType, 'cache-control': 'no-store' },
+      });
     }
 
     const result = publicResult(getDb().getMerchantDirectory(input));
     const body = JSON.stringify(result);
     renderCacheSet(key, body, 'application/json');
-    return new Response(body, { headers: { 'content-type': 'application/json' } });
+    return new Response(body, {
+      headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+    });
   } catch (error) {
     if (error instanceof DirectoryQueryValidationError) {
-      return Response.json({ error: 'invalid_query' }, { status: 400 });
+      return Response.json(
+        { error: 'invalid_query' },
+        { status: 400, headers: { 'cache-control': 'no-store' } },
+      );
     }
     throw error;
   }

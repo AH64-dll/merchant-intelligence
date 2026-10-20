@@ -13,7 +13,7 @@ The routing is explicit and fail-closed:
 | Discovery workers | Antigravity (`google-antigravity`) | `google-antigravity/gemini-3.7-flash` |
 | Discovery coordinator | Antigravity (`google-antigravity`) | `google-antigravity/gemini-3.7-flash` |
 | Fast Sol analysis | Antigravity (`google-antigravity`) | `google-antigravity/gemini-3.7-flash` |
-| Luna verification and review | Codex (`openai-codex`) | `openai-codex/gpt-5.6-luna` |
+| Verification and review | Merge Gateway (`merge-gateway`) | `merge-gateway/glm-5.3-flash` |
 
 At startup the adapter probes the installed OMP catalog with `omp models --json`, resolves these
 exact model selectors, and fails closed if either selected model is unavailable or crosses
@@ -23,7 +23,7 @@ confirmed.
 ## Installation
 
 ```bash
-cd merchant_intelligence
+cd pipeline   # from the repository root
 python3.11 -m venv .venv
 . .venv/bin/activate
 pip install -e '.[dev]'
@@ -31,8 +31,8 @@ cp config.example.yaml config.yaml
 ```
 
 The controller currently targets OMP `17.x` semantics (`omp -p --mode json --model ...`). It
-probes flags rather than assuming them. OMP must be on `PATH`, and the Antigravity and Codex
-providers must be authenticated in that OMP profile.
+probes flags rather than assuming them. OMP must be on `PATH`, and the Antigravity and Merge
+Gateway providers must be authenticated in that OMP profile.
 
 ## Commands
 
@@ -64,6 +64,17 @@ The live smoke overlay intentionally accepts the foundation gate and limits Sol 
 verification task so the real provider chain can be exercised quickly; this is not production
 quality evidence. Production runs use `config.yaml` thresholds and never inherit that override.
 
+### Maintenance commands
+
+```bash
+python main.py fb-seed-groups                                    # register research.fb_groups in the group registry
+python main.py fb-gen-tasks --run-id RUN_ID                      # enqueue FB community-feedback verification tasks
+python main.py fb-swarm [--luna-agents N] [--gemini-agents N] [--tasks-per-agent N]
+python main.py backfill-source-metadata [--apply] [--db PATH]    # classify/backfill v4 source locator metadata (dry-run by default)
+python main.py audit-source-links [--limit N] [--delay S] [--timeout S] [--max-redirects N] [--stale-days N] [--apply] [--db PATH]
+                                                # resumable, read-only reachability check of sources.web_url (dry-run by default)
+```
+
 ## Pipeline
 
 1. **Discovery (Gemini / Antigravity):** 5 partitioned assignments cover electronics, gaming,
@@ -76,7 +87,7 @@ quality evidence. Production runs use `config.yaml` thresholds and never inherit
 3. **Fast analysis (Gemini / Antigravity):** processes bounded merchant packages instead of dumping
    the whole database into one context. It creates merchant analyses and narrow verification
    tasks; Luna reviews these outputs.
-4. **Verification and review (Luna / Codex):** runs no more than 5 concurrent agents, verifies
+4. **Verification and review (Luna / Merge Gateway):** runs no more than 5 concurrent agents, verifies
    Gemini's claims against public sources, retains unresolved findings, and performs the final
    review pass.
 5. **Completion:** only a foundation that passes configured quality gates and has no actionable

@@ -25,7 +25,7 @@ import type {
   Sentiment,
   SnapshotInfo,
 } from './types';
-import { MERCHANT_DIRECTORY_PAGE_SIZE } from './types';
+import { MERCHANT_DIRECTORY_PAGE_SIZE, PLACEHOLDER_SUMMARY } from './types';
 
 const COVERAGE_LEVELS: readonly MerchantDirectoryCoverageLevel[] = [
   'none',
@@ -253,6 +253,18 @@ function sourceKey(row: DirectoryEvidenceRow): string | null {
   const parsed = new URL(safe);
   parsed.hash = '';
   return parsed.toString();
+}
+
+/**
+ * True when a row carries a real, model-supplied summary. The placeholder
+ * boilerplate used for source-only rows must never be presented as the
+ * highlighted documented positive evidence (mirrors db.ts's isMeaningful check).
+ */
+function hasDocumentedSummary(row: DirectoryEvidenceRow): boolean {
+  return (
+    row.summary.trim().length > 0
+    && row.summary.toLowerCase() !== PLACEHOLDER_SUMMARY.toLowerCase()
+  );
 }
 
 function evidenceDateValue(row: DirectoryEvidenceRow): number {
@@ -497,6 +509,7 @@ export function buildMerchantDirectoryProjection(
           row.independent &&
           row.duplicateOf === null &&
           row.sentiment === 'positive' &&
+          hasDocumentedSummary(row) &&
           safeHttpUrl(row.sourceUrl) !== null,
       )
       .sort(compareHighlight);

@@ -6,7 +6,7 @@ in-memory line store, then emits the final tree. Block ops (`PUT N*`/`CUT N*`)
 resolve via Python indentation + markdown heading rules; failures are listed.
 """
 from __future__ import annotations
-import json, re
+import json, os, re, sys
 from pathlib import Path
 
 SRC = Path('/home/amr/.omp/agent/sessions/-tmp/2026-08-23T12-44-04-275Z_01a02ea6-4733-7000-97bc-3c1f9afac8f4.jsonl')
@@ -210,7 +210,10 @@ for rel, ls in sorted(files.items()):
         continue
     dest = OUT / rel
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text('\n'.join(ls) + '\n')
+    # Atomic: never overwrite a real source file with a partial write.
+    tmp = dest.parent / (dest.name + '.tmp')
+    tmp.write_text('\n'.join(ls) + '\n')
+    os.replace(tmp, dest)
     manifest.append((rel, len(ls)))
 print('applied:', applied, '| edit events:', edits)
 print('files emitted:', len(manifest))
@@ -219,3 +222,6 @@ for rel, n in manifest:
 print('--- problems ---')
 for u in problems[:30]:
     print(u)
+if problems:
+    # A mangled reconstruction must not be presented as a success.
+    sys.exit(1)

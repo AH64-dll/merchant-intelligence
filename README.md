@@ -4,7 +4,7 @@ Provenance-preserving merchant research pipeline plus an Arabic RTL, server-rend
 
 ## Canonical data model
 
-`data/merchant_intelligence.db` is the source of truth (SQLite schema v3). Each `merchants` row is one canonical seller, not one branch. Aliases, identifiers, recorded addresses, evidence, claims, analyses, tasks, and merchant links attach to that seller UUID. Recorded addresses remain `merchant_identifiers(kind='address')`; their count is a location-record count, not a claimed branch count.
+`data/merchant_intelligence.db` is the source of truth (SQLite schema v5). Each `merchants` row is one canonical seller, not one branch. Aliases, identifiers, recorded addresses, evidence, claims, analyses, tasks, and merchant links attach to that seller UUID. Recorded addresses remain `merchant_identifiers(kind='address')`; their count is a location-record count, not a claimed branch count.
 
 The reviewed consolidation manifest lives in `pipeline/merchant_intel/merchant_merge.py`. It merges only manually confirmed chains, preserves every source and evidence observation, rebuilds seller-local claims and duplicate roots, and fails closed if a retired UUID is missing. It never performs fuzzy entity resolution.
 
@@ -17,9 +17,11 @@ The reviewed consolidation manifest lives in `pipeline/merchant_intel/merchant_m
 ## Public routes
 
 - `/` — seller search.
+- `/search` — server-rendered name/phone/link search results, with a localized match reason per hit.
 - `/merchants` — all canonical sellers with pagination and evidence/category/location filters.
 - `/merchants/positive-evidence` — deterministic ordering by documented independent positive evidence. It is not a trust score or purchase guarantee.
 - `/merchant/[id]` — one seller summary followed by complete evidence, source links, claims, identifiers, analysis, and provenance.
+- `/api/search` — JSON name/phone/link search (`?q=…&page=…`); a blank query or one longer than 300 characters returns 400.
 - `/api/merchants` — public list projection; `/api/merchants/[id]` remains the complete detail projection.
 
 ## Data operations
@@ -43,7 +45,7 @@ pnpm test
 pnpm build
 ```
 
-Schema v3 is unchanged by seller consolidation. The snapshot gate treats evidence/claim ownership mismatches, cross-seller duplicate roots, duplicate chains/cycles, self merchant links, foreign-key orphans, and stale analysis state as fatal.
+Schema v5 is unchanged by seller consolidation (v4/v5 added source locator metadata, link checks, and merchant briefs). The snapshot gate treats evidence/claim ownership mismatches, cross-seller duplicate roots, duplicate chains/cycles, self merchant links, foreign-key orphans, and stale analysis state as fatal.
 
 ## Interpretation boundary
 

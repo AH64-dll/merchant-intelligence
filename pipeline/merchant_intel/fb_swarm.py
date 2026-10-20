@@ -25,6 +25,7 @@ from merchant_intel.ingest import ingest_luna, mark_tasks_assigned, release_task
 from merchant_intel.pipeline import GOAL, _parse
 from merchant_intel.prompts import render
 from merchant_intel.fbsession import (
+    DEFAULT_COOKIE_DB,
     fetch_post_text,
     pace_between_fetches,
     search_group_posts,
@@ -32,21 +33,57 @@ from merchant_intel.fbsession import (
 )
 from merchant_intel.fbgroups import TASK_TITLE_PREFIX
 
-_HANDLE_RE = re.compile(r"facebook\.com/(?:profile\.php\?id=\d+|people/[^\"\s>]+)")
+_FB_DOMAIN = r"(?<![\w.-])(?:https?://)?(?:www\.|web\.|m\.|mbasic\.)?facebook\.com"
+# Real Facebook site paths that are NOT a user profile; a plain
+# facebook.com/<username> match must skip these.
+_RESERVED_PATHS = (
+    r"groups|marketplace|watch|reels?|photos?|story|events|pages|videos?|posts?|"
+    r"share|hashtag|gaming|bookmarks|messages|notifications|search|business|help|"
+    r"policies|terms|login|settings|fundraisers|friends|permalink\.php|story\.php"
+)
+_HANDLE_RE = re.compile(
+    _FB_DOMAIN
+    + r"/(?:"
+    + r"profile\.php\?id=\d+"  # legacy numeric profile id
+    + r"|people/[^\"\s>]+"  # /people/<name-or-id>
+    + r"|(?!(?:" + _RESERVED_PATHS + r")(?:[/?\"\s>]|$))"  # not a site path
+    + r"[A-Za-z0-9.][A-Za-z0-9._-]*"  # plain facebook.com/<username>
+    + r")"
+)
+# Egyptian mobile (0 1x xxxxxxxx / +20 1x xxxxxxxx) and landline forms.
+_PHONE_RE = re.compile(
+    r"(?<![\d+])(?:\+20|0)1[0125]\d{8}(?!\d)"
+    r"|(?<![\d+])(?:\+20|0)[2-9]\d{7,8}(?!\d)"
+)
+# Bare @handle; the lookbehind keeps it from eating e-mail addresses.
+_AT_HANDLE_RE = re.compile(r"(?<![\w.])@[A-Za-z0-9_.]{3,}\b")
+
+
+def scrub_text(text: str) -> str:
+    """Pure scrubber: remove FB profile URLs, bare @handles and Egyptian phone
+    numbers from free text so commenter identities are never persisted."""
+    if not text:
+        return text
+    text = _HANDLE_RE.sub("[community member]", text)
+    text = _PHONE_RE.sub("[redacted phone]", text)
+    text = _AT_HANDLE_RE.sub("[community member]", text)
+    return text
 
 
 def scrub_author_handles(output: LunaAgentOutput) -> None:
-    """Replace probable profile-handle substrings with [community member]."""
+    """Replace probable profile-handle substrings with [community member]
+    across every free-text field the FB path persists."""
     for finding in output.findings:
+        finding.summary = scrub_text(finding.summary)
+        finding.notes = scrub_text(finding.notes)
         for evidence in finding.evidence:
-            if _HANDLE_RE.search(evidence.summary):
-                evidence.summary = _HANDLE_RE.sub("[community member]", evidence.summary)
-            if _HANDLE_RE.search(evidence.raw_quote):
-                evidence.raw_quote = _HANDLE_RE.sub("[community member]", evidence.raw_quote)
-        if _HANDLE_RE.search(finding.summary):
-            finding.summary = _HANDLE_RE.sub("[community member]", finding.summary)
-        if _HANDLE_RE.search(finding.notes):
-            finding.notes = _HANDLE_RE.sub("[community member]", finding.notes)
+            evidence.summary = scrub_text(evidence.summary)
+            evidence.raw_quote = scrub_text(evidence.raw_quote)
+            evidence.source_note = scrub_text(evidence.source_note)
+            if evidence.supporting_notes:
+                evidence.supporting_notes = [
+                    scrub_text(note) for note in evidence.supporting_notes
+                ]
 
 
 def _fetch_task_payload(
@@ -144,86 +181,99 @@ async def _run_one(
     round_no: int,
     timeout_sec: int,
     prior_findings_json: str = "",
+    semaphore: asyncio.Semaphore | None = None,
 ) -> dict | None:
-    async with asyncio.Semaphore(5):
+    # The semaphore is created ONCE per run and shared, so max_parallel_agents is
+    # actually honoured instead of every coroutine getting a fresh free slot.
+    if semaphore is None:
+        semaphore = asyncio.Semaphore(1)
+    async with semaphore:
         task_ids = [str(row["id"]) for row in tasks]
         mark_tasks_assigned(db, task_ids, agent_id, round_no)
-        task_payload = []
-        for row in tasks:
-            fetched = await asyncio.to_thread(_fetch_task_payload, row, groups)
-            fetched = _clip_fbsearch(fetched, max_bytes=10000)
-            task_payload.append(
-                {
-                    "task_id": row["id"],
-                    "merchant_id": row["merchant_id"],
-                    "title": row["title"],
-                    "instruction": row["instruction"][:400],
-                    "fbsearch": fetched,
-                }
-            )
-        prompt = render(
-            "fb_community.md",
-            goal=GOAL,
-            agent_id=agent_id,
-            tasks=json.dumps(task_payload, ensure_ascii=False),
-        )
-        if prior_findings_json:
-            prompt += (
-                "\n\nGEMINI CROSS-CHECK INPUT (community findings already recorded for "
-                "these merchants; verify rather than repeat; truncated):\n"
-                + prior_findings_json[:40000]
-            )
-        print(
-            f"[fbswarm] launching {agent_id} ({model}) with {len(tasks)} tasks, "
-            f"prompt {len(prompt)} bytes",
-            flush=True,
-        )
+        settled = False
         try:
-            result = await client.run(
-                AgentRequest(
-                    prompt=prompt,
-                    model=model,
-                    name=agent_id,
-                    role=role,
-                    goal=GOAL,
-                    workspace_id=f"fbswarm-{agent_id}",
-                    timeout_sec=timeout_sec,
+            task_payload = []
+            for row in tasks:
+                fetched = await asyncio.to_thread(_fetch_task_payload, row, groups)
+                fetched = _clip_fbsearch(fetched, max_bytes=10000)
+                task_payload.append(
+                    {
+                        "task_id": row["id"],
+                        "merchant_id": row["merchant_id"],
+                        "title": row["title"],
+                        "instruction": row["instruction"][:400],
+                        "fbsearch": fetched,
+                    }
                 )
+            prompt = render(
+                "fb_community.md",
+                goal=GOAL,
+                agent_id=agent_id,
+                tasks=json.dumps(task_payload, ensure_ascii=False),
             )
-        except Exception as exc:  # noqa: BLE001
-            release_tasks(db, task_ids, f"launch failed: {exc}")
-            print(f"[fbswarm] {agent_id} LAUNCH FAILED: {exc}", flush=True)
-            return None
-        if not result.ok:
-            release_tasks(db, task_ids, result.error or "fb agent failed")
-            print(f"[fbswarm] {agent_id} FAILED: {result.error}", flush=True)
-            return None
-        try:
-            parsed = _parse(LunaAgentOutput, result.payload, wrap_list_as="findings")
-            parsed.agent_id = agent_id
-        except ValueError as exc:
-            release_tasks(db, task_ids, f"parse failed: {exc}")
-            print(f"[fbswarm] {agent_id} PARSE FAILED: {exc}", flush=True)
-            return None
-        returned_ids = {finding.task_id for finding in parsed.findings}
-        release_tasks(db, [tid for tid in task_ids if tid not in returned_ids], "fb agent omitted this task")
-        scrub_author_handles(parsed)
-        # Community anecdotes cap at medium reliability regardless of agent
-        # enthusiasm (plan evidence rule); clamp before ingest.
-        for finding in parsed.findings:
-            for evidence in finding.evidence:
-                if evidence.confidence > 0.8:
-                    evidence.confidence = 0.8
-                if evidence.reliability_band == ReliabilityBand.STRONG:
-                    evidence.reliability_band = ReliabilityBand.MEDIUM
-        added = ingest_luna(
-            db,
-            parsed,
-            agent_run_id=f"fbswarm:{agent_id}",
-            round_no=round_no,
-        )
-        print(f"[fbswarm] {agent_id} done: {len(parsed.findings)} findings, {added} new evidence", flush=True)
-        return {"agent_id": agent_id, "findings": len(parsed.findings), "new_evidence": added}
+            if prior_findings_json:
+                prompt += (
+                    "\n\nGEMINI CROSS-CHECK INPUT (community findings already recorded for "
+                    "these merchants; verify rather than repeat; truncated):\n"
+                    + prior_findings_json[:40000]
+                )
+            print(
+                f"[fbswarm] launching {agent_id} ({model}) with {len(tasks)} tasks, "
+                f"prompt {len(prompt)} bytes",
+                flush=True,
+            )
+            try:
+                result = await client.run(
+                    AgentRequest(
+                        prompt=prompt,
+                        model=model,
+                        name=agent_id,
+                        role=role,
+                        goal=GOAL,
+                        workspace_id=f"fbswarm-{agent_id}",
+                        timeout_sec=timeout_sec,
+                    )
+                )
+            except Exception as exc:  # noqa: BLE001
+                release_tasks(db, task_ids, f"launch failed: {exc}")
+                print(f"[fbswarm] {agent_id} LAUNCH FAILED: {exc}", flush=True)
+                return None
+            if not result.ok:
+                release_tasks(db, task_ids, result.error or "fb agent failed")
+                print(f"[fbswarm] {agent_id} FAILED: {result.error}", flush=True)
+                return None
+            try:
+                parsed = _parse(LunaAgentOutput, result.payload, wrap_list_as="findings")
+                parsed.agent_id = agent_id
+            except ValueError as exc:
+                release_tasks(db, task_ids, f"parse failed: {exc}")
+                print(f"[fbswarm] {agent_id} PARSE FAILED: {exc}", flush=True)
+                return None
+            returned_ids = {finding.task_id for finding in parsed.findings}
+            release_tasks(db, [tid for tid in task_ids if tid not in returned_ids], "fb agent omitted this task")
+            scrub_author_handles(parsed)
+            # Community anecdotes cap at medium reliability regardless of agent
+            # enthusiasm (plan evidence rule); clamp before ingest.
+            for finding in parsed.findings:
+                for evidence in finding.evidence:
+                    if evidence.confidence > 0.8:
+                        evidence.confidence = 0.8
+                    if evidence.reliability_band == ReliabilityBand.STRONG:
+                        evidence.reliability_band = ReliabilityBand.MEDIUM
+            added = ingest_luna(
+                db,
+                parsed,
+                agent_run_id=f"fbswarm:{agent_id}",
+                round_no=round_no,
+            )
+            print(f"[fbswarm] {agent_id} done: {len(parsed.findings)} findings, {added} new evidence", flush=True)
+            settled = True
+            return {"agent_id": agent_id, "findings": len(parsed.findings), "new_evidence": added}
+        finally:
+            # Any task this worker took but did not settle (unexpected exception
+            # outside the narrow handlers above) must not stay in_progress forever.
+            if not settled:
+                release_tasks(db, task_ids, "fb agent did not settle this task")
 
 
 def _gemini_findings_for(db: Database, task_rows: list) -> str:
@@ -252,7 +302,7 @@ async def run_fb_swarm(
     cfg = load_config(config_path)
     if not verify_session():
         print(
-            "Facebook session dead. Re-extract: copy Zen cookies.sqlite to /tmp/.fbsess.sqlite "
+            f"Facebook session dead. Re-extract: copy Zen cookies.sqlite to {DEFAULT_COOKIE_DB} "
             "then rerun. Exiting 3.",
             flush=True,
         )
@@ -278,45 +328,61 @@ async def run_fb_swarm(
     gemini_chunks = chunks[:gemini_agents]
     luna_chunks = chunks[gemini_agents : gemini_agents + luna_agents]
     results: list[dict] = []
-    if gemini_chunks:
-        gem_results = await asyncio.gather(
-            *[
-                _run_one(
-                    client,
-                    db,
-                    agent_id=f"{round_label}-g-{i:02d}",
-                    role="analyst",
-                    model=gemini_model,
-                    tasks=chunk,
-                    groups=groups,
-                    round_no=1000,
-                    timeout_sec=cfg.omp.analysis_timeout_sec,
-                )
-                for i, chunk in enumerate(gemini_chunks, start=1)
-            ]
-        )
-        results.extend(r for r in gem_results if r)
-    if luna_chunks:
-        luna_results = await asyncio.gather(
-            *[
-                _run_one(
-                    client,
-                    db,
-                    agent_id=f"{round_label}-l-{i:02d}",
-                    role="verifier",
-                    model=luna_model,
-                    tasks=chunk,
-                    groups=groups,
-                    round_no=1001,
-                    timeout_sec=cfg.omp.analysis_timeout_sec,
-                    prior_findings_json=_gemini_findings_for(db, chunk),
-                )
-                for i, chunk in enumerate(luna_chunks, start=1)
-            ]
-        )
-        results.extend(r for r in luna_results if r)
+    semaphore = asyncio.Semaphore(max(1, cfg.concurrency.max_parallel_agents))
+    try:
+        if gemini_chunks:
+            gem_results = await asyncio.gather(
+                *[
+                    _run_one(
+                        client,
+                        db,
+                        agent_id=f"{round_label}-g-{i:02d}",
+                        role="analyst",
+                        model=gemini_model,
+                        tasks=chunk,
+                        groups=groups,
+                        round_no=1000,
+                        timeout_sec=cfg.omp.analysis_timeout_sec,
+                        semaphore=semaphore,
+                    )
+                    for i, chunk in enumerate(gemini_chunks, start=1)
+                ],
+                return_exceptions=True,
+            )
+            for result in gem_results:
+                if isinstance(result, BaseException):
+                    print(f"[fbswarm] gemini agent crashed: {result!r}", flush=True)
+                elif result:
+                    results.append(result)
+        if luna_chunks:
+            luna_results = await asyncio.gather(
+                *[
+                    _run_one(
+                        client,
+                        db,
+                        agent_id=f"{round_label}-l-{i:02d}",
+                        role="verifier",
+                        model=luna_model,
+                        tasks=chunk,
+                        groups=groups,
+                        round_no=1001,
+                        timeout_sec=cfg.omp.analysis_timeout_sec,
+                        prior_findings_json=_gemini_findings_for(db, chunk),
+                        semaphore=semaphore,
+                    )
+                    for i, chunk in enumerate(luna_chunks, start=1)
+                ],
+                return_exceptions=True,
+            )
+            for result in luna_results:
+                if isinstance(result, BaseException):
+                    print(f"[fbswarm] luna agent crashed: {result!r}", flush=True)
+                elif result:
+                    results.append(result)
+    finally:
+        # Always bulk-terminate live omp children, even after an unexpected failure.
+        await client.close()
     launched = len(gemini_chunks) + len(luna_chunks)
     ok = len(results)
     print(f"[fbswarm] summary: {ok}/{launched} agents produced findings", flush=True)
-    await client.close()
     return 0 if launched and ok / launched >= 0.8 else 1

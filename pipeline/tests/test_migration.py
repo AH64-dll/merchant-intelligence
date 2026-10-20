@@ -1,11 +1,12 @@
-"""Migration and write-contract tests for the v3 and v4 schemas.
+"""Migration and write-contract tests for the v3, v4 and v5 schemas.
 
 Builds real v2 fixtures with the pre-migration schema (git history is the
 specification of v2: UNIQUE(kind, normalized_value) identifiers, unversioned
 analysis payloads, mixed-offset timestamps, chained duplicate_of pointers)
 and asserts the v3 migration preserves, normalizes, and canonicalizes without
 losing a single row. The v4 fixtures are degraded from the live schema and
-cover every source locator that has no browser-openable URL.
+cover every source locator that has no browser-openable URL. The v5 fixtures
+cover the persisted translations table and the fail-closed version guard.
 """
 
 import json
@@ -135,8 +136,8 @@ def test_v2_migrates_to_v3_preserving_rows_and_backfills(tmp_path):
     before.close()
 
     db = Database(path)
-    assert SCHEMA_VERSION == 4
-    assert db.query_one("SELECT MAX(version) AS v FROM schema_version")["v"] == 4
+    assert SCHEMA_VERSION == 5
+    assert db.query_one("SELECT MAX(version) AS v FROM schema_version")["v"] == 5
     after_counts = {
         table: db.query_one(f"SELECT COUNT(*) AS c FROM {table}")["c"]
         for table in pre_counts
@@ -605,8 +606,8 @@ def test_migrate_v3_to_v4_classifies_locators_and_preserves_raw_urls(tmp_path):
     before.close()
 
     db = Database(path)
-    assert SCHEMA_VERSION == 4
-    assert db.query_one("SELECT MAX(version) AS v FROM schema_version")["v"] == 4
+    assert SCHEMA_VERSION == 5
+    assert db.query_one("SELECT MAX(version) AS v FROM schema_version")["v"] == 5
 
     # No source row is deleted, merged, or rewritten: url and canonical_url
     # stay byte-identical, including the mangled canonical form of id 1203.
@@ -676,10 +677,117 @@ def test_v4_migration_does_not_rerun_on_reopen(tmp_path):
     first.close()
 
     reopened = Database(path)
-    assert reopened.query_one("SELECT MAX(version) AS v FROM schema_version")["v"] == 4
+    assert reopened.query_one("SELECT MAX(version) AS v FROM schema_version")["v"] == 5
     assert tuple(
         reopened.query_one(
             "SELECT url, web_url, locator_note, access_kind FROM sources"
         )
     ) == expected
     reopened.close()
+
+
+def _v4_fixture(path: Path) -> None:
+    """Create a v5 database and degrade it back to the v4 shape.
+
+    v5 only added the translations table, so removing it (and its index) and
+    resetting the version is a faithful v4 database.
+    """
+    db = Database(path)
+    conn = db._conn
+    conn.execute("DROP INDEX IF EXISTS idx_translations_record")
+    conn.execute("DROP TABLE IF EXISTS translations")
+    conn.execute("DELETE FROM schema_version")
+    conn.execute("INSERT INTO schema_version(version) VALUES (4)")
+    db.close()
+
+
+def test_migrate_v4_to_v5_creates_translations_table(tmp_path):
+    path = tmp_path / "v4.db"
+    _v4_fixture(path)
+
+    before = sqlite3.connect(path)
+    assert before.execute(
+        "SELECT COUNT(*) FROM sqlite_master WHERE name IN"
+        " ('translations', 'idx_translations_record')"
+    ).fetchone()[0] == 0
+    before.close()
+
+    db = Database(path)
+    assert SCHEMA_VERSION == 5
+    assert db.query_one("SELECT MAX(version) AS v FROM schema_version")["v"] == 5
+    assert [
+        row["name"] for row in db.query("PRAGMA table_info(translations)")
+    ] == [
+        "id",
+        "table_name",
+        "record_id",
+        "field_name",
+        "lang",
+        "content",
+        "model",
+        "created_at",
+    ]
+    assert db.query_one(
+        "SELECT COUNT(*) AS c FROM sqlite_master WHERE type='index'"
+        " AND name='idx_translations_record'"
+    )["c"] == 1
+
+    # The UNIQUE(table_name, record_id, field_name, lang) key and the
+    # lang IN ('ar','en') CHECK both hold on the migrated table.
+    db.execute(
+        "INSERT INTO translations(table_name, record_id, field_name, lang, content)"
+        " VALUES ('merchants', 'm1', 'category', 'ar', 'إلكترونيات')"
+    )
+    with pytest.raises(sqlite3.IntegrityError):
+        db.execute(
+            "INSERT INTO translations(table_name, record_id, field_name, lang, content)"
+            " VALUES ('merchants', 'm1', 'category', 'fr', 'x')"
+        )
+    with pytest.raises(sqlite3.IntegrityError):
+        db.execute(
+            "INSERT INTO translations(table_name, record_id, field_name, lang, content)"
+            " VALUES ('merchants', 'm1', 'category', 'ar', 'duplicate')"
+        )
+    db.close()
+
+
+def test_v5_database_is_not_downgraded_on_reopen(tmp_path):
+    """A v5 database opened by v5 code stays v5 with one version row."""
+    path = tmp_path / "v5.db"
+    Database(path).close()
+
+    before = sqlite3.connect(path)
+    translations_sql = before.execute(
+        "SELECT sql FROM sqlite_master WHERE name='translations'"
+    ).fetchone()[0]
+    before.close()
+
+    db = Database(path)
+    assert db.query_one("SELECT MAX(version) AS v FROM schema_version")["v"] == 5
+    # The old code always DELETE'd and re-INSERT'd the row; a v5 database must
+    # come back out with exactly the row it went in with.
+    assert db.query_one("SELECT COUNT(*) AS c FROM schema_version")["c"] == 1
+    assert db.query_one(
+        "SELECT sql FROM sqlite_master WHERE name='translations'"
+    )["sql"] == translations_sql
+    db.close()
+
+
+def test_newer_schema_version_is_rejected_fail_closed(tmp_path):
+    """A v6 database raises before any write instead of downgrading to v5."""
+    path = tmp_path / "v6.db"
+    Database(path).close()
+    conn = sqlite3.connect(path)
+    conn.execute("DELETE FROM schema_version")
+    conn.execute("INSERT INTO schema_version(version) VALUES (6)")
+    conn.commit()
+    conn.close()
+
+    with pytest.raises(RuntimeError, match="6"):
+        Database(path)
+
+    # The newer database is untouched: no downgrade write happened.
+    conn = sqlite3.connect(path)
+    assert conn.execute("SELECT MAX(version) FROM schema_version").fetchone()[0] == 6
+    conn.close()
+

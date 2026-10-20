@@ -6,22 +6,27 @@ Processes the group's batch file in chunks of vendors, calling omp with
 Resumable: skips vendors whose translations already exist in the DB.
 
 Usage: python3 scripts/translate_worker.py --group N
-Exit codes: 0 = group complete; 2 = provider failure (retry later).
+Exit codes: 0 = group complete; 1 = incomplete (items left untranslated, retries
+exhausted); 2 = provider failure (retry later).
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from translate_bilingual import connect, extract_vendor, N_GROUPS, WORK_DIR, TRANSLATE_MODEL
 
-MODEL = "merge-gateway/glm-5.3-flash"
+# Single source of truth: the id lives in translate_bilingual only, so the
+# prompt payload header and the actual model call can never desynchronise.
+MODEL = TRANSLATE_MODEL
 GLOSSARY = (Path(__file__).parent.parent / "data" / "bilingual_glossary.md").read_text(encoding="utf-8")
 CHUNK_ITEMS = 6           # items per omp call (Nemotron reasoning time scales with items)
 RATE_SLEEP = 2            # seconds between calls
@@ -48,14 +53,27 @@ def build_prompt(items: list[dict]) -> str:
 
 
 def call_model(items: list[dict]) -> list[dict] | None:
-    pfile = WORK_DIR / f"prompt_{int(time.time()*1000)}.json"
-    pfile.write_text(build_prompt(items), encoding="utf-8")
-    r = subprocess.run(
-        ["timeout", "900", "omp", "-p", "--mode", "json", "--no-session", "--no-tools",
-         "--model", MODEL, f"@{pfile}"],
-        capture_output=True, text=True,
+    # Unique prompt file per process: the four supervisor workers share
+    # WORK_DIR, so a millisecond timestamp can collide and one worker would
+    # truncate / unlink the file another's `omp @file` is still reading.
+    WORK_DIR.mkdir(parents=True, exist_ok=True)
+    pfile = tempfile.NamedTemporaryFile(
+        "w", dir=WORK_DIR, suffix=".json", delete=False, encoding="utf-8"
     )
-    pfile.unlink(missing_ok=True)
+    try:
+        pfile.write(build_prompt(items))
+        pfile.close()
+        r = subprocess.run(
+            ["timeout", "900", "omp", "-p", "--mode", "json", "--no-session", "--no-tools",
+             "--model", MODEL, f"@{pfile.name}"],
+            capture_output=True, text=True,
+        )
+    finally:
+        pfile.close()
+        try:
+            os.unlink(pfile.name)
+        except OSError:
+            pass
     result_text = None
     for line in r.stdout.splitlines():
         try:
@@ -125,25 +143,30 @@ def main() -> int:
         print("group complete", flush=True)
         return 0
 
+    MAX_CHUNK_ATTEMPTS = 3
     db_w = connect()
     done = 0
     errors = 0
-    skip_indices: set[int] = set()
-    for i in range(0, len(queue), CHUNK_ITEMS):
-        if i in skip_indices:
-            print(f"chunk {i//CHUNK_ITEMS}: skipped (previously poisoned)", flush=True)
-            continue
+    attempts: dict[int, int] = {}
+    pending = list(range(0, len(queue), CHUNK_ITEMS))
+    while pending:
+        i = pending.pop(0)
         chunk = queue[i:i + CHUNK_ITEMS]
         result = call_model(chunk)
         if result is None:
+            attempts[i] = attempts.get(i, 0) + 1
             errors += 1
-            print(f"chunk {i//CHUNK_ITEMS}: model failure (consecutive {errors})", flush=True)
+            print(f"chunk {i//CHUNK_ITEMS}: model failure "
+                  f"(consecutive {errors}, attempt {attempts[i]}/{MAX_CHUNK_ATTEMPTS})", flush=True)
             if errors >= 3:
                 db_w.close()
                 print("aborting: 3 consecutive model failures", flush=True)
                 return 2
+            if attempts[i] < MAX_CHUNK_ATTEMPTS:
+                pending.append(i)
             time.sleep(30)
             continue
+        errors = 0  # a success breaks the consecutive-failure streak
         by_key = {}
         for item in chunk:
             by_key[(item["record_id"], item["field_name"])] = item
@@ -172,6 +195,12 @@ def main() -> int:
               f"(total {done}/{total})", flush=True)
         time.sleep(RATE_SLEEP)
     db_w.close()
+    if done < total:
+        exhausted = sorted(n // CHUNK_ITEMS for n, a in attempts.items()
+                           if a >= MAX_CHUNK_ATTEMPTS)
+        print(f"group {args.group} incomplete: {done}/{total} translated; "
+              f"chunks exhausted retries: {exhausted}", flush=True)
+        return 1
     print(f"group {args.group} complete: {done} translated", flush=True)
     return 0
 

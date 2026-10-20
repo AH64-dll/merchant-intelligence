@@ -21,6 +21,8 @@ export function PositiveEvidenceCard({
 }): JSX.Element | null {
   if (entry.positiveHighlight === null) return null;
   const highlight = entry.positiveHighlight;
+  // Bind the validated href, never the raw stored value.
+  const safeSourceUrl = safeHttpUrl(highlight.sourceUrl);
   return (
     <MerchantSummaryCard entry={entry}>
       <section aria-label="أبرز دليل إيجابي موثق" className="border-t border-black pt-2">
@@ -51,9 +53,9 @@ export function PositiveEvidenceCard({
           >
             الدليل كاملًا في صفحة البائع
           </Link>
-          {safeHttpUrl(highlight.sourceUrl) !== null ? (
+          {safeSourceUrl !== null ? (
             <a
-              href={highlight.sourceUrl}
+              href={safeSourceUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block min-h-[44px] underline underline-offset-2"

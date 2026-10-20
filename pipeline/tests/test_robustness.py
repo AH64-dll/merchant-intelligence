@@ -392,3 +392,142 @@ def test_ingest_sol_writes_payload_version_one(tmp_path):
     )
     assert payload["payload_version"] == 1
     db.close()
+
+
+def test_ingest_sol_resolves_pending_merchant_id_without_name_error(tmp_path):
+    db = Database(tmp_path / "mi.db")
+    merchant_id = resolve_merchant(db, _candidate(), 1)
+    db.upsert_run("run-1", "running", "analysis", 0, 0, {})
+    output = SolRoundOutput.model_validate(
+        {
+            "merchants": [
+                {
+                    "merchant_name": "Example Store",
+                    "identity_confidence": 0.5,
+                    "internal_state": "mixed",
+                }
+            ]
+        }
+    )
+    assert output.merchants[0].merchant_id == "pending"
+
+    ingest_sol(db, "run-1", output, 1, allowed_merchant_ids={merchant_id})
+    row = db.query_one("SELECT merchant_id FROM merchant_analyses WHERE run_id='run-1'")
+    assert row is not None and row["merchant_id"] == merchant_id
+
+    # No allowed scope still must not raise, and must not attach arbitrarily.
+    ingest_sol(db, "run-1", output, 1)
+    assert db.query_one(
+        "SELECT COUNT(*) AS n FROM merchant_analyses WHERE run_id='run-1'"
+    )["n"] == 1
+    db.close()
+
+
+def test_exclusions_runs_against_real_database(tmp_path):
+    cfg = load_config(smoke=True)
+    cfg.root = Path(tmp_path)
+    cfg.database_path = str(tmp_path / "mi.db")
+    cfg.export_dir = str(tmp_path / "export")
+    db = Database(cfg.database_path)
+    resolve_merchant(db, _candidate(), 1)
+    pipe = Pipeline(cfg, MockOmpClient(), db)
+    assert "Example Store" in pipe._exclusions()
+    assert "Example Store" in pipe._exclusions(limit=5)
+    db.close()
+
+
+def test_duplicate_probe_is_scoped_to_one_merchant(tmp_path):
+    db = Database(tmp_path / "mi.db")
+
+    def twin(city: str, website: str) -> MerchantCandidate:
+        return MerchantCandidate(
+            canonical_name="Twin Store",
+            category="electronics",
+            city=city,
+            identifiers={"websites": [website]},
+        )
+
+    first = resolve_merchant(db, twin("Cairo", "https://twin-a.test"), 1)
+    second = resolve_merchant(db, twin("Giza", "https://twin-b.test"), 1)
+    assert first != second
+    assert db.query_one("SELECT COUNT(*) AS n FROM merchants")["n"] == 2
+
+    evidence = _evidence("https://shared.test/post", "Identical evidence text for two twin merchants.")
+    _, first_independent = ingest_evidence(db, first, evidence, agent_run_id="a1", round_no=1)
+    _, second_independent = ingest_evidence(db, second, evidence, agent_run_id="a2", round_no=1)
+    assert first_independent is True
+    assert second_independent is True
+
+    # The fingerprints genuinely collide; only the per-merchant scope keeps the
+    # probe from dangling a cross-merchant duplicate_of pointer.
+    rows = db.query("SELECT fingerprint, content_fingerprint FROM evidence ORDER BY rowid")
+    assert rows[0]["fingerprint"] == rows[1]["fingerprint"]
+    assert rows[0]["content_fingerprint"] == rows[1]["content_fingerprint"]
+    cross = db.query(
+        """SELECT e.id FROM evidence e JOIN evidence root ON root.id=e.duplicate_of
+           WHERE e.merchant_id<>root.merchant_id"""
+    )
+    assert cross == []
+    assert db.query_one("SELECT COUNT(*) AS n FROM evidence WHERE duplicate_of IS NOT NULL")["n"] == 0
+    db.close()
+
+
+def test_render_does_not_rescan_inserted_values(monkeypatch):
+    from merchant_intel import prompts
+
+    monkeypatch.setattr(prompts, "load_prompt", lambda name: "{note} {value}")
+    assert prompts.render("t.md", note="literal {value}", value="RESOLVED") == "literal {value} RESOLVED"
+    assert prompts.render("t.md", note="only-note") == "only-note {value}"
+
+
+def test_luna_exception_releases_in_progress_tasks(tmp_path):
+    cfg = load_config(smoke=True)
+    cfg.root = Path(tmp_path)
+    cfg.database_path = str(tmp_path / "mi.db")
+    cfg.export_dir = str(tmp_path / "export")
+    db = Database(cfg.database_path)
+    merchant_id = resolve_merchant(db, _candidate(), 1)
+    db.upsert_run("run-1", "running", "verification", 1, 1, {})
+    db.execute(
+        """INSERT INTO verification_tasks
+           (id, run_id, merchant_id, title, instruction, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        ("task-1", "run-1", merchant_id, "Check source", "Find a source", "now", "now"),
+    )
+
+    class ExplodingClient(MockOmpClient):
+        async def run(self, request):
+            raise RuntimeError("windows termination failure")
+
+    pipe = Pipeline(cfg, ExplodingClient(), db)
+    pipe.client.resolved_models = {"verifier": "openai-codex/gpt-5.6-luna"}
+    pipe.state.run_id = "run-1"
+    pipe.state.stage = "verification"
+    pipe.state.verification_round = 1
+    rows = db.query("SELECT * FROM verification_tasks WHERE id='task-1'")
+
+    with pytest.raises(RuntimeError):
+        asyncio.run(pipe._luna_one(1, rows))
+
+    row = db.query_one("SELECT status FROM verification_tasks WHERE id='task-1'")
+    assert row is not None and row["status"] == "pending"
+    db.close()
+
+
+def test_config_rejects_bad_numbers_with_the_config_path(tmp_path):
+    path = tmp_path / "config.yaml"
+
+    path.write_text("research:\n  stale_after_days: abc\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="research.stale_after_days"):
+        load_config(path)
+
+    path.write_text("concurrency:\n  max_parallel_agents: many\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="concurrency.max_parallel_agents"):
+        load_config(path)
+
+    path.write_text("concurrency:\n  max_parallel_agents: 0\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="concurrency.max_parallel_agents"):
+        load_config(path)
+
+    path.write_text("concurrency:\n  max_parallel_agents: '3'\n", encoding="utf-8")
+    assert load_config(path).concurrency.max_parallel_agents == 3

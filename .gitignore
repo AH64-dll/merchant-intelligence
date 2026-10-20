@@ -11,6 +11,7 @@ __pycache__/
 *.pyc
 *.db-wal
 *.db-shm
+*.db-journal
 .venv/
 
 # Webapp build artifacts and deps
@@ -22,3 +23,9 @@ webapp/__pycache__/
 .env
 .env.*
 *.key
+
+# Editors, OS and coverage artifacts
+.DS_Store
+.idea/
+.vscode/
+coverage/

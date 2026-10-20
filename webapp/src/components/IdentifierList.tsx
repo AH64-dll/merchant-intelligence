@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 import type { Identifier } from '@/lib/types';
 import { IDENTIFIER_KIND_LABELS, ROLE_LABELS } from '@/lib/labels';
 import type { IdentifierKind } from '@/lib/types';
+import { safeHttpUrl } from './display';
 
 /**
  * Actionable value for contact identifiers. The anchor target uses the
@@ -25,18 +26,21 @@ function IdentifierValue({ identifier }: { identifier: Identifier }): JSX.Elemen
       </a>
     );
   }
-  if (kind === 'website' && normalizedValue.startsWith('http')) {
-    return (
-      <a
-        href={normalizedValue}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="underline"
-        dir="ltr"
-      >
-        {value}
-      </a>
-    );
+  if (kind === 'website') {
+    const safeUrl = safeHttpUrl(normalizedValue);
+    if (safeUrl !== null) {
+      return (
+        <a
+          href={safeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+          dir="ltr"
+        >
+          {value}
+        </a>
+      );
+    }
   }
   return (
     <span dir="ltr" className="ltr-isolate wrap-anywhere">

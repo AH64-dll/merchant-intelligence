@@ -38,9 +38,9 @@ quote_sql() {
 
 TMP=""
 cleanup() {
-  # Remove ONLY this invocation's temp file; the lock file stays (it is a lock).
-  if [ -n "$TMP" ] && [ -f "$TMP" ]; then
-    rm -f "$TMP"
+  # Remove ONLY this invocation's temp files; the lock file stays (it is a lock).
+  if [ -n "$TMP" ]; then
+    rm -f "$TMP" "$TMP.audit"
   fi
 }
 trap cleanup ERR EXIT
@@ -55,6 +55,15 @@ if [ ! -f "$SRC" ]; then
 fi
 if [ ! -f "$AUDIT" ]; then
   die "audit script not found at $AUDIT"
+fi
+
+# Fail closed: the audited temp copy is `mv`d over DEST, so if SRC and DEST name
+# the same file (e.g. DEST_DB=data/merchant_intelligence.db) the master DB would
+# be overwritten by the copy.
+SRC_REAL="$(realpath -m "$SRC")"
+DEST_REAL="$(realpath -m "$DEST")"
+if [ "$SRC_REAL" = "$DEST_REAL" ]; then
+  die "SRC_DB and DEST_DB resolve to the same file ($SRC_REAL); refusing to overwrite the master DB"
 fi
 
 mkdir -p "$(dirname "$DEST")"

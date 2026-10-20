@@ -194,6 +194,21 @@ export interface NormalizedQueryUrl {
 /** Identity-bearing query params preserved when stripping tracking noise. */
 const IDENTITY_QUERY_KEYS = new Set(['id']);
 
+/**
+ * Routing prefixes that are never account handles. Treating one of these as a
+ * username would key every such page (e.g. all `/pages/<brand>/<id>` URLs) onto
+ * one shared `host/<segment>` key.
+ */
+const RESERVED_SOCIAL_SEGMENTS = new Set([
+  'profile.php',
+  'pages',
+  'groups',
+  'watch',
+  'events',
+  'marketplace',
+  'video',
+]);
+
 function stripTracking(url: URL): string {
   const kept = new URLSearchParams();
   for (const [key, value] of url.searchParams) {
@@ -226,28 +241,50 @@ export function normalizeQueryUrl(rawInput: string): NormalizedQueryUrl | null {
   const externalReference = isExternalReferenceHost(host);
 
   // Social platforms: account key + full subpath.
-  const social = (kind: IdentifierKind, canonicalHost: string, handle: string): NormalizedQueryUrl => {
+  const social = (
+    kind: IdentifierKind,
+    canonicalHost: string,
+    handle: string,
+    options: { identityFromQuery?: boolean; pathAsIdentity?: boolean } = {},
+  ): NormalizedQueryUrl => {
     const accountKey = `${canonicalHost}/${handle}`.toLowerCase();
     const fullSub = path.length > 0 ? `${canonicalHost}${path}`.toLowerCase() : null;
+    // `identityFromQuery`: the identity lives in the query string, so the
+    //   path alone (e.g. `facebook.com/profile.php`) is shared boilerplate and
+    //   must never become a key.
+    // `pathAsIdentity`: the first segment is a routing prefix, not a handle, so
+    //   the full path (e.g. `facebook.com/pages/<brand>/<id>`) carries identity.
+    const pathKeys = options.pathAsIdentity
+      ? fullSub !== null ? [fullSub] : [accountKey]
+      : options.identityFromQuery
+        ? [accountKey]
+        : fullSub !== null && fullSub !== accountKey
+          ? [accountKey, fullSub]
+          : [accountKey];
+    const canonicalPath = options.pathAsIdentity && path.length > 0 ? path : `/${handle}`;
     return {
       kind,
-      normalized: `https://${canonicalHost}/${handle}`,
-      schemeless: `${canonicalHost}/${handle}`.toLowerCase(),
+      normalized: `https://${canonicalHost}${canonicalPath}`,
+      schemeless: `${canonicalHost}${canonicalPath}`.toLowerCase(),
       hostKey: canonicalHost,
-      pathKeys: fullSub !== null && fullSub !== accountKey ? [accountKey, fullSub] : [accountKey],
+      pathKeys,
       originKey: null, // shared platform host: never bare-host fallback
       externalReference,
     };
   };
 
   if ((host === 'facebook.com' || host.endsWith('.facebook.com')) && first !== undefined) {
-    // profile.php?id=… pages key on the numeric id.
+    // profile.php?id=… pages key on the numeric id (and only that id).
     if (first === 'profile.php') {
       const profileId = parsed.searchParams.get('id');
       if (profileId !== null && profileId.length > 0) {
-        const result = social('facebook', 'facebook.com', `profile.php?id=${profileId}`);
-        return { ...result, normalized: `https://facebook.com/profile.php?id=${profileId}` };
+        return social('facebook', 'facebook.com', `profile.php?id=${profileId}`, {
+          identityFromQuery: true,
+        });
       }
+    }
+    if (RESERVED_SOCIAL_SEGMENTS.has(first.toLowerCase())) {
+      return social('facebook', 'facebook.com', first, { pathAsIdentity: true });
     }
     return social('facebook', 'facebook.com', first);
   }

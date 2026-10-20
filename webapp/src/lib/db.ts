@@ -354,6 +354,28 @@ export function parseAnalysisPayload(payloadJson: string): AnalysisPayload | nul
   };
 }
 
+/**
+ * `parseAnalysisPayload` that degrades to null instead of throwing: an
+ * unsupported payload_version on one stored row must never 500 a page whose
+ * declared contract already allows a null analysis.
+ */
+function parseAnalysisPayloadSafe(payloadJson: string): AnalysisPayload | null {
+  try {
+    return parseAnalysisPayload(payloadJson);
+  } catch {
+    return null;
+  }
+}
+
+/** Guarded JSON.parse for stored payloads; malformed JSON yields undefined. */
+function parseStoredJson(json: string): unknown {
+  try {
+    return JSON.parse(json);
+  } catch {
+    return undefined;
+  }
+}
+
 export class MerchantDb {
   private readonly db: DatabaseHandle;
   private readonly snapshotInfo: SnapshotInfo;
@@ -376,7 +398,8 @@ export class MerchantDb {
   private readonly stmtDirectoryMerchants: Database.Statement;
   private readonly stmtDirectoryLinks: Database.Statement;
   private readonly stmtDirectoryEvidence: Database.Statement;
-  private readonly stmtTranslations: Database.Statement<[string, string]> | null;
+  private readonly stmtEvidenceTranslations: Database.Statement<[string, string]> | null;
+  private readonly stmtClaimTranslations: Database.Statement<[string, string]> | null;
   private directoryProjection: MerchantDirectoryProjection | null = null;
 
   constructor(dbPath: string) {
@@ -408,10 +431,22 @@ export class MerchantDb {
     this.stmtDetailAliases = this.db.prepare(
       'SELECT alias FROM merchant_aliases WHERE merchant_id = ? ORDER BY alias',
     );
-    this.stmtTranslations = this.hasTable('translations')
+    // Translations are scoped to the merchant's own evidence/claims rows by
+    // joining on record_id, so a detail read never materializes the whole
+    // translations table (thousands of rows across all merchants).
+    const hasTranslations = this.hasTable('translations');
+    this.stmtEvidenceTranslations = hasTranslations
       ? this.db.prepare(
-          `SELECT record_id, field_name, content FROM translations
-           WHERE table_name = ? AND lang = ?`,
+          `SELECT t.record_id AS record_id, t.field_name AS field_name, t.content AS content
+           FROM translations t JOIN evidence e ON e.id = t.record_id
+           WHERE t.table_name = 'evidence' AND t.lang = ? AND e.merchant_id = ?`,
+        )
+      : null;
+    this.stmtClaimTranslations = hasTranslations
+      ? this.db.prepare(
+          `SELECT t.record_id AS record_id, t.field_name AS field_name, t.content AS content
+           FROM translations t JOIN claims c ON c.id = t.record_id
+           WHERE t.table_name = 'claims' AND t.lang = ? AND c.merchant_id = ?`,
         )
       : null;
     this.stmtEvidence = this.db.prepare(
@@ -740,7 +775,7 @@ export class MerchantDb {
     }));
 
     const analysisRow = this.stmtLatestAnalysis.get(id) as AnalysisRow | undefined;
-    const analysis = analysisRow === undefined ? null : parseAnalysisPayload(analysisRow.payload_json);
+    const analysis = analysisRow === undefined ? null : parseAnalysisPayloadSafe(analysisRow.payload_json);
 
     // Sentiment counts are computed over non-duplicate evidence only, with an
     // explicit duplicate count — never a silently mixed basis.
@@ -768,11 +803,17 @@ export class MerchantDb {
     }));
 
     const briefRow = this.stmtBrief.get(id) as BriefRow | undefined;
-    const brief: BriefView | null =
+    // `payload_json` is NOT NULL but not guaranteed to be valid JSON: a
+    // malformed row must surface `brief: null`, never 500 the detail page/API.
+    const briefPayload =
       briefRow === undefined || briefRow.payload_json === null
+        ? undefined
+        : parseStoredJson(briefRow.payload_json);
+    const brief: BriefView | null =
+      briefRow === undefined || briefRow.payload_json === null || briefPayload === undefined
         ? null
         : {
-            payload: JSON.parse(briefRow.payload_json),
+            payload: briefPayload,
             generatedAt: briefRow.generated_at,
             model: briefRow.model,
             reviewedAt: briefRow.reviewed_at,
@@ -818,15 +859,15 @@ export class MerchantDb {
   getMerchantDetailLocalized(id: string, locale: 'ar' | 'en'): MerchantDetail | null {
     const detail = this.getMerchantDetail(id);
     if (detail === null) return null;
-    if (this.stmtTranslations === null) return detail;
+    if (this.stmtEvidenceTranslations === null || this.stmtClaimTranslations === null) return detail;
 
-    const evidenceTranslations = this.stmtTranslations.all('evidence', locale) as
+    const evidenceTranslations = this.stmtEvidenceTranslations.all(locale, id) as
       { record_id: string; field_name: string; content: string }[];
     const evidenceSummaryById: Record<string, string> = Object.fromEntries(
       evidenceTranslations.filter(r => r.field_name === 'summary').map(r => [r.record_id, r.content]),
     );
 
-    const claimTranslations = this.stmtTranslations.all('claims', locale) as
+    const claimTranslations = this.stmtClaimTranslations.all(locale, id) as
       { record_id: string; field_name: string; content: string }[];
     const claimSummaryById: Record<string, string> = Object.fromEntries(
       claimTranslations.filter(r => r.field_name === 'summary').map(r => [r.record_id, r.content]),

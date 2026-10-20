@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import sqlite3
 import sys
@@ -25,6 +26,12 @@ WORK_DIR = Path(__file__).resolve().parent.parent / "data" / "bilingual"
 N_GROUPS = 4
 
 TRANSLATE_MODEL = "merge-gateway/glm-5.3-flash"
+
+# Every translations row must name a table the extractor can emit; a missing or
+# unknown table_name is refused rather than defaulted (a wrong table
+# misattributes the row and manufactures phantom coverage gaps).
+VALID_TABLES = {"evidence", "claims", "merchant_briefs"}
+REQUIRED_ITEM_KEYS = ("record_id", "field_name", "target_lang", "translated_text")
 
 
 def connect(readonly: bool = False) -> sqlite3.Connection:
@@ -137,7 +144,10 @@ def cmd_extract(group: int) -> int:
         "merchants": len(mids),
         "docs": docs,
     }
-    out_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    # Atomic: agents read this file; a torn write would hand them half a batch.
+    tmp_path = WORK_DIR / (out_path.name + ".tmp")
+    tmp_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    os.replace(tmp_path, out_path)
     items = sum(len(d["items"]) for d in docs)
     print(f"group {group}: {len(mids)} merchants, {items} fields -> {out_path.name} "
           f"({out_path.stat().st_size/1024:.0f} KB)")
@@ -147,20 +157,41 @@ def cmd_extract(group: int) -> int:
 
 def cmd_ingest(file: str) -> int:
     data = json.loads(Path(file).read_text(encoding="utf-8"))
+    translations = data.get("translations")
+    if not isinstance(translations, list):
+        print(f"ingest error: {file} has no 'translations' list", file=sys.stderr)
+        return 1
+    # Validate the required keys up front: a KeyError halfway down a batch would
+    # abort the file after some rows were already inserted.
+    for n, item in enumerate(translations):
+        if not isinstance(item, dict):
+            print(f"ingest error: translations[{n}] is not an object", file=sys.stderr)
+            return 1
+        missing = [k for k in REQUIRED_ITEM_KEYS if not item.get(k)]
+        if missing:
+            print(f"ingest error: translations[{n}] missing required {missing}", file=sys.stderr)
+            return 1
     db = connect()
     count = 0
-    for item in data["translations"]:
+    skipped = 0
+    for item in translations:
+        # Never default a missing/unknown table_name to 'evidence': that
+        # misattributes the row and manufactures phantom coverage gaps.
+        if item.get("table_name") not in VALID_TABLES:
+            skipped += 1
+            continue
         db.execute("""
             INSERT INTO translations (table_name, record_id, field_name, lang, content, model)
             VALUES (?, ?, ?, ?, ?, ?)
             ON CONFLICT(table_name, record_id, field_name, lang)
             DO UPDATE SET content=excluded.content, model=excluded.model
-        """, (item.get("table_name", "evidence"), item["record_id"], item["field_name"],
+        """, (item["table_name"], item["record_id"], item["field_name"],
               item["target_lang"], item["translated_text"], item.get("model", TRANSLATE_MODEL)))
         count += 1
     db.commit()
     total = db.execute("SELECT COUNT(*) FROM translations").fetchone()[0]
-    print(f"ingested {count} translations; table total now {total}")
+    print(f"ingested {count} translations; table total now {total}"
+          + (f"; skipped {skipped} with missing/unknown table_name" if skipped else ""))
     db.close()
     return 0
 

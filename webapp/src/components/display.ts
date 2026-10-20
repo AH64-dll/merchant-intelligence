@@ -40,6 +40,7 @@ const AR_EG_DATE = new Intl.DateTimeFormat('ar-EG', {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
+  timeZone: 'UTC',
 });
 
 /**

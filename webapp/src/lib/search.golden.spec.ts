@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { MerchantDb } from './db';
 import { SearchIndex } from './search';
@@ -11,7 +12,7 @@ import type { SearchResult } from './types';
  * empty; no first-owner truncation on shared keys.
  */
 
-const DB_PATH = new URL('../../data/merchants.db', import.meta.url).pathname;
+const DB_PATH = fileURLToPath(new URL('../../data/merchants.db', import.meta.url));
 
 // Stable merchant IDs (snapshot-verified):
 // Stable merchant IDs (snapshot-verified against the consolidated 351-seller

@@ -337,6 +337,48 @@ describe('assessReputation — truth table across every state', () => {
     expect(result.evidenceIds).toContain(stale.id);
   });
 
+  it('cites the OLDEST (max-age) warning in the caveat, not the most recent', () => {
+    const now = new Date('2026-08-29T12:00:00Z');
+    const near = evidence({
+      claimType: 'official_warning',
+      sentiment: 'negative',
+      authorType: 'regulator',
+      publishedAt: '2026-06-01T00:00:00+00:00',
+    });
+    const far = evidence({
+      claimType: 'official_warning',
+      sentiment: 'negative',
+      authorType: 'regulator',
+      publishedAt: '2025-01-01T00:00:00+00:00',
+    });
+    const ageNear = Math.round((now.getTime() - Date.parse(near.publishedAt ?? '')) / 86_400_000);
+    const ageFar = Math.round((now.getTime() - Date.parse(far.publishedAt ?? '')) / 86_400_000);
+    expect(ageFar).toBeGreaterThan(ageNear);
+    const result = assessReputation('OFFICIAL_WARNING', [near, far], now);
+    expect(result.caveat).toContain(`أقدم إشارة قبل ${ageFar} يومًا`);
+    expect(result.caveat).not.toContain(`${ageNear} يومًا`);
+  });
+
+  it('dates the OLDEST (max-age) stale warning in the explanation, not the first listed', () => {
+    const now = new Date('2026-08-29T12:00:00Z');
+    const newerStale = evidence({
+      claimType: 'official_warning',
+      sentiment: 'negative',
+      authorType: 'regulator',
+      publishedAt: '2016-01-01T00:00:00+00:00',
+    });
+    const olderStale = evidence({
+      claimType: 'official_warning',
+      sentiment: 'negative',
+      authorType: 'regulator',
+      publishedAt: '2014-01-01T00:00:00+00:00',
+    });
+    const result = assessReputation('OFFICIAL_WARNING', [newerStale, olderStale], now);
+    expect(result.kind).toBe('OFFICIAL_WARNING');
+    expect(result.explanation).toContain('2014-01-01');
+    expect(result.explanation).not.toContain('2016-01-01');
+  });
+
   it('merchant-authored official_warning advice about impersonators is NOT a warning against that merchant', () => {
     const advice = evidence({
       claimType: 'official_warning',

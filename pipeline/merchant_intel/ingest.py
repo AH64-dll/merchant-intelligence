@@ -377,8 +377,9 @@ def ingest_evidence(
     )
     duplicate = db.query_one(
         """SELECT id FROM evidence
-           WHERE fingerprint=? OR content_fingerprint=? ORDER BY id LIMIT 1""",
-        (exact_fp, content_fp),
+           WHERE merchant_id=? AND (fingerprint=? OR content_fingerprint=?)
+           ORDER BY id LIMIT 1""",
+        (merchant_id, exact_fp, content_fp),
     )
     # Duplicate pointers always reference the canonical root of a chain:
     # if the matched row is itself a duplicate, walk to its root so chains
@@ -502,12 +503,12 @@ def ingest_sol(
     now = _now()
     for analysis in output.merchants:
         merchant_id = analysis.merchant_id
-        if merchant_id in {"", "pending"} and len(allowed) == 1:
-            merchant_id = next(iter(allowed))
+        if merchant_id in {"", "pending"} and allowed_merchant_ids and len(allowed_merchant_ids) == 1:
+            merchant_id = next(iter(allowed_merchant_ids))
         merchant = db.query_one("SELECT id FROM merchants WHERE id=?", (merchant_id,))
-        if merchant is None and allowed:
+        if merchant is None and allowed_merchant_ids:
             label = canonicalize_name(analysis.merchant_name or analysis.merchant_id)
-            for candidate_id in allowed:
+            for candidate_id in allowed_merchant_ids:
                 candidate = db.query_one(
                     "SELECT id, canonical_name FROM merchants WHERE id=?", (candidate_id,)
                 )
