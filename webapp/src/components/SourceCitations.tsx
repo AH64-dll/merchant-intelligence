@@ -155,6 +155,19 @@ function linkTextForCitation(citation: SourceCitationItem, safeUrl: string): str
 }
 
 /**
+ * Maps a stored locator_note to a localized label when the pipeline wrote a
+ * known constant (deep-resolve pass); falls back to the raw note text.
+ */
+function locatorNoteLabel(note: string | null | undefined, strings: ReturnType<typeof t>): string | null {
+  if (!note || note.trim().length === 0) return null;
+  const n = note.trim();
+  if (n === 'Vendor page — the specific post is not publicly linkable') return strings.sourceVendorPage;
+  if (n === 'Original post no longer reachable') return strings.sourceUnreachable;
+  if (n.startsWith('Redirect resolved to site root')) return strings.sourceVendorPage;
+  return n;
+}
+
+/**
  * SourceCitations component: renders every available web citation without a cap.
  * Uses safeHttpUrl from display.ts, opens external links in a new tab with rel="noopener noreferrer",
  * and displays non-web/null locators with the required localized fallback and details disclosure.
@@ -193,8 +206,13 @@ export function SourceCitations(props: SourceCitationsProps): JSX.Element {
                   <ExternalLink size={11} aria-hidden="true" />
                 </a>
                 {citation.checkStatus ? (
-                  <span className="text-[#7a8085] text-[11px]" dir="auto">
+                  <span className="text-[#56606a] text-[11px]" dir="auto">
                     {strings.lastVerifiedPrefix.replace('{status}', checkStatusLabel(citation.checkStatus, locale))}
+                  </span>
+                ) : null}
+                {locatorNoteLabel(citation.locatorNote, strings) ? (
+                  <span className="inline-flex items-center rounded-full border border-[#e4e3de] bg-[#f5f3ef] px-2 py-0.5 text-[11px] text-[#56606a]" dir="auto">
+                    {locatorNoteLabel(citation.locatorNote, strings)}
                   </span>
                 ) : null}
               </li>
