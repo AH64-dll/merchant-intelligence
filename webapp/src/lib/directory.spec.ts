@@ -1,4 +1,6 @@
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { MerchantDb } from './db';
 import {
   buildMerchantDirectoryProjection,
   directoryQueryCacheKey,
@@ -298,7 +300,7 @@ describe('positive-evidence eligibility', () => {
       ...positivePair('merchant-adverse'),
       evidence('merchant-adverse', { sentiment: 'negative', claimType: 'refund_issue', authorType: 'merchant' }),
     ];
-    expect(positiveIds(rows, evidenceRows)).toEqual(['merchant-adverse', 'duplicate-adverse']);
+    expect(positiveIds(rows, evidenceRows)).toEqual(['merchant-adverse']);
   });
 
   it('excludes central assessment warning and risk claims even when sentiment is neutral', () => {
@@ -320,7 +322,7 @@ describe('positive-evidence eligibility', () => {
       ...positivePair('merchant-warning'),
       evidence('merchant-warning', { sentiment: 'neutral', claimType: 'official_warning', authorType: 'merchant' }),
     ];
-    expect(positiveIds(rows, evidenceRows)).toEqual(['merchant-warning', 'duplicate-warning']);
+    expect(positiveIds(rows, evidenceRows)).toEqual(['merchant-warning']);
   });
 });
 
@@ -533,6 +535,58 @@ describe('filtering, pagination, and query normalization', () => {
       normalizeDirectoryQuery(input);
     } catch (error) {
       expect(error).toMatchObject({ field });
+    }
+  });
+});
+
+describe('real snapshot positive-evidence adverse-signal gate', () => {
+  const DB_PATH = fileURLToPath(new URL('../../data/merchants.db', import.meta.url));
+  const db = new MerchantDb(DB_PATH);
+
+  it('disqualifies El Nekhely Technology (094fdd3a-...) and ensures every positive-evidence seller is clean', () => {
+    const result = db.getMerchantDirectory({ view: 'positive-evidence', page: 1 });
+    const elNekhely = result.items.find((m) => m.id === '094fdd3a-682f-487e-8742-e1ceda262a14');
+    expect(elNekhely, 'El Nekhely must not be in positive-evidence view').toBeUndefined();
+
+    // Check all pages of positive evidence
+    const allPositiveIds: string[] = [];
+    for (let p = 1; p <= result.pagination.totalPages; p++) {
+      const pageRes = db.getMerchantDirectory({ view: 'positive-evidence', page: p });
+      for (const item of pageRes.items) {
+        allPositiveIds.push(item.id);
+        // Fetch full evidence for this merchant and assert no non-merchant negative or warning claims
+        const detail = db.getMerchantDetail(item.id);
+        if (detail) {
+          const hasAdverse = detail.evidence.some(
+            (e) => (e.authorType !== 'merchant' && e.sentiment === 'negative') ||
+                   e.claimType === 'official_warning' ||
+                   e.claimType === 'identity_mismatch' ||
+                   e.claimType === 'fraud_risk'
+          );
+          expect(hasAdverse, `Merchant ${item.id} (${item.canonicalName}) should have no adverse evidence`).toBe(false);
+        }
+      }
+    }
+    expect(allPositiveIds).not.toContain('094fdd3a-682f-487e-8742-e1ceda262a14');
+    console.log(`Eligible positive-evidence sellers after fix: ${allPositiveIds.length}`);
+  });
+
+  it('composes text query q with category and governorate filters', () => {
+    // Search for B.Tech with category filter
+    const filtered = db.getMerchantDirectory({ q: 'B.TECH', category: 'Consumer Electronics & Household Appliances Retailer' });
+    expect(filtered.items.length).toBeGreaterThan(0);
+    expect(filtered.items.some((i) => i.id === '0abffb14-4754-4d4a-8ec7-78a5732a9264')).toBe(true);
+
+    // Query with non-matching governorate returns 0 items for B.Tech
+    const nonMatching = db.getMerchantDirectory({ q: '0abffb14-4754-4d4a-8ec7-78a5732a9264', governorate: 'Aswan' });
+    expect(nonMatching.items.length).toBe(0);
+  });
+
+  it('filters by locationCount (minimum address records)', () => {
+    const multiLocation = db.getMerchantDirectory({ locationCount: 2 });
+    expect(multiLocation.items.length).toBeGreaterThan(0);
+    for (const item of multiLocation.items) {
+      expect(item.locationCount).toBeGreaterThanOrEqual(2);
     }
   });
 });

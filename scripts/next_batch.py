@@ -59,7 +59,6 @@ def main() -> int:
                    COUNT(DISTINCT e.source_id) AS src
             FROM merchants m
             LEFT JOIN evidence e ON e.merchant_id = m.id AND e.independent = 1
-            WHERE m.state != 'UNVERIFIABLE_FOOTPRINT'
             GROUP BY m.id
             HAVING src < ?
             ORDER BY src ASC, m.canonical_name
@@ -67,16 +66,20 @@ def main() -> int:
             (MIN_SRC,),
         ).fetchall()
         rows = [r for r in all_rows if r[0] not in exhausted][: args.size]
-        remaining_total = cur.execute(
-            """SELECT COUNT(*) FROM (
-                 SELECT m.id FROM merchants m
-                 LEFT JOIN evidence e ON e.merchant_id=m.id AND e.independent=1
-                 WHERE m.state != 'UNVERIFIABLE_FOOTPRINT'
-                 GROUP BY m.id
-                 HAVING COUNT(DISTINCT e.source_id) < ?
-               )""",
-            (MIN_SRC,),
-        ).fetchone()[0]
+        if exhausted:
+            placeholders = ",".join("?" for _ in exhausted)
+            remaining_total = cur.execute(
+                f"""SELECT COUNT(*) FROM (
+                     SELECT m.id FROM merchants m
+                     LEFT JOIN evidence e ON e.merchant_id=m.id AND e.independent=1
+                     WHERE m.id NOT IN ({placeholders})
+                     GROUP BY m.id
+                     HAVING COUNT(DISTINCT e.source_id) < ?
+                   )""",
+                list(exhausted) + [MIN_SRC],
+            ).fetchone()[0]
+        else:
+            remaining_total = len([r for r in all_rows if r[0] not in exhausted])
         merchants = [
             {
                 "id": r[0],
@@ -105,16 +108,33 @@ def main() -> int:
         return 0
 
     # phase2
+    exhausted_file = ROOT / "data" / "orchestrator" / "state" / "exhausted_merchants.txt"
+    exhausted: set[str] = set()
+    if exhausted_file.exists():
+        exhausted = {l.strip() for l in exhausted_file.read_text().splitlines() if l.strip()}
     total = cur.execute("SELECT COUNT(*) FROM merchants").fetchone()[0]
-    below = cur.execute(
-        """SELECT COUNT(*) FROM (
-             SELECT m.id FROM merchants m
-             LEFT JOIN evidence e ON e.merchant_id=m.id AND e.independent=1
-             GROUP BY m.id
-             HAVING COUNT(DISTINCT e.source_id) < ?
-           )""",
-        (MIN_SRC,),
-    ).fetchone()[0]
+    if exhausted:
+        placeholders = ",".join("?" for _ in exhausted)
+        below = cur.execute(
+            f"""SELECT COUNT(*) FROM (
+                 SELECT m.id FROM merchants m
+                 LEFT JOIN evidence e ON e.merchant_id=m.id AND e.independent=1
+                 WHERE m.id NOT IN ({placeholders})
+                 GROUP BY m.id
+                 HAVING COUNT(DISTINCT e.source_id) < ?
+               )""",
+            list(exhausted) + [MIN_SRC],
+        ).fetchone()[0]
+    else:
+        below = cur.execute(
+            """SELECT COUNT(*) FROM (
+                 SELECT m.id FROM merchants m
+                 LEFT JOIN evidence e ON e.merchant_id=m.id AND e.independent=1
+                 GROUP BY m.id
+                 HAVING COUNT(DISTINCT e.source_id) < ?
+               )""",
+            (MIN_SRC,),
+        ).fetchone()[0]
     names = [
         r[0]
         for r in cur.execute("SELECT canonical_name FROM merchants ORDER BY canonical_name").fetchall()

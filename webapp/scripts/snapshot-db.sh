@@ -81,7 +81,7 @@ fi
 # and the nine table counts used for drift comparison.
 # ---------------------------------------------------------------------------
 read_source_state() {
-  sqlite3 "file:$(quote_sql "$SRC")?mode=ro" \
+  sqlite3 -readonly "$SRC" \
     "PRAGMA data_version;
      SELECT version FROM schema_version;
      SELECT (SELECT count(*) FROM merchants),
@@ -111,7 +111,7 @@ while :; do
 
   # -- transactionally consistent copy --------------------------------------
   TMP="$(mktemp "$(dirname "$DEST")/.merchants.db.snapshot.XXXXXX")"
-  if ! sqlite3 "file:$(quote_sql "$SRC")?mode=ro" \
+  if ! sqlite3 -readonly "$SRC" \
       "VACUUM INTO '$(quote_sql "$TMP")'"; then
     die "VACUUM INTO failed for source $SRC"
   fi
@@ -141,10 +141,10 @@ while :; do
 
   # -- manifest (snapshot_meta) inside the temp copy ONLY -------------------
   source_max_evidence_captured_at="$(
-    sqlite3 "file:$(quote_sql "$SRC")?mode=ro" "SELECT max(captured_at) FROM evidence"
+    sqlite3 -readonly "$SRC" "SELECT max(captured_at) FROM evidence"
   )"
   source_max_merchant_updated_at="$(
-    sqlite3 "file:$(quote_sql "$SRC")?mode=ro" "SELECT max(updated_at) FROM merchants"
+    sqlite3 -readonly "$SRC" "SELECT max(updated_at) FROM merchants"
   )"
   IFS='|' read -r \
     merchants_count sources_count evidence_count claims_count claim_evidence_count \

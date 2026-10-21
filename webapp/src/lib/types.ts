@@ -80,6 +80,10 @@ export type MatchedOn =
   | 'exact_alias'
   | 'normalized_variant'
   | 'partial_name'
+  | 'category'
+  | 'claim'
+  | 'evidence'
+  | 'source'
   | 'typo';
 
 export type SearchDiagnostic = 'invalid_egyptian_phone';
@@ -109,6 +113,10 @@ export type SearchTier =
   | 'exact_alias'
   | 'normalized_variant'
   | 'partial_name'
+  | 'category'
+  | 'claim'
+  | 'evidence'
+  | 'source'
   | 'typo';
 
 export interface Merchant {
@@ -308,9 +316,11 @@ export interface MerchantDirectoryEntry {
 }
 
 export interface MerchantDirectoryFilters {
+  q?: string;
   category?: string;
   governorate?: string;
   coverage?: MerchantDirectoryCoverageLevel;
+  locationCount?: number;
 }
 
 export interface MerchantDirectoryQuery extends MerchantDirectoryFilters {
@@ -322,9 +332,12 @@ export interface MerchantDirectoryQuery extends MerchantDirectoryFilters {
 export interface MerchantDirectoryQueryInput {
   view?: unknown;
   page?: unknown;
+  q?: unknown;
   category?: unknown;
   governorate?: unknown;
   coverage?: unknown;
+  locationCount?: unknown;
+  minLocations?: unknown;
 }
 
 export interface MerchantDirectoryPagination {

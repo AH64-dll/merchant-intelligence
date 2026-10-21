@@ -33,42 +33,7 @@ from merchant_intel.fbsession import (
 )
 from merchant_intel.fbgroups import TASK_TITLE_PREFIX
 
-_FB_DOMAIN = r"(?<![\w.-])(?:https?://)?(?:www\.|web\.|m\.|mbasic\.)?facebook\.com"
-# Real Facebook site paths that are NOT a user profile; a plain
-# facebook.com/<username> match must skip these.
-_RESERVED_PATHS = (
-    r"groups|marketplace|watch|reels?|photos?|story|events|pages|videos?|posts?|"
-    r"share|hashtag|gaming|bookmarks|messages|notifications|search|business|help|"
-    r"policies|terms|login|settings|fundraisers|friends|permalink\.php|story\.php"
-)
-_HANDLE_RE = re.compile(
-    _FB_DOMAIN
-    + r"/(?:"
-    + r"profile\.php\?id=\d+"  # legacy numeric profile id
-    + r"|people/[^\"\s>]+"  # /people/<name-or-id>
-    + r"|(?!(?:" + _RESERVED_PATHS + r")(?:[/?\"\s>]|$))"  # not a site path
-    + r"[A-Za-z0-9.][A-Za-z0-9._-]*"  # plain facebook.com/<username>
-    + r")"
-)
-# Egyptian mobile (0 1x xxxxxxxx / +20 1x xxxxxxxx) and landline forms.
-_PHONE_RE = re.compile(
-    r"(?<![\d+])(?:\+20|0)1[0125]\d{8}(?!\d)"
-    r"|(?<![\d+])(?:\+20|0)[2-9]\d{7,8}(?!\d)"
-)
-# Bare @handle; the lookbehind keeps it from eating e-mail addresses.
-_AT_HANDLE_RE = re.compile(r"(?<![\w.])@[A-Za-z0-9_.]{3,}\b")
-
-
-def scrub_text(text: str) -> str:
-    """Pure scrubber: remove FB profile URLs, bare @handles and Egyptian phone
-    numbers from free text so commenter identities are never persisted."""
-    if not text:
-        return text
-    text = _HANDLE_RE.sub("[community member]", text)
-    text = _PHONE_RE.sub("[redacted phone]", text)
-    text = _AT_HANDLE_RE.sub("[community member]", text)
-    return text
-
+from merchant_intel.normalize import scrub_text
 
 def scrub_author_handles(output: LunaAgentOutput) -> None:
     """Replace probable profile-handle substrings with [community member]
@@ -315,10 +280,11 @@ async def run_fb_swarm(
     luna_model = client.model_for_role("verifier")
     groups = _group_list(db)
     pending = db.query(
-        f"""SELECT * FROM verification_tasks
-            WHERE title LIKE '{TASK_TITLE_PREFIX}%'
-            AND status IN ('pending','unresolved') AND attempts < 3
-            ORDER BY id"""
+        """SELECT * FROM verification_tasks
+           WHERE title LIKE ? || '%'
+           AND status IN ('pending','unresolved') AND attempts < 3
+           ORDER BY id""",
+        (TASK_TITLE_PREFIX,),
     )
     if not pending:
         print("[fbswarm] no pending FB community tasks; run fb-gen-tasks first", flush=True)

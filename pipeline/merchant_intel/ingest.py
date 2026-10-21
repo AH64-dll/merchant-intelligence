@@ -24,7 +24,7 @@ from merchant_intel.schemas import (
     utcnow,
 )
 from merchant_intel.sources import classify_source_locator
-
+from merchant_intel.normalize import scrub_text
 
 def _utc_iso(value: datetime | None) -> str | None:
     """Serialize a datetime as UTC ISO-8601 with an explicit +00:00 offset.
@@ -418,8 +418,8 @@ def ingest_evidence(
             claim_id,
             evidence.claim_type.value,
             evidence.sentiment.value,
-            evidence.summary,
-            evidence.raw_quote,
+            scrub_text(evidence.summary),
+            scrub_text(evidence.raw_quote),
             evidence.author_type.value,
             int(evidence.transaction_evidence),
             evidence.confidence,

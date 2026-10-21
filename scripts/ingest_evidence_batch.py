@@ -173,6 +173,39 @@ def insert_evidence(cur: sqlite3.Cursor, e: dict) -> str | None:
 
     evid = str(uuid.uuid4())
     now = utcnow()
+
+    raw_sent = str(e.get("sentiment") or "neutral").strip().lower()
+    sent_aliases = {"pos": "positive", "neg": "negative", "neu": "neutral", "mixed": "neutral"}
+    sentiment = sent_aliases.get(raw_sent, raw_sent if raw_sent in {"positive", "negative", "neutral"} else "neutral")
+
+    raw_band = str(e.get("reliability_band") or "weak").strip().lower()
+    band_aliases = {"low": "weak", "moderate": "medium", "high": "strong", "very_high": "very_strong"}
+    reliability_band = band_aliases.get(raw_band, raw_band if raw_band in {"weak", "medium", "strong", "very_strong"} else "weak")
+
+    raw_conf = float(e.get("confidence", 0.5))
+    confidence = max(0.0, min(1.0, raw_conf))
+
+    dup_of = e.get("duplicate_of")
+    if dup_of:
+        # Canonicalize to root and ensure same merchant
+        seen_chain: set[str] = set()
+        curr_dup = dup_of
+        while curr_dup:
+            parent_row = cur.execute("SELECT id, merchant_id, duplicate_of FROM evidence WHERE id=?", (curr_dup,)).fetchone()
+            if not parent_row or parent_row[1] != mid:
+                curr_dup = None
+                break
+            if not parent_row[2]:
+                break
+            if curr_dup in seen_chain:
+                curr_dup = None
+                break
+            seen_chain.add(curr_dup)
+            curr_dup = parent_row[2]
+        dup_of = curr_dup
+
+    independent = 0 if dup_of else int(e.get("independent", 1))
+
     cur.execute(
         """
         INSERT INTO evidence (
@@ -189,20 +222,20 @@ def insert_evidence(cur: sqlite3.Cursor, e: dict) -> str | None:
             src_id,
             e.get("claim_id"),
             e.get("claim_type", "verified_business_information"),
-            e.get("sentiment", "neutral"),
+            sentiment,
             e.get("summary", ""),
             e.get("quoted_excerpt", ""),
             e.get("author_type", "unknown"),
             int(e.get("transaction_evidence", 0)),
-            float(e.get("confidence", 0.5)),
-            e.get("reliability_band", "weak"),
+            confidence,
+            reliability_band,
             e.get("language", "en"),
             e.get("published_at"),
             now,
             fp,
             cfp,
-            int(e.get("independent", 1)),
-            e.get("duplicate_of"),
+            independent,
+            dup_of,
             e.get("agent_run_id"),
             int(e.get("round_no", 0)),
             int(e.get("verified", 0)),

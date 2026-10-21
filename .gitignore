@@ -6,6 +6,8 @@ data/normalized/
 data/rejected/
 data/verified/
 data/agent-runs/
+data/backups/
+data/orchestrator/backups/
 logs/
 __pycache__/
 *.pyc

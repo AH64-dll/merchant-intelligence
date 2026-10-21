@@ -29,11 +29,15 @@ export function directoryPageInput(
   const governorate = forward(params.governorate);
   const coverage = forward(params.coverage);
   const page = forward(params.page);
+  const q = forward(params.q);
+  const locationCount = forward(params.locationCount ?? params.minLocations);
   return {
     view,
     ...(page !== undefined ? { page } : {}),
     ...(category !== undefined ? { category } : {}),
     ...(governorate !== undefined ? { governorate } : {}),
     ...(coverage !== undefined ? { coverage } : {}),
+    ...(locationCount !== undefined ? { locationCount } : {}),
+    ...(q !== undefined ? { q } : {}),
   };
 }

@@ -11,20 +11,23 @@ omp:
   json_mode: true
   persist_sessions: true
   approve: true
-  no_tools: false
+  no_tools: true
   exclude_tools:
     - bash
     - edit
     - write
     - computer
     - task
+    - mcp
+    - fetch
+    - web_search
   no_context_files: true
   thinking: max
   use_goal_slash: true
   no_pty: true
-  no_extensions: false
-  no_skills: false
-  no_rules: false
+  no_extensions: true
+  no_skills: true
+  no_rules: true
   require_catalog: true
 
 models:

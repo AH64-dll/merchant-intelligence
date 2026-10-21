@@ -132,3 +132,48 @@ def similar(a: str, b: str) -> float:
         return 0.0
     return SequenceMatcher(None, normalize_claim_text(a), normalize_claim_text(b)).ratio()
 
+_FB_DOMAIN = r"(?<![\w.-])(?:https?://)?(?:[a-z0-9-]+\.)*facebook\.com"
+_RESERVED_PATHS = (
+    r"groups|marketplace|watch|reels?|photos?|story|events|pages|videos?|posts?|"
+    r"share|hashtag|gaming|bookmarks|messages|notifications|search|business|help|"
+    r"policies|terms|login|settings|fundraisers|friends|permalink\.php|story\.php"
+)
+_HANDLE_RE = re.compile(
+    _FB_DOMAIN
+    + r"/(?:"
+    + r"profile\.php\?id=\d+"  # legacy numeric profile id
+    + r"|people/[^\"\s>]+"  # /people/<name-or-id>
+    + r"|(?!(?:" + _RESERVED_PATHS + r")(?:[/?\"\s>]|$))"  # not a site path
+    + r"[A-Za-z0-9.][A-Za-z0-9._-]*"  # plain facebook.com/<username>
+    + r")"
+)
+_PHONE_RE = re.compile(
+    r"(?<![\d+])(?:\+20|0)1[0125]\d{8}(?!\d)"
+    r"|(?<![\d+])(?:\+20|0)[2-9]\d{7,8}(?!\d)"
+)
+_FB_SCHEME_RE = re.compile(
+    r"fb://(?:profile|native_post|permalink\.php|story|page)[^\s\"'>]*",
+    re.IGNORECASE,
+)
+_SEPARATOR_PHONE_RE = re.compile(
+    r"(?<!\d)(?:\+?20[\s.-]*)?0?1[0125](?:[\s.-]*\d){8}(?!\d)"
+    r"|(?<!\d)(?:\+?20[\s.-]*)?0?[2-9](?:[\s.-]*\d){7,8}(?!\d)"
+)
+_DIGIT_RUN_RE = re.compile(r"\b\d{11,}\b")
+_AT_HANDLE_RE = re.compile(r"(?<![\w.])@[A-Za-z0-9_.]{3,}\b")
+
+
+def scrub_text(text: str) -> str:
+    """Pure scrubber: remove FB profile URLs, fb:// schemes, bare @handles,
+    digit runs >= 11, and Egyptian phone numbers from free text so commenter
+    identities are never persisted."""
+    if not text:
+        return text
+    text = _HANDLE_RE.sub("[community member]", text)
+    text = _FB_SCHEME_RE.sub("[community member]", text)
+    text = _PHONE_RE.sub("[redacted phone]", text)
+    text = _SEPARATOR_PHONE_RE.sub("[redacted phone]", text)
+    text = _DIGIT_RUN_RE.sub("[redacted phone]", text)
+    text = _AT_HANDLE_RE.sub("[community member]", text)
+    return text
+

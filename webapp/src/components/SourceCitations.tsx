@@ -1,6 +1,9 @@
 import type { JSX } from 'react';
+import { ChevronDown, ExternalLink } from 'lucide-react';
 
 import type { EvidenceItem, SourceRefView } from '@/lib/types';
+import { checkStatusLabel as getCheckStatusLabel } from '@/lib/labels';
+import { t, type Locale } from '@/lib/i18n';
 import { safeHttpUrl } from './display';
 
 /**
@@ -17,9 +20,22 @@ export const CHECK_STATUS_LABELS: Record<string, string> = {
   not_checked: 'لم يتم التحقق بعد',
 };
 
-export function checkStatusLabel(status: string | null | undefined): string {
-  if (!status || status === 'not_checked') return 'لم يتم التحقق بعد';
-  return CHECK_STATUS_LABELS[status] ?? status;
+export function checkStatusLabel(status: string | null | undefined, locale: Locale = 'ar'): string {
+  return getCheckStatusLabel(status, locale);
+}
+
+const ACCESS_KIND_LABELS: Record<string, { ar: string; en: string }> = {
+  web: { ar: 'ويب', en: 'Web' },
+  whois: { ar: 'سجل تقني (Whois)', en: 'Whois technical registry' },
+  offline: { ar: 'أرشيف غير متصل', en: 'Offline archive' },
+  unknown: { ar: 'غير محدد', en: 'Unspecified' },
+};
+
+function accessKindLabel(kind: string | undefined, locale: Locale = 'ar'): string {
+  if (!kind) return locale === 'en' ? 'Unspecified' : 'غير محدد';
+  const item = ACCESS_KIND_LABELS[kind];
+  if (item) return locale === 'en' ? item.en : item.ar;
+  return kind.replace(/_/g, ' ');
 }
 
 export interface SourceCitationItem {
@@ -38,6 +54,7 @@ export interface SourceCitationsProps {
   evidenceIds?: string[];
   allEvidence?: EvidenceItem[];
   className?: string;
+  locale?: Locale;
 }
 
 function resolveCitationItems(props: SourceCitationsProps): SourceCitationItem[] {
@@ -86,71 +103,72 @@ function resolveCitationItems(props: SourceCitationsProps): SourceCitationItem[]
           checkStatus: c.checkStatus,
         });
       }
-    } else if (ev.url && ev.url.trim().length > 0) {
-      const safe = safeHttpUrl(ev.url);
+    } else if (ev.url) {
       items.push({
-        webUrl: safe,
-        sourceLabel: '',
-        locatorNote: ev.url,
-        accessKind: ev.url.startsWith('whois:') ? 'whois' : 'unknown',
-        checkStatus: null,
+        webUrl: ev.url,
         rawUrl: ev.url,
       });
     }
   }
 
-  // Deduplicate citations by their stable identity key
-  const uniqueItems: SourceCitationItem[] = [];
   const seen = new Set<string>();
+  const deduped: SourceCitationItem[] = [];
 
   for (const item of items) {
-    const key = citationKey(item);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    uniqueItems.push(item);
+    const key = item.sourceId
+      ? `id:${item.sourceId}`
+      : item.webUrl
+        ? `url:${item.webUrl}`
+        : item.rawUrl
+          ? `raw:${item.rawUrl}`
+          : `note:${item.locatorNote}`;
+
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(item);
+    }
   }
 
-  return uniqueItems;
+  return deduped;
 }
 
-/**
- * Stable identity for one citation — the same composite the dedup pass uses,
- * so it is unique inside the rendered list where an array index is not.
- */
 function citationKey(citation: SourceCitationItem): string {
-  if (citation.webUrl) return `url:${citation.webUrl}`;
-  if (citation.sourceId !== undefined) return `id:${citation.sourceId}`;
-  if (citation.rawUrl) return `raw:${citation.rawUrl}`;
-  return `note:${citation.locatorNote ?? ''}`;
+  if (citation.sourceId !== undefined) return `src-${citation.sourceId}`;
+  if (citation.webUrl) return `url-${citation.webUrl}`;
+  if (citation.rawUrl) return `raw-${citation.rawUrl}`;
+  return `note-${citation.locatorNote ?? 'anon'}`;
 }
 
 function linkTextForCitation(citation: SourceCitationItem, safeUrl: string): string {
-  const label = citation.sourceLabel?.trim();
-  if (label && label.length > 0) {
-    return label;
+  if (citation.sourceLabel && citation.sourceLabel.trim().length > 0) {
+    return citation.sourceLabel.trim();
+  }
+  if (citation.locatorNote && citation.locatorNote.trim().length > 0) {
+    return citation.locatorNote.trim();
   }
   try {
     const parsed = new URL(safeUrl);
-    const host = parsed.hostname.replace(/^www\./, '');
-    return host || 'المصدر الأصلي';
+    return parsed.hostname.replace(/^www\./, '');
   } catch {
-    return 'المصدر الأصلي';
+    return safeUrl;
   }
 }
 
 /**
  * SourceCitations component: renders every available web citation without a cap.
  * Uses safeHttpUrl from display.ts, opens external links in a new tab with rel="noopener noreferrer",
- * and displays non-web/null locators with the required Arabic fallback and details disclosure.
+ * and displays non-web/null locators with the required localized fallback and details disclosure.
  */
 export function SourceCitations(props: SourceCitationsProps): JSX.Element {
+  const locale = props.locale ?? 'ar';
+  const strings = t(locale);
   const citations = resolveCitationItems(props);
   const className = props.className ?? '';
 
   if (citations.length === 0) {
     return (
-      <div className={`text-xs text-neutral-600 ${className}`} dir="auto">
-        <span>لا يتوفر رابط ويب قابل للفتح في السجل</span>
+      <div className={`text-xs text-[#7a8085] ${className}`} dir="auto">
+        <span>{strings.noWebLinkAvailable}</span>
       </div>
     );
   }
@@ -168,14 +186,15 @@ export function SourceCitations(props: SourceCitationsProps): JSX.Element {
                   href={safeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline underline-offset-2 hover:text-blue-800"
+                  className="inline-flex items-center gap-1 text-[#4a7c7e] hover:underline underline-offset-2"
                   dir="ltr"
                 >
                   <span dir="auto">{linkText}</span>
+                  <ExternalLink size={11} aria-hidden="true" />
                 </a>
                 {citation.checkStatus ? (
-                  <span className="text-neutral-500 text-[11px]" dir="auto">
-                    (آخر تحقق: {checkStatusLabel(citation.checkStatus)})
+                  <span className="text-[#7a8085] text-[11px]" dir="auto">
+                    {strings.lastVerifiedPrefix.replace('{status}', checkStatusLabel(citation.checkStatus, locale))}
                   </span>
                 ) : null}
               </li>
@@ -183,19 +202,20 @@ export function SourceCitations(props: SourceCitationsProps): JSX.Element {
           }
 
           return (
-            <li key={citationKey(citation)} className="inline-flex items-center gap-1.5 flex-wrap text-neutral-700">
-              <span>لا يتوفر رابط ويب قابل للفتح في السجل</span>
+            <li key={citationKey(citation)} className="inline-flex items-center gap-1.5 flex-wrap text-[#56606a]">
+              <span>{strings.noWebLinkAvailable}</span>
               {citation.locatorNote || citation.accessKind || citation.rawUrl ? (
-                <details className="inline-block text-[11px]">
-                  <summary className="cursor-pointer text-neutral-600 min-h-[44px] inline-flex items-center">
-                    بيانات المصدر
+                <details className="inline-block text-[11px] group">
+                  <summary className="cursor-pointer text-[#7a8085] hover:text-[#2a3441] min-h-[44px] inline-flex items-center gap-1">
+                    <ChevronDown size={12} className="transition-transform group-open:rotate-180 text-[#7a8085] shrink-0" aria-hidden="true" />
+                    <span>{strings.sourceMetadata}</span>
                   </summary>
-                  <div className="mt-0.5 p-1.5 bg-neutral-50 border border-neutral-200 rounded text-[11px] space-y-0.5">
-                    {citation.accessKind ? <div>نوع الوصول: {citation.accessKind}</div> : null}
-                    {citation.locatorNote ? <div>ملاحظة: {citation.locatorNote}</div> : null}
+                  <div className="mt-0.5 p-2 bg-[#fdfcf9] border border-[#e4e3de] rounded text-[11px] space-y-0.5">
+                    {citation.accessKind ? <div>{strings.accessKindPrefix}{accessKindLabel(citation.accessKind, locale)}</div> : null}
+                    {citation.locatorNote ? <div>{strings.notePrefix}{citation.locatorNote}</div> : null}
                     {citation.rawUrl ? (
                       <div>
-                        المحدد: <span dir="ltr" className="ltr-isolate wrap-anywhere">{citation.rawUrl}</span>
+                        {strings.locatorPrefix}<span dir="ltr" className="ltr-isolate wrap-anywhere">{citation.rawUrl}</span>
                       </div>
                     ) : null}
                   </div>

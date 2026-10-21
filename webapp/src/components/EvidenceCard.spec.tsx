@@ -117,16 +117,47 @@ describe('EvidenceCard excerpt and details', () => {
     expect(html).toContain('مقتطف مقتبس');
   });
 
-  it('contains a details disclosure with technical provenance', () => {
+  it('contains a details disclosure with technical provenance without leaking reliability band', () => {
     const html = renderEvidence();
     expect(html).toContain('<details');
     expect(html).toContain('تفاصيل المصدر والتوثيق');
     expect(html).toContain('facebook_post');
-    expect(html).toContain('تقدير قوة آلي');
+    expect(html).not.toContain('تقدير قوة آلي');
     expect(html).toContain('جولة تحقق آلية');
   });
-});
 
+  it('renders English copy when locale is en', () => {
+    const html = renderToStaticMarkup(
+      createElement(EvidenceCard, { evidence: evidenceFixture(), locale: 'en' }),
+    );
+    expect(html).toContain('Evidence sentiment:');
+    expect(html).toContain('Source category:');
+    expect(html).toContain('Source and documentation details');
+  });
+
+  it('never leaks the pipeline PLACEHOLDER_SUMMARY into Arabic or English output', () => {
+    const placeholder = 'Source cited without a model-supplied summary.';
+    const arHtml = renderToStaticMarkup(
+      createElement(EvidenceCard, {
+        evidence: evidenceFixture({ summary: placeholder, quotedExcerpt: 'اقتباس حقيقي' }),
+        locale: 'ar',
+      }),
+    );
+    expect(arHtml).not.toContain(placeholder);
+    expect(arHtml).toContain('لم يُسجَّل ملخص لهذا المصدر');
+    expect(arHtml).toContain('اقتباس حقيقي');
+
+    const enHtml = renderToStaticMarkup(
+      createElement(EvidenceCard, {
+        evidence: evidenceFixture({ summary: placeholder, quotedExcerpt: 'Real quote' }),
+        locale: 'en',
+      }),
+    );
+    expect(enHtml).not.toContain(placeholder);
+    expect(enHtml).toContain('No summary was recorded for this source');
+    expect(enHtml).toContain('Real quote');
+  });
+});
 describe('FooterContent freshness', () => {
   it('shows snapshot date and staleness warning beyond 7 days', () => {
     const stale = renderToStaticMarkup(

@@ -1,7 +1,8 @@
-import type { IndexData, MerchantDb } from './db';
+import type { MerchantDb } from './db';
 import {
   conjunctionVariants,
   detectInputKind,
+  isExternalReferenceUrl,
   levenshtein,
   nameTokens,
   normalizeNameLoose,
@@ -48,6 +49,7 @@ interface CandidateTokens {
   merchantId: string;
   looseTokens: string[];
   display: string;
+  kind: 'name' | 'alias' | 'address' | 'category' | 'claim' | 'evidence' | 'source';
 }
 
 const TIER_ORDER: Record<SearchTier, number> = {
@@ -56,29 +58,67 @@ const TIER_ORDER: Record<SearchTier, number> = {
   exact_alias: 2,
   normalized_variant: 3,
   partial_name: 4,
-  typo: 5,
+  category: 5,
+  claim: 6,
+  evidence: 7,
+  source: 8,
+  typo: 9,
 };
 
-const MATCH_LABELS: Record<MatchedOn, string> = {
-  commercial_register: 'سجل تجاري',
-  address: 'عنوان',
-  phone: 'هاتف',
-  whatsapp: 'واتساب',
-  email: 'بريد إلكتروني',
-  facebook: 'صفحة فيسبوك',
-  instagram: 'حساب إنستغرام',
-  tiktok: 'حساب تيك توك',
-  website: 'الموقع الرسمي',
-  marketplace: 'متجر إلكتروني',
-  google_maps: 'موقع على الخرائط',
-  'website-host': 'تطابق نطاق الموقع',
-  'marketplace-host': 'تطابق نطاق متجر إلكتروني',
-  exact_name: 'تطابق اسم تام',
-  exact_alias: 'تطابق اسم بديل',
-  normalized_variant: 'صيغة قريبة من الاسم',
-  partial_name: 'تطابق جزئي في الاسم',
-  typo: 'تشابه تقريبي في الاسم',
+export const MATCH_LABELS: Record<'ar' | 'en', Record<MatchedOn, string>> = {
+  ar: {
+    commercial_register: 'سجل تجاري',
+    address: 'عنوان',
+    phone: 'هاتف',
+    whatsapp: 'واتساب',
+    email: 'بريد إلكتروني',
+    facebook: 'صفحة فيسبوك',
+    instagram: 'حساب إنستغرام',
+    tiktok: 'حساب تيك توك',
+    website: 'الموقع الرسمي',
+    marketplace: 'متجر إلكتروني',
+    google_maps: 'موقع على الخرائط',
+    'website-host': 'تطابق نطاق الموقع',
+    'marketplace-host': 'تطابق نطاق متجر إلكتروني',
+    exact_name: 'تطابق اسم تام',
+    exact_alias: 'تطابق اسم بديل',
+    normalized_variant: 'صيغة قريبة من الاسم',
+    partial_name: 'تطابق جزئي في الاسم',
+    category: 'تصنيف',
+    claim: 'ادعاء موثق',
+    evidence: 'دليل مسجل',
+    source: 'مصدر',
+    typo: 'تشابه تقريبي في الاسم',
+  },
+  en: {
+    commercial_register: 'Commercial register',
+    address: 'Address',
+    phone: 'Phone',
+    whatsapp: 'WhatsApp',
+    email: 'Email',
+    facebook: 'Facebook page',
+    instagram: 'Instagram account',
+    tiktok: 'TikTok account',
+    website: 'Official website',
+    marketplace: 'Online store / Marketplace',
+    google_maps: 'Google Maps location',
+    'website-host': 'Website domain match',
+    'marketplace-host': 'Marketplace domain match',
+    exact_name: 'Exact name match',
+    exact_alias: 'Exact alias match',
+    normalized_variant: 'Normalized name variant',
+    partial_name: 'Partial name match',
+    category: 'Category',
+    claim: 'Documented claim',
+    evidence: 'Recorded evidence',
+    source: 'Source',
+    typo: 'Approximate name match',
+  },
 };
+
+export function matchLabel(matchedOn: MatchedOn, locale: 'ar' | 'en' = 'ar'): string {
+  return MATCH_LABELS[locale]?.[matchedOn] ?? MATCH_LABELS.ar[matchedOn] ?? (matchedOn as string);
+}
 
 export class SearchIndex {
   private readonly merchantsById: Map<string, Merchant>;
@@ -107,10 +147,22 @@ export class SearchIndex {
   /** Loose token → levenshtein-ready normalized form cache. */
   private readonly tokenList: string[];
 
-  constructor(data: IndexData) {
+  constructor(data: {
+    merchants: Merchant[];
+    identifiers: { merchantId: string; kind: IdentifierKind; normalized: string }[];
+    aliases: { merchantId: string; alias: string }[];
+    claims?: { merchantId: string; summary: string }[];
+    evidence?: { merchantId: string; summary: string; quotedExcerpt?: string }[];
+    sources?: { merchantId: string; url: string; sourceLabel?: string }[];
+  }) {
     this.merchantsById = new Map(data.merchants.map((m) => [m.id, m]));
     this.identifierExact = new Map();
     this.urlIndex = new Map();
+    this.nameExact = new Map();
+    this.aliasExact = new Map();
+    this.looseKeyOwners = new Map();
+    this.candidates = [];
+    this.candidatesByMerchant = new Map();
     for (const identifier of data.identifiers) {
       if (!isSearchableIdentifier(identifier.kind, identifier.normalized)) continue;
       this.addToOwners(
@@ -120,18 +172,53 @@ export class SearchIndex {
         identifier.normalized,
       );
       this.indexIdentifierUrl(identifier.kind, identifier.normalized, identifier.merchantId);
+      if (identifier.kind === 'address') {
+        this.addAddress(identifier.merchantId, identifier.normalized);
+      } else if (identifier.kind === 'commercial_register') {
+        this.addCommercialRegister(identifier.merchantId, identifier.normalized);
+      } else if (identifier.kind === 'facebook' || identifier.kind === 'instagram' || identifier.kind === 'tiktok') {
+        const parsed = normalizeQueryUrl(identifier.normalized);
+        if (parsed && parsed.pathKeys.length > 0) {
+          for (const key of parsed.pathKeys) {
+            const handle = key.split('/')[1]?.replace(/^@/, '');
+            if (handle && handle.length >= 2) {
+              this.candidates.push({
+                merchantId: identifier.merchantId,
+                looseTokens: [handle.toLowerCase()],
+                display: identifier.normalized,
+                kind: 'name',
+              });
+            }
+          }
+        }
+      }
     }
-    this.nameExact = new Map();
-    this.aliasExact = new Map();
-    this.looseKeyOwners = new Map();
-    this.candidates = [];
     for (const merchant of data.merchants) {
       this.addName(merchant.id, merchant.canonicalName);
+      if (merchant.category && merchant.category.trim().length > 0) {
+        this.addCategory(merchant.id, merchant.category);
+      }
     }
     for (const alias of data.aliases) {
       this.addAlias(alias.merchantId, alias.alias);
     }
-    this.candidatesByMerchant = new Map();
+    if (data.claims) {
+      for (const claim of data.claims) {
+        if (claim.summary && claim.summary.trim().length > 0) {
+          this.addClaim(claim.merchantId, claim.summary);
+        }
+      }
+    }
+    if (data.evidence) {
+      for (const ev of data.evidence) {
+        this.addEvidence(ev.merchantId, ev.summary, ev.quotedExcerpt);
+      }
+    }
+    if (data.sources) {
+      for (const src of data.sources) {
+        this.addSource(src.merchantId, src.url, src.sourceLabel);
+      }
+    }
     for (const candidate of this.candidates) {
       const list = this.candidatesByMerchant.get(candidate.merchantId);
       if (list !== undefined) {
@@ -153,18 +240,20 @@ export class SearchIndex {
         } else {
           this.tokenPostings.set(token, new Set([candidate.merchantId]));
         }
-        for (const gram of trigrams(token)) {
-          const gramBucket = this.trigramPostings.get(gram);
-          if (gramBucket !== undefined) {
-            gramBucket.add(candidate.merchantId);
-          } else {
-            this.trigramPostings.set(gram, new Set([candidate.merchantId]));
-          }
-          const tokBucket = this.trigramTokenPostings.get(gram);
-          if (tokBucket !== undefined) {
-            tokBucket.add(token);
-          } else {
-            this.trigramTokenPostings.set(gram, new Set([token]));
+        if (candidate.kind === 'name' || candidate.kind === 'alias') {
+          for (const gram of trigrams(token)) {
+            const gramBucket = this.trigramPostings.get(gram);
+            if (gramBucket !== undefined) {
+              gramBucket.add(candidate.merchantId);
+            } else {
+              this.trigramPostings.set(gram, new Set([candidate.merchantId]));
+            }
+            const tokBucket = this.trigramTokenPostings.get(gram);
+            if (tokBucket !== undefined) {
+              tokBucket.add(token);
+            } else {
+              this.trigramTokenPostings.set(gram, new Set([token]));
+            }
           }
         }
       }
@@ -224,7 +313,7 @@ export class SearchIndex {
     const loose = normalizeNameLoose(raw);
     if (nameTokens(loose).length === 0) return;
     this.addToOwners(this.looseKeyOwners, loose, merchantId, raw);
-    this.candidates.push({ merchantId, looseTokens: nameTokens(loose), display: raw });
+    this.candidates.push({ merchantId, looseTokens: nameTokens(loose), display: raw, kind: 'name' });
     // The strict form itself participates in posting lists so exact-token
     // containment works even when loose and strict differ.
     if (loose !== strict) {
@@ -234,6 +323,68 @@ export class SearchIndex {
     }
   }
 
+  private addCategory(merchantId: string, raw: string): void {
+    const loose = normalizeNameLoose(raw);
+    const tokens = nameTokens(loose);
+    if (tokens.length === 0) return;
+    this.candidates.push({ merchantId, looseTokens: tokens, display: raw, kind: 'category' });
+  }
+
+  private addAddress(merchantId: string, raw: string): void {
+    const strict = normalizeNameStrict(raw);
+    if (strict.length > 0) {
+      this.addToOwners(this.identifierExact, `address\u0000${strict}`, merchantId, raw);
+    }
+    const loose = normalizeNameLoose(raw);
+    const tokens = nameTokens(loose);
+    if (tokens.length === 0) return;
+    this.candidates.push({ merchantId, looseTokens: tokens, display: raw, kind: 'address' });
+  }
+
+  private addCommercialRegister(merchantId: string, raw: string): void {
+    const strict = normalizeNameStrict(raw);
+    if (strict.length > 0) {
+      this.addToOwners(this.identifierExact, `commercial_register\u0000${strict}`, merchantId, raw);
+    }
+    const loose = normalizeNameLoose(raw);
+    const tokens = nameTokens(loose);
+    if (tokens.length === 0) return;
+    this.candidates.push({ merchantId, looseTokens: tokens, display: raw, kind: 'address' });
+  }
+
+  private addClaim(merchantId: string, raw: string): void {
+    const loose = normalizeNameLoose(raw);
+    const tokens = nameTokens(loose);
+    if (tokens.length === 0) return;
+    this.candidates.push({ merchantId, looseTokens: tokens, display: raw, kind: 'claim' });
+  }
+
+  private addEvidence(merchantId: string, summary?: string, excerpt?: string): void {
+    const text = [summary, excerpt].filter((s): s is string => typeof s === 'string' && s.trim().length > 0).join(' ');
+    const loose = normalizeNameLoose(text);
+    const tokens = nameTokens(loose);
+    if (tokens.length === 0) return;
+    this.candidates.push({
+      merchantId,
+      looseTokens: tokens,
+      display: summary || excerpt || text,
+      kind: 'evidence',
+    });
+  }
+
+  private addSource(merchantId: string, url?: string, label?: string): void {
+    const text = [label, url].filter((s): s is string => typeof s === 'string' && s.trim().length > 0).join(' ');
+    const loose = normalizeNameLoose(text);
+    const tokens = nameTokens(loose);
+    if (tokens.length === 0) return;
+    this.candidates.push({
+      merchantId,
+      looseTokens: tokens,
+      display: label || url || text,
+      kind: 'source',
+    });
+  }
+
   /**
    * Deterministic, collision-safe retrieval. Identifier/phone/email/URL
    * queries never fall through to name matching; a phone-shaped query that is
@@ -241,7 +392,7 @@ export class SearchIndex {
    * with zero hits. No numeric scores: hits are ordered by ordinal tier and
    * explainable quality metrics.
    */
-  search(query: string, page = 1, pageSize: number = SEARCH_PAGE_SIZE): SearchResult {
+  search(query: string, page = 1, pageSize: number = SEARCH_PAGE_SIZE, locale: 'ar' | 'en' = 'ar'): SearchResult {
     const inputKind = detectInputKind(query);
     const best = new Map<string, BestHit>();
     const diagnostic = this.collect(inputKind, query, (merchantId, hit) => {
@@ -269,7 +420,7 @@ export class SearchIndex {
       if (merchant === undefined) continue;
       allHits.push({
         merchant,
-        match: { kind: hit.matchedOn, value: hit.matchedValue, label: MATCH_LABELS[hit.matchedOn] },
+        match: { kind: hit.matchedOn, value: hit.matchedValue, label: matchLabel(hit.matchedOn, locale) },
       });
       hitTiers.push(hit.tier);
     }
@@ -296,6 +447,9 @@ export class SearchIndex {
   }
 
   private collect(inputKind: InputKind, query: string, consider: Consider): SearchDiagnostic | null {
+    if (isExternalReferenceUrl(query)) {
+      return null;
+    }
     if (inputKind === 'phone') {
       const phone = normalizePhone(query);
       if (phone === null) return 'invalid_egyptian_phone';
@@ -397,6 +551,18 @@ export class SearchIndex {
     const queryTokens = [...new Set(nameTokens(looseQuery))];
     if (queryTokens.length === 0) return;
 
+    const crBucket = this.identifierExact.get(`commercial_register\u0000${strictQuery}`);
+    if (crBucket !== undefined) {
+      for (const [merchantId, raw] of crBucket) {
+        consider(merchantId, { tier: 'exact_identifier', matchedOn: 'commercial_register', matchedValue: raw, quality: PERFECT });
+      }
+    }
+    const addressBucket = this.identifierExact.get(`address\u0000${strictQuery}`);
+    if (addressBucket !== undefined) {
+      for (const [merchantId, raw] of addressBucket) {
+        consider(merchantId, { tier: 'exact_identifier', matchedOn: 'address', matchedValue: raw, quality: PERFECT });
+      }
+    }
     const strictBucket = this.nameExact.get(strictQuery);
     if (strictBucket !== undefined) {
       for (const [merchantId, raw] of strictBucket) {
@@ -436,14 +602,30 @@ export class SearchIndex {
   private matchPartial(queryTokens: string[], consider: Consider): void {
     for (const merchantId of this.candidatePool(queryTokens)) {
       for (const candidate of this.candidatesByMerchant.get(merchantId) ?? []) {
-        if (!queryTokens.every((token) => candidate.looseTokens.includes(token))) continue;
+        if (!queryTokens.every((token) => candidate.looseTokens.some((cTok) => cTok === token || cTok.includes(token)))) {
+          continue;
+        }
+        const exactMatches = queryTokens.filter((token) => candidate.looseTokens.includes(token)).length;
+        const fuzzyTokens = queryTokens.length - exactMatches;
+        const extraTokens = Math.max(0, candidate.looseTokens.length - queryTokens.length);
+        const quality: HitQuality = { fuzzyTokens, extraTokens, editDistance: 0 };
+        const tier: SearchTier =
+          candidate.kind === 'name' || candidate.kind === 'alias' || candidate.kind === 'address'
+            ? 'partial_name'
+            : candidate.kind;
+        const matchedOn: MatchedOn =
+          candidate.kind === 'name' || candidate.kind === 'alias'
+            ? 'partial_name'
+            : candidate.kind === 'address'
+              ? 'address'
+              : candidate.kind;
+
         consider(merchantId, {
-          tier: 'partial_name',
-          matchedOn: 'partial_name',
+          tier,
+          matchedOn,
           matchedValue: candidate.display,
-          quality: { fuzzyTokens: 0, extraTokens: candidate.looseTokens.length - queryTokens.length, editDistance: 0 },
+          quality,
         });
-        break;
       }
     }
   }
@@ -452,6 +634,7 @@ export class SearchIndex {
     const maxFuzzyTokens = queryTokens.length >= 3 ? 2 : 1;
     for (const merchantId of this.typoPool(queryTokens)) {
       for (const candidate of this.candidatesByMerchant.get(merchantId) ?? []) {
+        if (candidate.kind !== 'name' && candidate.kind !== 'alias') continue;
         const quality = this.candidateTypoQuality(candidate, queryTokens, maxFuzzyTokens);
         if (quality !== null) {
           consider(merchantId, { tier: 'typo', matchedOn: 'typo', matchedValue: candidate.display, quality });
@@ -524,12 +707,33 @@ export class SearchIndex {
 
   /** Posting-list intersection: merchants holding any informative query token. */
   private candidatePool(queryTokens: string[]): Set<string> {
-    const pool = new Set<string>();
-    for (const token of queryTokens) {
-      const bucket = this.tokenPostings.get(token);
-      if (bucket === undefined) continue;
-      for (const merchantId of bucket) {
-        if ((this.candidatesByMerchant.get(merchantId)?.length ?? 0) > 0) pool.add(merchantId);
+    if (queryTokens.length === 0) return new Set();
+    const tokenMatches = (tok: string): Set<string> => {
+      const owners = new Set<string>();
+      const exact = this.tokenPostings.get(tok);
+      if (exact !== undefined) {
+        for (const id of exact) owners.add(id);
+      }
+      if (tok.length >= 2) {
+        for (const corpusTok of this.tokenList) {
+          if (corpusTok !== tok && corpusTok.includes(tok)) {
+            const bucket = this.tokenPostings.get(corpusTok);
+            if (bucket !== undefined) {
+              for (const id of bucket) owners.add(id);
+            }
+          }
+        }
+      }
+      return owners;
+    };
+
+    const sets = queryTokens.map(tokenMatches);
+    sets.sort((a, b) => a.size - b.size);
+    const pool = new Set(sets[0]);
+    for (let i = 1; i < sets.length; i += 1) {
+      const current = sets[i]!;
+      for (const id of pool) {
+        if (!current.has(id)) pool.delete(id);
       }
     }
     return pool;

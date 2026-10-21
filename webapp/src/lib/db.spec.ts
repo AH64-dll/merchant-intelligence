@@ -114,13 +114,38 @@ describe('MerchantDb.getIndexData', () => {
     expect(indexData().merchants.length).toBe(db.getSnapshotInfo().counts.merchants);
   });
 
-  it('returns only searchable identifier kinds', () => {
+  it('returns only searchable identifier kinds including address and commercial_register', () => {
     const kinds = new Set(indexData().identifiers.map((identifier) => identifier.kind));
-    expect(kinds.has('address')).toBe(false);
-    expect(kinds.has('commercial_register')).toBe(false);
+    expect(kinds.has('address')).toBe(true);
+    expect(kinds.has('commercial_register')).toBe(true);
     expect(kinds.has('phone')).toBe(true);
     expect(kinds.has('facebook')).toBe(true);
-    expect(kinds.size).toBe(9);
+    expect(kinds.size).toBe(11);
+  });
+
+  it('provides claims, evidence, and sources in getIndexData for search coverage', () => {
+    const data = db.getIndexData();
+    expect(Array.isArray(data.claims)).toBe(true);
+    expect(Array.isArray(data.evidence)).toBe(true);
+    expect(Array.isArray(data.sources)).toBe(true);
+    expect(data.claims.length).toBeGreaterThan(0);
+    expect(data.evidence.length).toBeGreaterThan(0);
+    expect(data.sources.length).toBeGreaterThan(0);
+  });
+
+  it('refuses to open the master pipeline database (defense-in-depth)', () => {
+    expect(() => new MerchantDb('../data/merchant_intelligence.db')).toThrow(
+      /Forbidden database target/,
+    );
+    expect(() => new MerchantDb('/tmp/merchant_intelligence.db')).toThrow(
+      /Forbidden database target/,
+    );
+  });
+
+  it('strictly enforces read-only database connections', () => {
+    expect(() => raw.exec('CREATE TABLE IF NOT EXISTS probe (x INTEGER)')).toThrow(
+      /readonly database/i,
+    );
   });
 
   it('returns all aliases equal to the manifest', () => {
@@ -489,7 +514,7 @@ describe('MerchantDb.getMerchantDetail — structural branches', () => {
   const NULLPUB_ID = B_TECH_ID;
   const SAME_ROUND_ID = '02369463-bc9c-4b0a-bd4d-04544becaa38';
 
-  it('returns address/commercial_register identifiers in the detail even though they are excluded from the index', () => {
+  it('returns address/commercial_register identifiers in both the detail and index', () => {
     const detail = db.getMerchantDetail(ADDR_ONLY_ID);
     expect(detail).not.toBeNull();
     expect(detail?.identifiers.length ?? 0).toBeGreaterThan(0);
@@ -497,7 +522,7 @@ describe('MerchantDb.getMerchantDetail — structural branches', () => {
       expect(['address', 'commercial_register']).toContain(identifier.kind);
     }
     const indexedIds = new Set(db.getIndexData().identifiers.map((entry) => entry.merchantId));
-    expect(indexedIds.has(ADDR_ONLY_ID)).toBe(false);
+    expect(indexedIds.has(ADDR_ONLY_ID)).toBe(true);
   });
 
   it('returns an empty related list when the merchant has no merchant_links in either direction', () => {
@@ -564,6 +589,55 @@ describe('parseAnalysisPayload — defensive branches', () => {
   it('throws clearly on unknown payload versions', () => {
     expect(() => parseAnalysisPayload(JSON.stringify({ payload_version: 2 }))).toThrow(/payload_version/);
     expect(() => parseAnalysisPayload(JSON.stringify({ payload_version: '1' }))).toThrow(/payload_version/);
+  });
+
+  it('strips the internal reliability/identity-certainty vocabulary from stored analysis text', () => {
+    const parsed = parseAnalysisPayload(
+      JSON.stringify({
+        payload_version: 1,
+        verified_claims: [
+          'claim=Live seller page; stance=positive; source_reliability=very_strong; independent_sources=2; entity_certainty=low; usefulness=Confirms a live surface',
+          'source_reliability=weak; entity_certainty=high',
+        ],
+        unverified_claims: ['claim=Unverified; source_reliability=moderate;'],
+        risk_signals: ['entity_certainty=low; claim=Risk'],
+      }),
+    );
+    const all = [
+      ...(parsed?.verifiedClaims ?? []),
+      ...(parsed?.unverifiedClaims ?? []),
+      ...(parsed?.riskSignals ?? []),
+    ].join(' | ');
+    expect(all).not.toMatch(/source_reliability|entity_certainty/);
+    // The meaningful segments survive verbatim, in order.
+    expect(parsed?.verifiedClaims[0]).toBe(
+      'claim=Live seller page; stance=positive; independent_sources=2; usefulness=Confirms a live surface',
+    );
+    // A string that was nothing but internal tokens disappears entirely.
+    expect(parsed?.verifiedClaims).toHaveLength(1);
+    expect(parsed?.unverifiedClaims).toEqual(['claim=Unverified']);
+  });
+
+  it('strips embedded dict literals with internal keys (post-analysis payload shape)', () => {
+    const parsed = parseAnalysisPayload(
+      JSON.stringify({
+        payload_version: 1,
+        unverified_claims: [
+          "id=C1; claim=Vendor announces warranty; source_url=https://example.com/x; evaluation={'confidence': 'low', 'source_reliability': 'weak-moderate: self-published', 'entity_certainty': 'moderate-low: generic name; only branch anchor disambiguates'}; published=None",
+          "claim=Clean claim text; sentiment='positive', 'reliability': \"high; multiple sources\"",
+        ],
+      }),
+    );
+    const claims = parsed?.unverifiedClaims ?? [];
+    const joined = claims.join(' | ');
+    expect(joined).not.toMatch(/source_reliability|entity_certainty|'confidence'|sentiment'/i);
+    // Public claim segments and URLs survive.
+    expect(claims[0]).toContain('claim=Vendor announces warranty');
+    expect(claims[0]).toContain('source_url=https://example.com/x');
+    expect(claims[0]).toContain('published=None');
+    // The evaluation dict is gone — no stray value fragments remain.
+    expect(claims[0]).not.toContain('disambiguates');
+    expect(claims[0]).not.toMatch(/[\"']$/);
   });
 
   it('flattens evidence_summary.summary and applies defaults for missing fields', () => {

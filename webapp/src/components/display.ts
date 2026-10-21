@@ -1,5 +1,8 @@
+import { PLACEHOLDER_SUMMARY } from '@/lib/types';
+import { t } from '@/lib/i18n';
 import type { SourceCategory } from '@/lib/taxonomy';
 import { SOURCE_CATEGORY_LABELS } from '@/lib/taxonomy';
+import type { Locale } from '@/lib/i18n';
 
 /**
  * Publication staleness threshold for the evidence-card marker (days).
@@ -31,9 +34,11 @@ export function safeHttpUrl(value: string | null | undefined): string | null {
   }
 }
 
-/** Arabic label for a derived source category (controlled taxonomy). */
-export function sourceCategoryLabel(category: SourceCategory): string {
-  return SOURCE_CATEGORY_LABELS[category].ar;
+/** Localized label for a derived source category (controlled taxonomy). */
+export function sourceCategoryLabel(category: SourceCategory, locale: Locale = 'ar'): string {
+  const item = SOURCE_CATEGORY_LABELS[category];
+  if (!item) return category;
+  return locale === 'en' ? item.en : item.ar;
 }
 
 const AR_EG_DATE = new Intl.DateTimeFormat('ar-EG', {
@@ -43,29 +48,64 @@ const AR_EG_DATE = new Intl.DateTimeFormat('ar-EG', {
   timeZone: 'UTC',
 });
 
-/**
- * Memoized ISO timestamp → ar-EG formatted date. Snapshot data repeats the
- * same timestamps across evidence rows and merchants; a bounded map keeps the
- * Intl formatter off the per-render hot path (measured 15.6ms → ~6ms for a
- * 66-card evidence list).
- */
+const EN_US_DATE = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+
+const DATE_CACHE_MAX = 4096;
 const AR_DATE_CACHE = new Map<string, string>();
-const AR_DATE_CACHE_MAX = 4096;
+const EN_DATE_CACHE = new Map<string, string>();
 
 /**
- * Formats an ISO timestamp for display in ar-EG. Rendering is done inside a
- * dir=ltr isolation wrapper by callers (numeric Western digits stay readable).
+ * Formats an ISO timestamp for display in ar-EG.
+ * Note: Callers should render with dir="auto" (or timeDir(locale)), NOT dir="ltr",
+ * so Arabic-Indic digits and Arabic month names maintain correct visual day-month-year order.
  */
 export function formatDateAr(iso: string): string {
   const hit = AR_DATE_CACHE.get(iso);
   if (hit !== undefined) return hit;
   const date = new Date(iso);
   const formatted = Number.isNaN(date.getTime()) ? iso.slice(0, 10) : AR_EG_DATE.format(date);
-  if (AR_DATE_CACHE.size >= AR_DATE_CACHE_MAX) {
+  if (AR_DATE_CACHE.size >= DATE_CACHE_MAX) {
     AR_DATE_CACHE.clear();
   }
   AR_DATE_CACHE.set(iso, formatted);
   return formatted;
+}
+
+/**
+ * Formats an ISO timestamp for display in en-US.
+ */
+export function formatDateEn(iso: string): string {
+  const hit = EN_DATE_CACHE.get(iso);
+  if (hit !== undefined) return hit;
+  const date = new Date(iso);
+  const formatted = Number.isNaN(date.getTime()) ? iso.slice(0, 10) : EN_US_DATE.format(date);
+  if (EN_DATE_CACHE.size >= DATE_CACHE_MAX) {
+    EN_DATE_CACHE.clear();
+  }
+  EN_DATE_CACHE.set(iso, formatted);
+  return formatted;
+}
+
+/**
+ * Locale-aware date formatter.
+ */
+export function formatDate(iso: string, locale: Locale = 'ar'): string {
+  return locale === 'en' ? formatDateEn(iso) : formatDateAr(iso);
+}
+
+/**
+ * Returns the HTML `dir` attribute for a `<time>` element displaying a date.
+ * English dates use "ltr". Arabic dates (which contain Arabic month names and numerals)
+ * use "auto" to prevent the Unicode Bidirectional Algorithm from visually inverting
+ * day and year order in RTL contexts.
+ */
+export function timeDir(locale: Locale = 'ar'): 'ltr' | 'auto' {
+  return locale === 'en' ? 'ltr' : 'auto';
 }
 
 /** Days elapsed since an ISO timestamp; negative/invalid input yields null. */
@@ -73,4 +113,21 @@ export function ageInDays(iso: string, now: Date = new Date()): number | null {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return null;
   return Math.floor((now.getTime() - date.getTime()) / (24 * 60 * 60 * 1000));
+}
+
+/**
+ * Returns a display-safe summary string. If the stored summary is empty or
+ * matches the pipeline fallback PLACEHOLDER_SUMMARY, returns a localized honest note
+ * explaining that no summary was recorded for this source.
+ */
+export function displaySummary(summary: string | null | undefined, locale: Locale = 'ar'): string {
+  if (!summary) return t(locale).placeholderSummary;
+  const trimmed = summary.trim();
+  if (
+    trimmed.length === 0 ||
+    trimmed.toLowerCase() === PLACEHOLDER_SUMMARY.toLowerCase()
+  ) {
+    return t(locale).placeholderSummary;
+  }
+  return trimmed;
 }

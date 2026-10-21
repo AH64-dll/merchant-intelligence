@@ -1,11 +1,12 @@
 import type { EvidenceItem, Identifier, MerchantState } from './types';
 import type { IdentifierRole } from './identifier-policy';
+import type { Locale } from './i18n';
 
 export type IdentityLevel = 'established' | 'supported' | 'uncertain';
 
 export interface IdentityAssessment {
   level: IdentityLevel;
-  /** Human-readable Arabic reasons; never a confidence percentage. */
+  /** Human-readable reasons; never a confidence percentage. */
   reasons: string[];
 }
 
@@ -105,15 +106,26 @@ export function assessIdentity(
   state: MerchantState,
   identifiers: Identifier[],
   relatedRelations: readonly string[],
+  locale: Locale,
 ): IdentityAssessment {
+  const activeLocale = locale === 'en' ? 'en' : 'ar';
   const reasons: string[] = [];
   const nameConflict = relatedRelations.includes('name_identifier_conflict');
+
   if (nameConflict || state === 'IDENTITY_UNCERTAIN') {
     if (nameConflict) {
-      reasons.push('هناك تعارض بين الاسم وأحد المعرفات، لذا لا يمكن الجزم بالهوية.');
+      reasons.push(
+        activeLocale === 'en'
+          ? 'There is a conflict between the name and an identifier; identity cannot be confirmed.'
+          : 'هناك تعارض بين الاسم وأحد المعرفات، لذا لا يمكن الجزم بالهوية.',
+      );
     }
     if (state === 'IDENTITY_UNCERTAIN') {
-      reasons.push('حالة الهوية الداخلية للتحليل: غير مؤكدة.');
+      reasons.push(
+        activeLocale === 'en'
+          ? 'Identity data is uncertain and requires further verification.'
+          : 'بيانات الهوية غير مؤكدة وتحتاج لمزيد من التدقيق.',
+      );
     }
     return { level: 'uncertain', reasons };
   }
@@ -123,18 +135,34 @@ export function assessIdentity(
   const supporting = roles.filter((role) => SUPPORTING_ROLES.has(role));
 
   if (highSignal.length >= 2) {
-    reasons.push('تتطابق علامات تعريف مستقلة (مثل هاتف وموقع رسمي) مع هذا التاجر.');
+    reasons.push(
+      activeLocale === 'en'
+        ? 'Independent identifying markers (such as phone and official website) match this vendor.'
+        : 'تتطابق علامات تعريف مستقلة (مثل هاتف وموقع رسمي) مع هذا التاجر.',
+    );
     return { level: 'established', reasons };
   }
   if (highSignal.length >= 1 || supporting.length >= 2) {
     if (highSignal.length >= 1) {
-      reasons.push('يتوفر مؤشر تعريف مباشر واحد على الأقل لهذا التاجر.');
+      reasons.push(
+        activeLocale === 'en'
+          ? 'At least one direct identifying indicator is available for this vendor.'
+          : 'يتوفر مؤشر تعريف مباشر واحد على الأقل لهذا التاجر.',
+      );
     } else {
-      reasons.push('توجد مؤشرات تعريف غير مباشرة متعددة، لكنها ليست حاسمة.');
+      reasons.push(
+        activeLocale === 'en'
+          ? 'Multiple indirect identifying indicators exist, but they are not conclusive.'
+          : 'توجد مؤشرات تعريف غير مباشرة متعددة، لكنها ليست حاسمة.',
+      );
     }
     return { level: 'supported', reasons };
   }
-  reasons.push('المعرفات المتاحة لا تكفي لتأكيد الهوية.');
+  reasons.push(
+    activeLocale === 'en'
+      ? 'Available identifiers are insufficient to confirm identity.'
+      : 'المعرفات المتاحة لا تكفي لتأكيد الهوية.',
+  );
   return { level: 'uncertain', reasons };
 }
 
@@ -223,27 +251,38 @@ function warningAgeDays(item: EvidenceItem, now: Date): number | null {
 export function assessReputation(
   state: MerchantState,
   evidence: EvidenceItem[],
+  locale: Locale,
   now: Date = new Date(),
 ): ReputationAssessment {
+  const activeLocale = locale === 'en' ? 'en' : 'ar';
   const nonDuplicate = evidence.filter((item) => item.duplicateOf === null);
   const notable = nonDuplicate.filter((item) => item.verified || item.transactionEvidence);
 
   if (state === 'IDENTITY_UNCERTAIN') {
     return {
       kind: 'IDENTITY_UNCERTAIN',
-      headline: 'لا يمكن إسناد استنتاج سمعة',
+      headline:
+        activeLocale === 'en' ? 'No reputation inference can be attributed' : 'لا يمكن إسناد استنتاج سمعة',
       explanation:
-        'بما أن الهوية غير مؤكدة، لا يمكن ربط الأدلة المتاحة بهذا التاجر بشكل قاطع، ولا يُستخلص أي حكم على السمعة.',
+        activeLocale === 'en'
+          ? 'Because identity is uncertain, available evidence cannot be conclusively linked to this vendor, and no reputation judgment is drawn.'
+          : 'بما أن الهوية غير مؤكدة، لا يمكن ربط الأدلة المتاحة بهذا التاجر بشكل قاطع، ولا يُستخلص أي حكم على السمعة.',
       evidenceIds: notable.map((item) => item.id),
-      caveat: 'قارن المعرفات والموقع قبل الاعتماد على أي من هذه الأدلة.',
+      caveat:
+        activeLocale === 'en'
+          ? 'Compare identifiers and location before relying on any of this evidence.'
+          : 'قارن المعرفات والموقع قبل الاعتماد على أي من هذه الأدلة.',
     };
   }
 
   if (nonDuplicate.length === 0) {
     return {
       kind: 'INSUFFICIENT_DATA',
-      headline: 'الأدلة غير كافية',
-      explanation: 'لا توجد أدلة غير مكررة كافية لتكوين صورة عن التعامل مع هذا التاجر.',
+      headline: activeLocale === 'en' ? 'Insufficient evidence' : 'الأدلة غير كافية',
+      explanation:
+        activeLocale === 'en'
+          ? 'There is not enough non-duplicate evidence to form a picture of dealings with this vendor.'
+          : 'لا توجد أدلة غير مكررة كافية لتكوين صورة عن التعامل مع هذا التاجر.',
       evidenceIds: [],
       caveat: null,
     };
@@ -261,42 +300,58 @@ export function assessReputation(
   // OFFICIAL_WARNING requires linked warning evidence; the stored state alone
   // never justifies the label.
   if (warningEvidence.length > 0) {
-    // "Oldest" is the MAXIMUM age — the reduce must keep the larger ageDays,
-    // and the rendered date must be that same entry's date.
     const oldestWarning = datedWarnings.reduce<{ item: EvidenceItem; ageDays: number } | null>(
       (acc, entry) => (acc === null || entry.ageDays > acc.ageDays ? entry : acc),
       null,
     );
     const warningIds = warningEvidence.map((item) => item.id);
+    const oldestDate = oldestWarning?.item.publishedAt?.slice(0, 10) ?? (activeLocale === 'en' ? 'unknown' : 'غير معروف');
+
     if (staleWarnings.length > 0) {
       return {
         kind: 'OFFICIAL_WARNING',
-        headline: 'إشارة رسمية سابقة (قديمة)',
+        headline: activeLocale === 'en' ? 'Prior official notice (dated)' : 'إشارة رسمية سابقة (قديمة)',
         explanation:
-          `رصدت جهة عامة تحذيرًا يتعلق بهذا التاجر، وأقدم تحذير مؤرخ بتاريخ ${oldestWarning?.item.publishedAt?.slice(0, 10) ?? 'غير معروف'} — راجع المصدر الأصلي قبل اتخاذ أي قرار.`,
+          activeLocale === 'en'
+            ? `A public authority noted a warning regarding this vendor, with the oldest warning dated ${oldestDate} — review the original source before making any decision.`
+            : `رصدت جهة عامة تحذيرًا يتعلق بهذا التاجر، وأقدم تحذير مؤرخ بتاريخ ${oldestDate} — راجع المصدر الأصلي قبل اتخاذ أي قرار.`,
         evidenceIds: warningIds,
-        caveat: 'هذا تحذير رسمي مؤرخ وليس إدانة؛ تحقق من المصدر وما إذا كان التحذير ما زال ساريًا.',
+        caveat:
+          activeLocale === 'en'
+            ? 'This is a dated official warning, not a conviction; verify the source and whether the warning remains active.'
+            : 'هذا تحذير رسمي مؤرخ وليس إدانة؛ تحقق من المصدر وما إذا كان التحذير ما زال ساريًا.',
       };
     }
     return {
       kind: 'OFFICIAL_WARNING',
-      headline: 'إشارة رسمية مرتبطة بأدلة',
+      headline:
+        activeLocale === 'en' ? 'Official notice backed by evidence' : 'إشارة رسمية مرتبطة بأدلة',
       explanation:
-        'توجد أدلة من جهة عامة أو تنظيمية مرتبطة بهذا التاجر، مذكورة أدناه مع تواريخها ومصادرها.',
+        activeLocale === 'en'
+          ? 'Evidence from a public or regulatory authority is linked to this vendor, listed below with dates and sources.'
+          : 'توجد أدلة من جهة عامة أو تنظيمية مرتبطة بهذا التاجر، مذكورة أدناه مع تواريخها ومصادرها.',
       evidenceIds: warningIds,
       caveat:
-        'هذه إشارة رسمية مؤرخة وليست إدانة. افتح المصدر الأصلي واقرأ التفاصيل بنفسك.' +
-        (oldestWarning !== null ? ` أقدم إشارة قبل ${oldestWarning.ageDays} يومًا.` : ''),
+        activeLocale === 'en'
+          ? 'This is a dated official notice, not a conviction. Open the original source and read details yourself.' +
+            (oldestWarning !== null ? ` Oldest notice was ${oldestWarning.ageDays} days ago.` : '')
+          : 'هذه إشارة رسمية مؤرخة وليست إدانة. افتح المصدر الأصلي واقرأ التفاصيل بنفسك.' +
+            (oldestWarning !== null ? ` أقدم إشارة قبل ${oldestWarning.ageDays} يومًا.` : ''),
     };
   }
   if (state === 'OFFICIAL_WARNING') {
     return {
       kind: 'REQUIRES_MANUAL_REVIEW',
-      headline: 'يحتاج مراجعة يدوية',
+      headline: activeLocale === 'en' ? 'Requires manual review' : 'يحتاج مراجعة يدوية',
       explanation:
-        'حالة التاجر تشير إلى تحذير رسمي، لكن لا توجد أدلة مرتبطة تدعم ذلك ضمن البيانات الحالية.',
+        activeLocale === 'en'
+          ? 'Vendor status indicates an official warning, but no linked evidence supports this in the current data.'
+          : 'حالة التاجر تشير إلى تحذير رسمي، لكن لا توجد أدلة مرتبطة تدعم ذلك ضمن البيانات الحالية.',
       evidenceIds: [],
-      caveat: 'لا يوجد دليل منشور يدعم هذا التصنيف — لا تعتمد عليه دون مراجعة يدوية.',
+      caveat:
+        activeLocale === 'en'
+          ? 'No published evidence supports this classification — do not rely on it without manual review.'
+          : 'لا يوجد دليل منشور يدعم هذا التصنيف — لا تعتمد عليه دون مراجعة يدوية.',
     };
   }
 
@@ -305,41 +360,58 @@ export function assessReputation(
   if (riskEvidence.length > 0) {
     return {
       kind: 'HIGH_RISK_SIGNALS',
-      headline: 'إشارات تتطلب تحققًا',
+      headline: activeLocale === 'en' ? 'Signals requiring verification' : 'إشارات تتطلب تحققًا',
       explanation:
-        'توجد تقارير أو ادعاءات خطيرة في الأدلة أدناه. هذه إشارات تتطلب تحققًا من المصدر وليست إثباتًا قاطعًا.',
+        activeLocale === 'en'
+          ? 'Serious reports or allegations appear in the evidence below. These are signals requiring source verification, not conclusive proof.'
+          : 'توجد تقارير أو ادعاءات خطيرة في الأدلة أدناه. هذه إشارات تتطلب تحققًا من المصدر وليست إثباتًا قاطعًا.',
       evidenceIds: riskEvidence.map((item) => item.id),
-      caveat: 'اقرأ المصدر الأصلي لكل إشارة؛ قد تكون الادعاءات غير مؤكدة أو متقادمة.',
+      caveat:
+        activeLocale === 'en'
+          ? 'Read the original source for each signal; claims may be unconfirmed or outdated.'
+          : 'اقرأ المصدر الأصلي لكل إشارة؛ قد تكون الادعاءات غير مؤكدة أو متقادمة.',
     };
   }
   if (negative > 0 && positive > 0) {
     return {
       kind: 'MIXED_REPUTATION',
-      headline: 'أدلة متضاربة',
+      headline: activeLocale === 'en' ? 'Conflicting evidence' : 'أدلة متضاربة',
       explanation:
-        `تحتوي الأدلة غير المكررة على ${positive} إشارة إيجابية و${negative} إشارة سلبية؛ اقرأ المصادر لفهم السياق.`,
+        activeLocale === 'en'
+          ? `Non-duplicate evidence contains ${positive} positive and ${negative} negative signal(s); read sources to understand context.`
+          : `تحتوي الأدلة غير المكررة على ${positive} إشارة إيجابية و${negative} إشارة سلبية؛ اقرأ المصادر لفهم السياق.`,
       evidenceIds: notable.map((item) => item.id),
-      caveat: 'التضارب يعني غالبًا تجارب مختلفة أو فترات زمنية مختلفة — راجع التواريخ.',
+      caveat:
+        activeLocale === 'en'
+          ? 'Conflicting signals often reflect differing experiences or time periods — check the dates.'
+          : 'التضارب يعني غالبًا تجارب مختلفة أو فترات زمنية مختلفة — راجع التواريخ.',
     };
   }
   if (negative > 0) {
     return {
       kind: 'MIXED_REPUTATION',
-      headline: 'تقارير سلبية — راجع المصادر',
+      headline: activeLocale === 'en' ? 'Negative reports — review sources' : 'تقارير سلبية — راجع المصادر',
       explanation:
-        `توجد ${negative} إشارة سلبية في الأدلة غير المكررة. راجع المصدر وتاريخ كل تقرير قبل الاعتماد عليها.`,
+        activeLocale === 'en'
+          ? `There are ${negative} negative signal(s) in non-duplicate evidence. Review the source and date of each report before relying on it.`
+          : `توجد ${negative} إشارة سلبية في الأدلة غير المكررة. راجع المصدر وتاريخ كل تقرير قبل الاعتماد عليها.`,
       evidenceIds: nonDuplicate
         .filter((item) => NEGATIVE_CLAIM_TYPES.has(item.claimType) || item.sentiment === 'negative')
         .map((item) => item.id),
-      caveat: 'الشكاوى تعكس تجارب أفراد؛ قد لا تمثل الوضع الحالي للتاجر.',
+      caveat:
+        activeLocale === 'en'
+          ? 'Customer complaints reflect individual experiences; they may not represent the vendor’s current status.'
+          : 'الشكاوى تعكس تجارب أفراد؛ قد لا تمثل الوضع الحالي للتاجر.',
     };
   }
   if (positive > 0) {
     return {
       kind: 'MIXED_REPUTATION',
-      headline: 'إشارات إيجابية، ليست ضمانة',
+      headline: activeLocale === 'en' ? 'Positive signals, not a guarantee' : 'إشارات إيجابية، ليست ضمانة',
       explanation:
-        `توجد ${positive} إشارة إيجابية في الأدلة غير المكررة. الإشارات الإيجابية ليست ضمانًا لجودة التعامل مستقبلًا.`,
+        activeLocale === 'en'
+          ? `There are ${positive} positive signal(s) in non-duplicate evidence. Positive signals are not a guarantee of future purchase quality.`
+          : `توجد ${positive} إشارة إيجابية في الأدلة غير المكررة. الإشارات الإيجابية ليست ضمانًا لجودة التعامل مستقبلًا.`,
       evidenceIds: nonDuplicate
         .filter((item) => POSITIVE_CLAIM_TYPES.has(item.claimType) || item.sentiment === 'positive')
         .map((item) => item.id),
@@ -349,10 +421,17 @@ export function assessReputation(
 
   return {
     kind: 'INSUFFICIENT_DATA',
-    headline: 'الأدلة غير كافية',
+    headline: activeLocale === 'en' ? 'Insufficient evidence' : 'الأدلة غير كافية',
     explanation:
-      'الأدلة المتاحة محايدة أو غير حاسمة، ولا تكفي لتكوين صورة عن التعامل مع هذا التاجر.',
+      activeLocale === 'en'
+        ? 'Available evidence is neutral or inconclusive, and insufficient to form a picture of dealings with this vendor.'
+        : 'الأدلة المتاحة محايدة أو غير حاسمة، ولا تكفي لتكوين صورة عن التعامل مع هذا التاجر.',
     evidenceIds: notable.map((item) => item.id),
-    caveat: notable.length > 0 ? 'هناك أدلة إضافية مذكورة أدناه؛ راجعها بنفسك.' : null,
+    caveat:
+      notable.length > 0
+        ? activeLocale === 'en'
+          ? 'Additional evidence is listed below; review it yourself.'
+          : 'هناك أدلة إضافية مذكورة أدناه؛ راجعها بنفسك.'
+        : null,
   };
 }

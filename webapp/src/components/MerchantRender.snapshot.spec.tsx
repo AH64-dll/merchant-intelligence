@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { assessEvidenceCoverage, assessIdentity, assessReputation } from '../lib/assessment';
+import type { Locale } from '../lib/i18n';
 import type { EvidenceCoverage } from '../lib/assessment';
 import { MerchantDb } from '../lib/db';
 import { EvidenceCard } from './EvidenceCard';
@@ -32,25 +33,25 @@ beforeAll(() => {
   db = new MerchantDb(MERCHANTS_DB);
 });
 
-function renderMerchant(id: string): string {
+function renderMerchant(id: string, locale: Locale = 'ar'): string {
   const detail = db.getMerchantDetail(id);
   if (detail === null) throw new Error(`merchant ${id} missing from snapshot`);
   const identity = assessIdentity(
     detail.merchant.state,
     detail.identifiers,
     detail.related.map((r) => r.relation),
+    locale,
   );
   const coverage = assessEvidenceCoverage(detail.evidence);
   const reputation = assessReputation(
     detail.merchant.state,
-    detail.evidence,
-    new Date('2026-08-30T00:00:00Z'),
-  );
+    detail.evidence,locale,new Date('2026-08-30T00:00:00Z'));
   // Quoted excerpts contain verbatim community text, so they are excluded
   // from the banned-copy assertion (which guards OUR copy, not the data).
   const partsWithoutExcerpts: string[] = [
     detail.merchant.canonicalName,
     identity.level,
+    ...identity.reasons,
     coverageText(coverage),
     reputation.headline,
     reputation.explanation,
@@ -58,16 +59,18 @@ function renderMerchant(id: string): string {
       renderToStaticMarkup(
         createElement(EvidenceCard, {
           evidence: { ...evidence, quotedExcerpt: '' },
+          locale,
         }),
       ),
     ),
     ...detail.claims.map((claim) =>
-      renderToStaticMarkup(createElement(ClaimCards, { claims: [claim] })),
+      renderToStaticMarkup(createElement(ClaimCards, { claims: [claim], locale })),
     ),
     renderToStaticMarkup(
       createElement(SentimentBar, {
         sentiment: detail.sentiment,
         duplicateCount: detail.duplicateEvidenceCount,
+        locale,
       }),
     ),
   ];
@@ -131,5 +134,11 @@ describe('snapshot merchants render without banned trust/rating copy', () => {
         expect(html).toContain(evidence.url.split('/')[0]);
       }
     }
+  });
+
+  it('renders snapshot merchant in English without Arabic identity reasons', () => {
+    const html = renderMerchant('a427fcf4-50ad-4234-a231-dfc0c2c347a5', 'en');
+    expect(html).toContain('Available identifiers are insufficient to confirm identity.');
+    expect(html).not.toContain('المعرفات المتاحة لا تكفي لتأكيد الهوية.');
   });
 });

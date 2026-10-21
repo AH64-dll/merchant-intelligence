@@ -1,9 +1,16 @@
 import type { JSX, ReactNode } from 'react';
 import Link from 'next/link';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Fingerprint } from 'lucide-react';
 
 import type { MerchantDirectoryEntry } from '@/lib/types';
-import { COVERAGE_LEVEL_LABELS, IDENTITY_LEVEL_LABELS, SENTIMENT_LABELS } from '@/lib/labels';
-import { formatDateAr } from './display';
+import {
+  coverageLevelLabel,
+  identityLevelLabel,
+  sentimentLabel,
+} from '@/lib/labels';
+import { t, type Locale } from '@/lib/i18n';
+import { formatDate } from './display';
 
 /**
  * Public seller summary card — the one shared markup for both directories.
@@ -16,81 +23,112 @@ import { formatDateAr } from './display';
 export function MerchantSummaryCard({
   entry,
   children,
+  locale = 'ar',
 }: {
   entry: MerchantDirectoryEntry;
-  /** Optional extra section (e.g. the positive highlight). */
   children?: ReactNode;
+  locale?: Locale;
 }): JSX.Element {
+  const strings = t(locale);
+  const delimiter = locale === 'en' ? ', ' : '، ';
   const { evidence } = entry;
+
+  const Chevron = locale === 'ar' ? ChevronLeft : ChevronRight;
+
   return (
-    <article className="space-y-2 border border-black p-4">
-      <h2 className="text-lg font-bold">
-        <Link
-          href={`/merchant/${entry.id}`}
-          className="inline-block min-h-[44px] py-1 underline underline-offset-2"
-        >
-          <span dir="auto">{entry.canonicalName}</span>
-        </Link>
-      </h2>
-      <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+    <article className="merchant-card space-y-3">
+      <div className="flex items-start justify-between gap-3 border-b border-[#e4e3de] pb-2">
+        <h2 className="text-base font-semibold text-[#2a3441]">
+          <Link
+            href={`/${locale}/merchant/${entry.id}`}
+            className="card-title-link"
+          >
+            <Fingerprint size={18} className="text-[#4a7c7e] flex-shrink-0" aria-hidden="true" />
+            <span dir="auto">{entry.canonicalName}</span>
+            <Chevron size={15} className="card-chevron" aria-hidden="true" />
+          </Link>
+        </h2>
+      </div>
+
+      <dl className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#56606a]">
         <div>
-          <dt className="inline font-bold">التصنيف: </dt>
+          <dt className="inline font-bold">{strings.categoryLabel}</dt>
           <dd className="inline" dir="auto">
-            {entry.categoryTags.length > 0 ? entry.categoryTags.join('، ') : 'تصنيف غير محدد'}
+            {entry.categoryTags.length > 0 ? entry.categoryTags.join(delimiter) : strings.unspecifiedCategory}
           </dd>
         </div>
         <div>
-          <dt className="inline font-bold">الموقع: </dt>
+          <dt className="inline font-bold">{strings.locationLabel}</dt>
           <dd className="inline" dir="auto">
             {entry.locationLabel}
           </dd>
         </div>
       </dl>
+
       {entry.locationCount > 1 ? (
-        <p className="text-sm">
-          عدة مواقع مسجَّلة — <span dir="ltr">{entry.locationCount}</span> سجل
-          موقع موثَّق (وليست تعدادًا مؤكدًا للفروع).
+        <p className="text-xs text-[#56606a]">
+          {strings.multipleRecordedLocations.replace('{count}', String(entry.locationCount))}
         </p>
       ) : null}
-      <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+
+      <dl className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#56606a]">
         <div>
-          <dt className="inline font-bold">الهوية: </dt>
-          <dd className="inline">{IDENTITY_LEVEL_LABELS[entry.identityLevel]}</dd>
+          <dt className="inline font-bold">{strings.identityLabel}</dt>
+          <dd className="inline font-medium text-[#2a3441]">{identityLevelLabel(entry.identityLevel, locale)}</dd>
         </div>
         <div>
-          <dt className="inline font-bold">تغطية الأدلة: </dt>
-          <dd className="inline">{COVERAGE_LEVEL_LABELS[entry.coverageLevel]}</dd>
+          <dt className="inline font-bold">{strings.evidenceCoverageLabel}</dt>
+          <dd className="inline font-medium text-[#2a3441]">{coverageLevelLabel(entry.coverageLevel, locale)}</dd>
         </div>
       </dl>
-      <p className="text-sm">
-        الأدلة: <span dir="ltr">{evidence.total}</span> إجمالًا، منها{' '}
-        <span dir="ltr">{evidence.nonDuplicate}</span> غير مكررة من{' '}
-        <span dir="ltr">{evidence.distinctSources}</span> مصادر مختلفة.
+
+      <p className="text-xs text-[#56606a]">
+        {strings.evidenceSummaryTally
+          .replace('{total}', String(evidence.total))
+          .replace('{nonDuplicate}', String(evidence.nonDuplicate))
+          .replace('{distinctSources}', String(evidence.distinctSources))}
       </p>
-      <p className="text-sm">
-        {SENTIMENT_LABELS.positive}: <span dir="ltr">{evidence.positive}</span> ·{' '}
-        {SENTIMENT_LABELS.neutral}: <span dir="ltr">{evidence.neutral}</span> ·{' '}
-        {SENTIMENT_LABELS.negative}: <span dir="ltr">{evidence.negative}</span>{' '}
-        (من الأدلة غير المكررة).
-      </p>
-      <p className="text-sm">
-        أحدث نشر موثَّق:{' '}
-        {evidence.latestPublishedAt !== null ? (
-          <time dateTime={evidence.latestPublishedAt.slice(0, 10)} dir="ltr">
-            {formatDateAr(evidence.latestPublishedAt)}
-          </time>
-        ) : (
-          'غير مؤرَّخ'
-        )}
-        {' · '}
-        آخر التقاط للأدلة:{' '}
-        {evidence.lastCapturedAt !== null ? (
-          <time dateTime={evidence.lastCapturedAt.slice(0, 10)} dir="ltr">
-            {formatDateAr(evidence.lastCapturedAt)}
-          </time>
-        ) : (
-          'غير معروف'
-        )}
+
+      <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs">
+        <span className="stance supporting inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className="stance-dot shrink-0" aria-hidden="true" />
+          <span>{sentimentLabel('positive', locale)}: <span dir="ltr" className="font-semibold">{evidence.positive}</span></span>
+        </span>
+        <span className="stance mixed inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className="stance-dot shrink-0" aria-hidden="true" />
+          <span>{sentimentLabel('neutral', locale)}: <span dir="ltr" className="font-semibold">{evidence.neutral}</span></span>
+        </span>
+        <span className="stance negative inline-flex items-center gap-1.5 whitespace-nowrap">
+          <span className="stance-dot shrink-0" aria-hidden="true" />
+          <span>{sentimentLabel('negative', locale)}: <span dir="ltr" className="font-semibold">{evidence.negative}</span></span>
+        </span>
+        <span className="text-xs text-[#56606a]">{strings.fromNonDuplicateEvidence}</span>
+      </div>
+
+      <p className="text-xs text-[#56606a] pt-1 border-t border-[#f0eee9] flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span>
+          {strings.latestPublished}
+          {evidence.latestPublishedAt !== null ? (
+            <time dateTime={evidence.latestPublishedAt.slice(0, 10)} dir="ltr">
+              {formatDate(evidence.latestPublishedAt, locale)}
+            </time>
+          ) : (
+            strings.undated
+          )}
+        </span>
+        <span className="inline-flex items-center gap-1 whitespace-nowrap">
+          <span aria-hidden="true">·</span>
+          <span>
+            {strings.latestCapture}
+            {evidence.lastCapturedAt !== null ? (
+              <time dateTime={evidence.lastCapturedAt.slice(0, 10)} dir="ltr">
+                {formatDate(evidence.lastCapturedAt, locale)}
+              </time>
+            ) : (
+              strings.unknownDate
+            )}
+          </span>
+        </span>
       </p>
       {children}
     </article>

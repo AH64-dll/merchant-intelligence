@@ -732,7 +732,12 @@ describe('Golden matrix — deliberate no-hits', () => {
   });
 
   it('hostname-like name input that matches nothing stays empty', () => {
-    expectNoHits('wataniya');
+    expectNoHits('nonexistenthostname');
+  });
+
+  it('wataniya reaches Al Wataniah for Electrical Appliances', () => {
+    const r = index.search('wataniya');
+    expect(r.hits.some((h) => h.merchant.canonicalName.includes('Wataniah'))).toBe(true);
   });
 
   it('oversized single token stays empty (bounded typo rescue)', () => {
@@ -757,10 +762,88 @@ describe('Golden matrix — envelope contracts on real data', () => {
     const p1 = index.search('tech', 1);
     const p2 = index.search('tech', 2);
     expect(p1.hits.length).toBe(20);
-    expect(p2.hits.length).toBe(p1.total - 20);
+    expect(p2.hits.length).toBe(Math.min(20, p1.total - 20));
     const seen = new Set(p1.hits.map((h) => h.merchant.id));
     for (const hit of p2.hits) {
       expect(seen.has(hit.merchant.id)).toBe(false);
     }
+  });
+});
+describe('Golden matrix — regression & hostile inputs', () => {
+  it('category word reaches expected merchant', () => {
+    const r1 = index.search('Gaming PC');
+    expect(r1.hits.some((h) => h.merchant.id === '3da82768-832c-4bf5-80c1-6cf3059cf5c5')).toBe(true);
+
+    const r2 = index.search('Consumer Electronics');
+    expect(r2.hits.some((h) => h.merchant.id === '4fa441a7-25b7-4710-9da0-689241c9fd2d')).toBe(true);
+  });
+
+  it('a word that only occurs in evidence text reaches expected merchant', () => {
+    const r = index.search('MiniCash');
+    expect(r.hits.some((h) => h.merchant.id === B_TECH_ID)).toBe(true);
+  });
+
+  it('domain query reaches merchant', () => {
+    const r = index.search('ahw.store');
+    expect(r.hits[0]?.merchant.id).toBe(AHW_ID);
+  });
+
+  it('handle query reaches merchant', () => {
+    const r = index.search('2begypt');
+    expect(r.hits.some((h) => h.merchant.id === INSTA_2B_ID)).toBe(true);
+  });
+
+  it('recorded address reaches merchant', () => {
+    const r = index.search('Smouha Club Main Gate');
+    expect(r.hits.some((h) => h.merchant.id === 'ceb4836a-9897-4805-a975-64215ca0d0a2')).toBe(true);
+  });
+
+  it('commercial register reaches merchant', () => {
+    const r = index.search('15021');
+    expect(r.hits.some((h) => h.merchant.id === '48420ec2-2aa1-4ceb-95fd-bfeb2b16f605')).toBe(true);
+  });
+
+  it('source label query reaches merchant', () => {
+    const r = index.search('FindHealthClinics');
+    expect(r.hits.some((h) => h.merchant.id === 'dfd12b2a-e57c-4391-8f89-2a6d7be12c5e')).toBe(true);
+  });
+
+  it('hostile SQL, control, and emoji inputs never throw and return cleanly', () => {
+    const hostileCases = [
+      "B.TECH' OR '1'='1",
+      'B.TECH; DROP TABLE merchants;--',
+      '%',
+      '_',
+      '--',
+      ';',
+      '\u200E\u200Fبي تك\u202A\u202C',
+      '🛒 B.TECH 📱',
+      '\x00\x1fB.TECH',
+      'a'.repeat(5000),
+      '',
+      '   ',
+    ];
+
+    for (const q of hostileCases) {
+      expect(() => index.search(q)).not.toThrow();
+      const res = index.search(q);
+      expect(Array.isArray(res.hits)).toBe(true);
+      expect(typeof res.total).toBe('number');
+    }
+
+    // Hostile B.TECH queries with injected characters still find B.TECH
+    expect(index.search("B.TECH'").hits.some((h) => h.merchant.id === B_TECH_ID)).toBe(true);
+    expect(index.search('B.TECH;--').hits.some((h) => h.merchant.id === B_TECH_ID)).toBe(true);
+    expect(index.search('B.TECH%').hits.some((h) => h.merchant.id === B_TECH_ID)).toBe(true);
+    expect(index.search('B.TECH_').hits.some((h) => h.merchant.id === B_TECH_ID)).toBe(true);
+    expect(index.search('\u200E\u200Fبي تك\u202A\u202C').hits.some((h) => h.merchant.id === B_TECH_ID)).toBe(true);
+    expect(index.search('🛒 B.TECH 📱').hits.some((h) => h.merchant.id === B_TECH_ID)).toBe(true);
+  });
+  it('bilingual match labels are returned when locale is en', () => {
+    const resAr = index.search('B.TECH', 1, 10, 'ar');
+    expect(resAr.hits[0]?.match.label).toBe('تطابق اسم تام');
+
+    const resEn = index.search('B.TECH', 1, 10, 'en');
+    expect(resEn.hits[0]?.match.label).toBe('Exact name match');
   });
 });

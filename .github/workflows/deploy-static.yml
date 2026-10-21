@@ -1,0 +1,121 @@
+name: Deploy static site
+
+# Builds the webapp as a fully static export and deploys it to GitHub Pages.
+# Triggers on snapshot updates (data/merchants.db, pipeline changes) and manual
+# dispatch; the "Last Updated" date rendered on every page is the snapshot's
+# own generatedAt — no extra bookkeeping needed.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'webapp/**'
+      - 'data/**'
+      - '.github/workflows/deploy-static.yml'
+  schedule:
+    # Weekly refresh so a regenerated snapshot goes live automatically.
+    - cron: '0 4 * * 0'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webapp
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: webapp/pnpm-lock.yaml
+
+      - name: Install sqlite3 (snapshot gate dependency)
+        run: sudo apt-get update && sudo apt-get install -y sqlite3
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate snapshot DB
+        run: pnpm snapshot
+
+      - name: Verify snapshot gate
+        run: pnpm snapshot:verify
+
+      - name: Export static data payloads
+        run: pnpm export:data
+
+      - name: Build static export
+        run: pnpm build
+        env:
+          # pages.dev serves at the apex — no path prefix.
+          NEXT_PUBLIC_BASE_PATH: ${{ vars.NEXT_PUBLIC_BASE_PATH || '' }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://daleeleltogar.pages.dev' }}
+          NEXT_PUBLIC_ENABLE_ADS: ${{ vars.NEXT_PUBLIC_ENABLE_ADS }}
+          NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID: ${{ vars.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID }}
+          NEXT_PUBLIC_ADSENSE_SLOT_BOTTOM: ${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_BOTTOM }}
+          NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR: ${{ vars.NEXT_PUBLIC_ADSENSE_SLOT_SIDEBAR }}
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: webapp/out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  # Cloudflare Pages target: deploys to https://daleeleltogar.pages.dev.
+  # Auto-creates the Pages project on first run. Requires repo secrets:
+  #   CLOUDFLARE_API_TOKEN  (Pages:Edit)
+  #   CLOUDFLARE_ACCOUNT_ID (dash → Workers & Pages → account id)
+  # Job skips silently until both exist — github.io stays the fallback meanwhile.
+  cf-vars:
+    runs-on: ubuntu-latest
+    outputs:
+      ok: ${{ steps.check.outputs.ok }}
+    steps:
+      - id: check
+        env:
+          T: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          A: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: "[ -n \"$T\" ] && [ -n \"$A\" ] && echo ok=yes >> \"$GITHUB_OUTPUT\" || echo ok=no >> \"$GITHUB_OUTPUT\""
+
+  deploy-cloudflare:
+    needs: [build, cf-vars]
+    if: needs.cf-vars.outputs.ok == 'yes'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          path: site
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy site --project-name=daleeleltogar --branch=main

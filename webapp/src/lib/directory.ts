@@ -10,6 +10,7 @@ import {
   isDisplayableIdentifier,
   isSearchableIdentifier,
 } from './identifier-policy';
+import { nameTokens, normalizeNameLoose } from './normalize';
 import { deriveSourceCategory } from './taxonomy';
 import type {
   EvidenceItem,
@@ -107,6 +108,7 @@ interface ProjectionMetadata {
   governorate: string;
   eligible: boolean;
   rank: PositiveRank;
+  searchTokens: string[];
 }
 
 export class DirectoryQueryValidationError extends Error {
@@ -150,6 +152,39 @@ function normalizedFilter(
   }
   return normalized;
 }
+function normalizedTextQuery(value: unknown): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string') {
+    throw new DirectoryQueryValidationError('q', 'q must be a single string');
+  }
+  if (/[\u0000-\u001f\u007f]/u.test(value)) {
+    throw new DirectoryQueryValidationError('q', 'q has invalid syntax');
+  }
+  const normalized = value.normalize('NFC').trim();
+  if (normalized.length === 0) return undefined;
+  if (normalized.length > 300) {
+    throw new DirectoryQueryValidationError('q', 'q has invalid syntax');
+  }
+  return normalized;
+}
+
+function normalizedLocationCount(value: unknown): number | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === 'number') {
+    if (!Number.isSafeInteger(value) || value < 1) {
+      throw new DirectoryQueryValidationError('locationCount', 'locationCount must be a positive safe integer');
+    }
+    return value;
+  }
+  if (typeof value === 'string' && /^[1-9]\d*$/u.test(value)) {
+    const parsed = Number(value);
+    if (!Number.isSafeInteger(parsed)) {
+      throw new DirectoryQueryValidationError('locationCount', 'locationCount must be a positive safe integer');
+    }
+    return parsed;
+  }
+  throw new DirectoryQueryValidationError('locationCount', 'locationCount must use normalized positive-integer syntax');
+}
 
 /** Parse raw URL-search values into the single canonical directory query shape. */
 export function normalizeDirectoryQuery(input: MerchantDirectoryQueryInput = {}): MerchantDirectoryQuery {
@@ -189,12 +224,16 @@ export function normalizeDirectoryQuery(input: MerchantDirectoryQueryInput = {})
 
   const category = normalizedFilter('category', input.category);
   const governorate = normalizedFilter('governorate', input.governorate);
+  const q = normalizedTextQuery(input.q);
+  const locationCount = normalizedLocationCount(input.locationCount ?? input.minLocations);
   return Object.freeze({
     view,
     page,
     ...(category === undefined ? {} : { category }),
     ...(governorate === undefined ? {} : { governorate }),
     ...(coverage === undefined ? {} : { coverage }),
+    ...(locationCount === undefined ? {} : { locationCount }),
+    ...(q === undefined ? {} : { q }),
   });
 }
 
@@ -207,6 +246,8 @@ export function directoryQueryCacheKey(input: MerchantDirectoryQueryInput = {}):
     query.category ?? null,
     query.governorate ?? null,
     query.coverage ?? null,
+    query.locationCount ?? null,
+    query.q ?? null,
   ]);
 }
 
@@ -327,9 +368,10 @@ function isPositiveEligible(
 ): boolean {
   if (!VERIFIED_DIRECTORY_STATES.has(state) || identityLevel === 'uncertain') return false;
   if (rank.positiveSources < 2) return false;
-  const independent = rows.filter((row) => row.independent && row.duplicateOf === null);
-  if (independent.some((row) => row.authorType !== 'merchant' && row.sentiment === 'negative')) return false;
-  return !independent.map(toEvidenceItem).some((item) => isWarningEvidence(item) || isRiskEvidence(item));
+  // Adverse signal check evaluates the WHOLE evidence set (duplicates included).
+  // A negative/warning/risk observation anywhere disqualifies.
+  if (rows.some((row) => row.authorType !== 'merchant' && row.sentiment === 'negative')) return false;
+  return !rows.map(toEvidenceItem).some((item) => isWarningEvidence(item) || isRiskEvidence(item));
 }
 
 function freezeEntry(entry: MerchantDirectoryEntry): MerchantDirectoryEntry {
@@ -412,6 +454,17 @@ export class MerchantDirectoryProjection {
       if (query.category !== undefined && !entry.categoryTags.includes(query.category)) return false;
       if (query.governorate !== undefined && this.metadata.get(entry.id)?.governorate !== query.governorate) return false;
       if (query.coverage !== undefined && entry.coverageLevel !== query.coverage) return false;
+      if (query.locationCount !== undefined && entry.locationCount < query.locationCount) return false;
+      if (query.q !== undefined) {
+        const meta = this.metadata.get(entry.id);
+        const qTokens = nameTokens(normalizeNameLoose(query.q));
+        if (
+          meta !== undefined &&
+          !qTokens.every((qTok) => meta.searchTokens.some((tok) => tok === qTok || tok.includes(qTok)))
+        ) {
+          return false;
+        }
+      }
       return true;
     });
     const total = filtered.length;
@@ -430,6 +483,32 @@ export class MerchantDirectoryProjection {
       snapshot: this.snapshot,
     });
   }
+
+  /**
+   * Static-export payload: entries + metadata Map entries + snapshot.
+   * JSON.stringify() picks this up automatically; the client rebuilds with
+   * MerchantDirectoryProjection.fromJSON() and gets identical behavior.
+   */
+  toJSON(): {
+    entries: readonly MerchantDirectoryEntry[];
+    metadata: ReadonlyArray<readonly [string, ProjectionMetadata]>;
+    snapshot: SnapshotInfo;
+  } {
+    return { entries: this.entries, metadata: [...this.metadata.entries()], snapshot: this.snapshot };
+  }
+
+  static fromJSON(payload: {
+    entries: readonly MerchantDirectoryEntry[];
+    metadata: ReadonlyArray<readonly [string, ProjectionMetadata]>;
+    snapshot: SnapshotInfo;
+  }): MerchantDirectoryProjection {
+    return new MerchantDirectoryProjection(
+      payload.entries,
+      new Map(payload.metadata),
+      payload.snapshot,
+    );
+  }
+
 }
 
 /** Build the immutable seller projection from exactly the three bounded DB reads. */
@@ -498,7 +577,7 @@ export function buildMerchantDirectoryProjection(
     const rows = evidenceByMerchant.get(seed.id) ?? [];
     const evidence = rows.map(toEvidenceItem);
     const coverage = assessEvidenceCoverage(evidence);
-    const identity = assessIdentity(seed.state, seed.identifiers, relations.get(seed.id) ?? []);
+    const identity = assessIdentity(seed.state, seed.identifiers, relations.get(seed.id) ?? [], 'ar');
     const addresses = seed.identifiers.filter(
       (identifier) => identifier.kind === 'address' && identifier.normalizedValue.trim().length > 0,
     );
@@ -549,10 +628,23 @@ export function buildMerchantDirectoryProjection(
       updatedAt: seed.updatedAt,
     });
     entries.push(entry);
+    const searchTokens = [
+      ...nameTokens(normalizeNameLoose(seed.canonicalName)),
+      ...nameTokens(normalizeNameLoose(seed.category)),
+      ...nameTokens(normalizeNameLoose(seed.city)),
+      ...nameTokens(normalizeNameLoose(seed.governorate)),
+      ...nameTokens(normalizeNameLoose(makeLocationLabel(seed, addresses))),
+      ...seed.identifiers.flatMap((i) => [
+        ...nameTokens(normalizeNameLoose(i.value)),
+        ...nameTokens(normalizeNameLoose(i.normalizedValue)),
+      ]),
+      ...rows.flatMap((r) => nameTokens(normalizeNameLoose(r.summary))),
+    ];
     metadata.set(seed.id, {
       governorate: normalizedStoredLabel(seed.governorate),
       eligible: isPositiveEligible(seed.state, identity.level, rows, rank),
       rank,
+      searchTokens: [...new Set(searchTokens)],
     });
   }
   return new MerchantDirectoryProjection(entries, metadata, snapshot);

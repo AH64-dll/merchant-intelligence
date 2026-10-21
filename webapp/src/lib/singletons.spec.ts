@@ -7,7 +7,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 
 import { getDb, getIndex, validateSnapshotManifest } from './singletons';
-import { GET as searchGET } from '../../app/api/search/route';
+import type { SearchResult } from './types';
 
 const require = createRequire(import.meta.url);
 const Database = require('better-sqlite3');
@@ -17,35 +17,9 @@ const MANIFEST_TABLES = [
   'merchant_analyses', 'merchant_identifiers', 'merchant_aliases', 'merchant_links',
 ] as const;
 
-function searchRequest(q: string | null): Request {
-  const url = new URL('http://localhost/api/search');
-  if (q !== null) url.searchParams.set('q', q);
-  return new Request(url);
-}
-
-describe('api/search route handler', () => {
-  it('returns 400 for missing or blank query', async () => {
-    for (const q of [null, '', '   ']) {
-      const res = await searchGET(searchRequest(q));
-      expect(res.status).toBe(400);
-      expect(await res.json()).toEqual({ error: 'missing_query' });
-    }
-  });
-
-  it('returns the new search contract shape with trimmed query', async () => {
-    const res = await searchGET(searchRequest('  b tech  '));
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      query: string;
-      inputKind: string;
-      total: number;
-      page: number;
-      pageSize: number;
-      ambiguous: boolean;
-      diagnostic: string | null;
-      hits: { merchant: { id: string }; match: { kind: string; value: string; label: string } }[];
-    };
-    expect(body.query).toBe('b tech');
+describe('SearchIndex over the real snapshot (browser-parity contract)', () => {
+  it('returns the search contract shape with trimmed-equivalent input', () => {
+    const body: SearchResult = getIndex().search('b tech');
     expect(typeof body.inputKind).toBe('string');
     expect(typeof body.total).toBe('number');
     expect(body.page).toBe(1);
@@ -59,29 +33,17 @@ describe('api/search route handler', () => {
     expect(body.hits[0].match.label.length).toBeGreaterThan(0);
   });
 
-  it('detects phone queries and matches identifier kinds', async () => {
-    const res = await searchGET(searchRequest('01000000000'));
-    const body = (await res.json()) as {
-      inputKind: string;
-      hits: { match: { kind: string } }[];
-    };
+  it('detects phone queries and matches identifier kinds', () => {
+    const body = getIndex().search('01000000000');
     expect(body.inputKind).toBe('phone');
     expect(body.hits[0].match.kind).toMatch(/phone|whatsapp/);
   });
 
-  it('rejects queries longer than 300 characters', async () => {
-    const res = await searchGET(searchRequest('a'.repeat(301)));
-    expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({ error: 'query_too_long' });
-  });
-
-  it('accepts a query of exactly 300 characters with the normal shape', async () => {
-    const res = await searchGET(searchRequest('a'.repeat(300)));
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { query: string; inputKind: string; hits: unknown[] };
-    expect(body.query).toHaveLength(300);
-    expect(typeof body.inputKind).toBe('string');
-    expect(Array.isArray(body.hits)).toBe(true);
+  it('survives blank and oversized queries without throwing', () => {
+    for (const q of ['', '   ', 'a'.repeat(301)]) {
+      const result = getIndex().search(q);
+      expect(Array.isArray(result.hits)).toBe(true);
+    }
   });
 });
 

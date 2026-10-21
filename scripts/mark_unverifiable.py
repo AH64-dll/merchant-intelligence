@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Mark merchants listed in data/orchestrator/state/exhausted_merchants.txt
-as state='UNVERIFIABLE_FOOTPRINT'. These are merchants that were researched
+as state='INSUFFICIENT_DATA'. These are merchants that were researched
 but produced zero (or insufficient) real online evidence. Idempotent."""
 
 from __future__ import annotations
@@ -16,19 +16,25 @@ EXH = ROOT / "data" / "orchestrator" / "state" / "exhausted_merchants.txt"
 
 
 def main() -> int:
-    ids = [l.strip() for l in EXH.read_text().splitlines() if l.strip()]
+    if not EXH.exists():
+        print(f"exhausted merchants file not found: {EXH}", file=sys.stderr)
+        return 0
+    ids = [l.strip() for l in EXH.read_text(encoding="utf-8").splitlines() if l.strip()]
+    if not ids:
+        print("no merchant ids to mark")
+        return 0
     con = sqlite3.connect(DB)
     cur = con.cursor()
     now = datetime.now(timezone.utc).isoformat()
     n = 0
     for mid in ids:
         cur.execute(
-            "UPDATE merchants SET state='UNVERIFIABLE_FOOTPRINT', updated_at=? WHERE id=?",
+            "UPDATE merchants SET state='INSUFFICIENT_DATA', updated_at=? WHERE id=?",
             (now, mid),
         )
         n += cur.rowcount
     con.commit()
-    print(f"flagged {n} merchants as UNVERIFIABLE_FOOTPRINT")
+    print(f"flagged {n} merchants as INSUFFICIENT_DATA")
     return 0
 
 

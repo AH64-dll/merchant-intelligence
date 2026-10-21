@@ -1,11 +1,13 @@
 import type { JSX, ReactNode } from 'react';
 import Link from 'next/link';
+import { Building2, Info, ListFilter, Scale, Search } from 'lucide-react';
 
 import type {
   MerchantDirectoryResult,
   MerchantDirectoryFilters,
 } from '@/lib/types';
-import { formatDateAr } from './display';
+import { t, type Locale } from '@/lib/i18n';
+import { formatDate, timeDir } from './display';
 import { MerchantSummaryCard } from './MerchantSummaryCard';
 import { PositiveEvidenceCard } from './PositiveEvidenceCard';
 import { DirectoryFilterBar } from './DirectoryFilterBar';
@@ -22,9 +24,9 @@ function preservedQuery(
   filters: MerchantDirectoryFilters,
 ): QueryEntry[] {
   const entries: QueryEntry[] = [];
-  if (filters.category !== undefined) entries.push(['category', filters.category]);
-  if (filters.governorate !== undefined) entries.push(['governorate', filters.governorate]);
-  if (filters.coverage !== undefined) entries.push(['coverage', filters.coverage]);
+  if (filters.category) entries.push(['category', filters.category]);
+  if (filters.governorate) entries.push(['governorate', filters.governorate]);
+  if (filters.coverage) entries.push(['coverage', filters.coverage]);
   return entries;
 }
 
@@ -37,15 +39,14 @@ function pageHref(
   const params = new URLSearchParams();
   for (const [key, value] of query) params.set(key, value);
   params.set('page', String(page));
-  return `${basePath}?${params.toString()}`;
+  const qs = params.toString();
+  return qs.length > 0 ? `${basePath}?${qs}` : basePath;
 }
 
 /**
- * Shared server-rendered shell for /merchants and /merchants/positive-evidence:
- * one heading block, one count/snapshot caption, one filter bar, one list of
- * shared cards, one accessible pagination. Pages pass copy + card kind — no
- * local ranking or duplicated card markup exists in the shell, and the page
- * links preserve every normalized filter parameter.
+ * Shared shell for /merchants and /merchants/positive-evidence:
+ * renders the heading, intro, active-match tally, snapshot freshness, GET
+ * filter bar, seller cards in index-panel structure, and pagination.
  */
 export function DirectoryPageShell({
   title,
@@ -58,89 +59,168 @@ export function DirectoryPageShell({
   cardKind,
   listLabel,
   extra,
+  locale = 'ar',
 }: {
-  /** Page h1. */
   title: string;
-  /** Explanatory paragraph(s) under the h1 (ordering/disclaimer copy). */
   intro: ReactNode;
-  /** Route path for the filter form, reset link, and pagination links. */
   basePath: string;
-  /** Selector result for the current normalized query. */
   result: MerchantDirectoryResult;
-  /** 'all' | 'positive-evidence' — preserved across form submits and links. */
   view: 'all' | 'positive-evidence';
-  /** Current normalized filters marking the selected options. */
   activeFilters: MerchantDirectoryFilters;
-  /** Empty-state guidance when no sellers match the current filters. */
   emptyState: ReactNode;
-  /** Which shared card renders each entry. */
+  /** 'summary' renders MerchantSummaryCard; 'positive' renders PositiveEvidenceCard. */
   cardKind: 'summary' | 'positive';
-  /** aria-label for the seller list. */
+  /** Accessible name for the seller list <ul aria-label=...>. */
   listLabel: string;
   /** Optional page-specific block rendered between the filter bar and list. */
   extra?: ReactNode;
+  locale?: Locale;
 }): JSX.Element {
+  const strings = t(locale);
+  const isEn = locale === 'en';
   const { pagination, availableFilters, snapshot } = result;
   const preserved = preservedQuery(view, activeFilters);
+
   return (
-    <section className="flex w-full flex-col gap-6 py-8">
-      <h1 className="text-2xl font-bold" dir="auto">
-        {title}
-      </h1>
-      {intro}
-      <p aria-live="polite">
-        إجمالي البائعين المطابقين: <span dir="ltr">{pagination.total}</span> — تُعرض{' '}
-        <span dir="ltr">{pagination.pageSize}</span> بائعًا في الصفحة.
-      </p>
-      <p className="text-sm">
-        لقطة البيانات وُلِّدت في:{' '}
-        <time dateTime={snapshot.generatedAt.slice(0, 10)} dir="ltr">
-          {formatDateAr(snapshot.generatedAt)}
-        </time>
-      </p>
+    <div className="page-merchants flex w-full flex-col gap-6 py-4">
+      <div className="page-heading">
+        <div className="eyebrow">
+          <span />
+          {view === 'all'
+            ? (isEn ? 'DIRECTORY INDEX' : 'فهرس الدليل')
+            : (isEn ? 'POSITIVE EVIDENCE' : 'أدلة إيجابية')}
+        </div>
+        <h1 dir="auto">
+          {view === 'all' ? <Building2 size={27} /> : <Scale size={27} />}
+          {title}
+        </h1>
+        <div className="page-intro">{typeof intro === 'string' ? <p dir="auto">{intro}</p> : intro}</div>
+      </div>
+
       <DirectoryFilterBar
         action={basePath}
         availableFilters={availableFilters}
         activeFilters={activeFilters}
+        locale={locale}
       />
+
       {extra}
-      {pagination.total === 0 ? (
-        <div className="border border-black p-4">{emptyState}</div>
-      ) : pagination.page > pagination.totalPages ? (
-        <div className="border border-black p-4">
-          <p>الصفحة المطلوبة خارج المدى.</p>
-          <p className="mt-2 text-sm">
-            إجمالي البائعين المطابقين <span dir="ltr">{pagination.total}</span>{' '}
-            موزعين على <span dir="ltr">{pagination.totalPages}</span> صفحات.
-          </p>
-          <Link
-            href={pageHref(basePath, pagination.totalPages, preserved)}
-            className="mt-2 inline-block min-h-[44px] border border-black px-3 py-2 underline underline-offset-2"
-          >
-            الانتقال إلى الصفحة الأخيرة
-          </Link>
+
+      <section className="index-panel">
+        <div className="index-toolbar">
+          <h2>
+            {view === 'all' ? <Building2 size={18} /> : <Scale size={18} />}
+            {listLabel}
+            <span className="unavailable-count">
+              {pagination.total > 0 ? `(${pagination.total})` : '—'}
+            </span>
+          </h2>
+          <div className="flex items-center gap-3">
+            <p className="hidden sm:block text-xs text-[var(--muted)]" aria-live="polite">
+              {strings.totalMatchingVendors}{' '}
+              <strong className="font-semibold text-[var(--ink)]" dir="ltr">
+                {pagination.total}
+              </strong>
+            </p>
+            <label className="filter-select flex min-w-0 items-center gap-1.5 sm:gap-2">
+              <ListFilter size={15} className="shrink-0" />
+              <select
+                aria-label={isEn ? 'Directory view' : 'عرض القائمة'}
+                defaultValue={view}
+                className="filter-view-select min-h-[44px] max-w-[200px] sm:max-w-[280px] text-xs pe-7 ps-2 rounded-[4px] border border-[var(--border)] bg-[#fafbf7]"
+                onChange={(e) => {
+                  // Preserves full query string without page param across view switch.
+                  // Direct location assignment is intentional for reliable SSR/client state alignment across directory routes.
+                  const viewPath = e.target.value === 'all' ? '/merchants' : '/merchants/positive-evidence';
+                  const qs = new URLSearchParams(window.location.search);
+                  qs.delete('page');
+                  const suffix = qs.toString();
+                  window.location.href = `/${locale}${viewPath}${suffix ? `?${suffix}` : ''}`;
+                }}
+              >
+                <option value="all">{strings.allMerchantsTitle}</option>
+                <option value="positive-evidence">{strings.positiveEvidenceTitle}</option>
+              </select>
+            </label>
+          </div>
         </div>
-      ) : (
-        <>
-          <ul className="flex flex-col gap-4" aria-label={listLabel}>
-            {result.items.map((entry) => (
-              <li key={entry.id}>
-                {cardKind === 'positive' ? (
-                  <PositiveEvidenceCard entry={entry} />
+
+        {pagination.total === 0 ? (
+          <>
+            <div className="directory-empty p-8 text-center">
+              <div className="empty-index-icon">
+                {view === 'all' ? (
+                  <Building2 size={29} aria-hidden="true" />
                 ) : (
-                  <MerchantSummaryCard entry={entry} />
+                  <Scale size={29} aria-hidden="true" />
                 )}
-              </li>
-            ))}
-          </ul>
-          <Pagination
-            basePath={basePath}
-            page={pagination.page}
-            totalPages={pagination.totalPages}
-            query={preserved}
-          />
-        </>
-      )}
-    </section>
+                <span className="empty-index-small">
+                  <Search size={13} aria-hidden="true" />
+                </span>
+              </div>
+              {emptyState}
+            </div>
+            <div className="data-notice">
+              <Info size={18} />
+              <div>
+                <strong>
+                  {isEn ? 'Evidence Coverage Note' : 'ملاحظة حول تغطية الأدلة'}
+                </strong>
+                <p>
+                  {isEn
+                    ? 'The directory reflects records available in the current dataset snapshot. An absence of matching records under specific filters does not indicate a negative verdict on any vendor.'
+                    : 'يعكس الدليل السجلات المتاحة في لقطة البيانات الحالية. غياب السجلات المطابقة تحت تصنيف معين لا يعني حكماً سلباً على أي بائع.'}
+                </p>
+              </div>
+            </div>
+          </>
+        ) : pagination.page > pagination.totalPages ? (
+          <div className="p-8 text-center space-y-4">
+            <p className="text-sm font-medium text-[var(--ink)]">{strings.pageOutOfRange}</p>
+            <p className="text-xs text-[var(--muted)]">
+              {strings.totalMatchingVendors} <span dir="ltr">{pagination.total}</span>{' '}
+              {strings.matchingVendorsDistributed} <span dir="ltr">{pagination.totalPages}</span>{' '}
+              {strings.pagesWord}
+            </p>
+            <Link
+              href={pageHref(basePath, pagination.totalPages, preserved)}
+              className="secondary-button inline-flex mx-auto"
+            >
+              {strings.goToLastPage}
+            </Link>
+          </div>
+        ) : (
+          <>
+            <ul className="p-4 space-y-3" aria-label={listLabel}>
+              {result.items.map((entry) => (
+                <li key={entry.id}>
+                  {cardKind === 'positive' ? (
+                    <PositiveEvidenceCard entry={entry} locale={locale} />
+                  ) : (
+                    <MerchantSummaryCard entry={entry} locale={locale} />
+                  )}
+                </li>
+              ))}
+            </ul>
+            <div className="index-footer">
+              <Pagination
+                basePath={basePath}
+                page={pagination.page}
+                totalPages={pagination.totalPages}
+                query={preserved}
+                locale={locale}
+              />
+            </div>
+          </>
+        )}
+      </section>
+
+      <p className="text-xs text-[var(--muted)]">
+        {strings.snapshotGeneratedAt}{' '}
+        <time dateTime={snapshot.generatedAt.slice(0, 10)} dir={timeDir(locale)}>
+          {formatDate(snapshot.generatedAt, locale)}
+        </time>
+      </p>
+    </div>
   );
 }

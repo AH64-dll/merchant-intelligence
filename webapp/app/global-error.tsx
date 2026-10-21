@@ -1,10 +1,13 @@
 'use client';
 
+import { AlertCircle, RotateCcw } from 'lucide-react';
+import { DIR_FOR, localeFromPathname, t } from '@/lib/i18n';
+
+
 /**
  * Root-level error boundary. `app/error.tsx` cannot catch failures thrown by
- * the root layout (which does real I/O via SiteFooter/getLocale), so this file
- * replaces the whole document with the same generic, non-leaking Arabic copy.
- * No error details are rendered.
+ * the root layout, so this file replaces the whole document with generic,
+ * non-leaking copy in the active locale. No error details are rendered.
  */
 export default function GlobalError({
   reset,
@@ -12,20 +15,45 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  // Error boundaries render only on the client — window is safe.
+  const locale = localeFromPathname(window.location.pathname);
+  const dir = DIR_FOR[locale];
+  const strings = t(locale);
+
   return (
-    <html lang="ar" dir="rtl">
-      <body className="min-h-screen flex flex-col">
-        <section className="py-16 text-center">
-          <h1 className="text-xl font-bold mb-4">حدث خطأ غير متوقع.</h1>
-          <p className="mb-6">لم نتمكن من عرض هذه الصفحة. يمكنك إعادة المحاولة أو العودة إلى البحث.</p>
-          <button
-            type="button"
-            onClick={() => reset()}
-            className="min-h-[44px] min-w-[44px] border border-black px-4 py-2 font-bold"
+    <html lang={locale} dir={dir} suppressHydrationWarning>
+      <body>
+        <main
+          className="main-content"
+          style={{
+            display: 'flex',
+            minHeight: '100vh',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <section
+            className="search-empty-panel"
+            role="alert"
+            style={{ maxWidth: '600px', width: '100%' }}
           >
-            إعادة المحاولة
-          </button>
-        </section>
+            <div className="large-empty-icon" aria-hidden="true">
+              <AlertCircle size={38} />
+            </div>
+            <h2>{strings.errorTitle}</h2>
+            <p>{strings.errorDesc}</p>
+            <div className="empty-actions">
+              <button
+                type="button"
+                onClick={() => reset()}
+                className="secondary-button"
+              >
+                <RotateCcw size={14} aria-hidden="true" />
+                <span>{strings.retry}</span>
+              </button>
+            </div>
+          </section>
+        </main>
       </body>
     </html>
   );

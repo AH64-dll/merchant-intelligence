@@ -132,9 +132,20 @@ async def main() -> int:
             "agents": ok,
             "total_groups": sum(len(r["groups"]) for r in ok),
         }
-        with open("/tmp/groupdisco_proposals.json", "w", encoding="utf-8") as f:
+        user_tmp = (
+            Path(tempfile.gettempdir()) / f"groupdisco-{os.getuid()}"
+            if hasattr(os, "getuid")
+            else Path(tempfile.gettempdir()) / "groupdisco"
+        )
+        user_tmp.mkdir(mode=0o700, parents=True, exist_ok=True)
+        if hasattr(os, "chmod"):
+            os.chmod(user_tmp, 0o700)
+        fd, proposals_path = tempfile.mkstemp(
+            prefix="groupdisco_proposals_", suffix=".json", dir=user_tmp
+        )
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(findings, f, ensure_ascii=False, indent=2)
-        print(f"[groupdisco] saved {findings['total_groups']} proposals to /tmp/groupdisco_proposals.json", flush=True)
+        print(f"[groupdisco] saved {findings['total_groups']} proposals to {proposals_path}", flush=True)
     finally:
         # Always clean up live omp children, even after an unexpected failure.
         await client.close()

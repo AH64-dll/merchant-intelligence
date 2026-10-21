@@ -164,7 +164,7 @@ describe('RelatedMerchants', () => {
       { id: 'm-2', name: 'تاجر آخر', relation: 'identifier_collision', rationale: 'تطابق رقم هاتف', confidence: 0.42 },
     ];
     const html = renderToStaticMarkup(createElement(RelatedMerchants, { related }));
-    expect(html).toMatch(/href="\/merchant\/m-2"/);
+    expect(html).toMatch(/href="\/ar\/merchant\/m-2"/);
     expect(html).toContain('تاجر آخر');
     expect(html).not.toContain('42');
     expect(html).not.toContain('0.42');

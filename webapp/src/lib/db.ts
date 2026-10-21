@@ -1,3 +1,4 @@
+import path from 'node:path';
 import Database from 'better-sqlite3';
 import type { Database as DatabaseHandle } from 'better-sqlite3';
 import { buildMerchantDirectoryProjection, selectMerchantDirectory } from './directory';
@@ -36,6 +37,8 @@ const SEARCHABLE_KINDS: readonly IdentifierKind[] = [
   'website',
   'email',
   'instagram',
+  'address',
+  'commercial_register',
   'marketplace',
   'google_maps',
   'tiktok',
@@ -84,6 +87,9 @@ export interface IndexData {
   merchants: Merchant[];
   identifiers: { merchantId: string; kind: IdentifierKind; normalized: string }[];
   aliases: { merchantId: string; alias: string }[];
+  claims: { merchantId: string; summary: string }[];
+  evidence: { merchantId: string; summary: string; quotedExcerpt: string }[];
+  sources: { merchantId: string; url: string; sourceLabel: string }[];
 }
 
 interface MerchantRow {
@@ -256,6 +262,98 @@ function strArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
 }
 
+/**
+ * Some stored analysis strings are legacy `key=value; …` model output rather
+ * than prose, and embedded Python-dict literals whose keys carry vocabulary the
+ * interpretation boundary forbids in public output. The passes below run at the
+ * single point where a stored payload becomes a view model shared by the JSON
+ * API and the rendered page — so neither consumer can leak them. Everything
+ * else in the string is preserved verbatim.
+ */
+/**
+ * Two classes of internal vocabulary:
+ *  - STRICT keys are snake_case pipeline identifiers that can NEVER legitimately
+ *    appear in public prose — ban the token plus its attached value in any form
+ *    (`key=value`, `'key': 'v'`, `key 0.45`).
+ *  - SOFT keys are ordinary words (`confidence`, `sentiment`, …) that are only
+ *    internal when used as a key — banned only in `key=value` / `'key': 'v'` /
+ *    `key:` forms so legitimate prose survives.
+ */
+const STRICT_KEYS =
+  'source_reliability|entity_certainty|reliability_band|identity_confidence|' +
+  'source_type|duplicate_of|package_labels|independent_source_count';
+
+const SOFT_KEYS =
+  'evaluation|confidence|sentiment|reliability|validity|ambiguity|' +
+  'corroboration|contradictions|freshness|strength|severity|verdict|score';
+
+const INTERNAL_KEYS = `${STRICT_KEYS}|${SOFT_KEYS}`;
+
+
+
+/** `'key': 'value'` / `'key'="value"` dict pairs — stripped before segmentation. */
+const INTERNAL_DICT_PAIR = new RegExp(
+  `['"](?:${INTERNAL_KEYS})['"]\\s*[:=]\\s*` +
+    `(?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'|[^;,{}]*)`,
+  'gi',
+);
+
+/**
+ * STRICT tokens in any form: `key=v`, `'key': 'v'`, `key: v`, bare `key v`,
+ * or a lone `key`. The unquoted value is a single token (`\\S+`) — anything
+ * longer is real prose, not a pipeline value.
+ */
+const STRICT_TOKEN = new RegExp(
+  `['"]?(?:${STRICT_KEYS})['"]?(?:\\s*[:=]\\s*(?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'|\\S+)|\\s+\\S+)?`,
+  'gi',
+);
+
+/** SOFT tokens only in key=value / key:value form (never bare prose words). */
+const SOFT_TOKEN = new RegExp(
+  `['"]?(?:${SOFT_KEYS})['"]?\\s*[:=]\\s*` +
+    `(?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'|[^;,)\\]}\\s]+)`,
+  'gi',
+);
+/**
+ * Residual segment-level guard: a segment that *begins* with an internal key is
+ * a pure `key=value` token segment and dies outright. Mid-sentence occurrences
+ * were already removed inline by STRICT/SOFT_TOKEN — dropping the whole
+ * sentence would erase real evidence prose.
+ */
+const INTERNAL_SEGMENT_KEY = new RegExp(
+  `^\\s*["']?(?:${INTERNAL_KEYS})["']?\\s*[=:]`,
+  'i',
+);
+
+const EDGE_TRIM = /^[,{}\[\]\s'"\\/:]+|[,{}\[\]\s'"\\/:]+$/g;
+
+/**
+ * Scrubs internal analysis vocabulary from a free-text field (summary, notes,
+ * excerpt). Removes strict tokens outright, soft `key=value` fragments inline,
+ * and collapses the punctuation/quote residue those removals leave behind.
+ */
+export function publicAnalysisText(value: string | null | undefined): string {
+  if (value === null || value === undefined || value === '') return '';
+  return value
+    .replace(INTERNAL_DICT_PAIR, ' ')
+    .replace(STRICT_TOKEN, ' ')
+    .replace(SOFT_TOKEN, ' ')
+    .replace(/\s*[,;]\s*(?=[)\]}])/g, '')
+    .replace(/\(\s*[,;]?\s*\)/g, '')
+    .replace(/[,;]\s*[,;]/g, ';')
+    .split(';')
+    .map((segment) => segment.replace(EDGE_TRIM, '').trim())
+    .filter((segment) => segment.length > 1 && !INTERNAL_SEGMENT_KEY.test(segment))
+    .join('; ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+function publicAnalysisStrings(value: unknown): string[] {
+  return strArray(value)
+    .map((item) => publicAnalysisText(item))
+    .filter((item) => item.length > 0);
+}
+
 export class SnapshotManifestError extends Error {}
 
 /**
@@ -337,20 +435,20 @@ export function parseAnalysisPayload(payloadJson: string): AnalysisPayload | nul
   return {
     merchantName: str(p['merchant_name']),
     identityConfidence: num(p['identity_confidence']),
-    evidenceSummary,
+    evidenceSummary: publicAnalysisText(evidenceSummary),
     sourceDiversity: num(p['source_diversity']),
-    verifiedClaims: strArray(p['verified_claims']),
-    unverifiedClaims: strArray(p['unverified_claims']),
-    contradictions: strArray(p['contradictions']),
-    riskSignals: strArray(p['risk_signals']),
-    positiveSignals: strArray(p['positive_signals']),
-    missingInformation: strArray(p['missing_information']),
+    verifiedClaims: publicAnalysisStrings(p['verified_claims']),
+    unverifiedClaims: publicAnalysisStrings(p['unverified_claims']),
+    contradictions: publicAnalysisStrings(p['contradictions']),
+    riskSignals: publicAnalysisStrings(p['risk_signals']),
+    positiveSignals: publicAnalysisStrings(p['positive_signals']),
+    missingInformation: publicAnalysisStrings(p['missing_information']),
     requiresMoreResearch: bool(p['requires_more_research']),
     internalState: str(p['internal_state']),
     evidenceConfidence: num(p['evidence_confidence']),
-    reputationNotes: str(p['reputation_notes']),
-    fraudRiskNotes: str(p['fraud_risk_notes']),
-    consumerSatisfactionNotes: str(p['consumer_satisfaction_notes']),
+    reputationNotes: publicAnalysisText(str(p['reputation_notes'])),
+    fraudRiskNotes: publicAnalysisText(str(p['fraud_risk_notes'])),
+    consumerSatisfactionNotes: publicAnalysisText(str(p['consumer_satisfaction_notes'])),
   };
 }
 
@@ -385,6 +483,9 @@ export class MerchantDb {
   private readonly stmtBrief: Database.Statement<[string]>;
   private readonly stmtIndexIdentifiers: Database.Statement;
   private readonly stmtAliases: Database.Statement;
+  private readonly stmtIndexClaims: Database.Statement;
+  private readonly stmtIndexEvidence: Database.Statement;
+  private readonly stmtIndexSources: Database.Statement;
   private readonly stmtMerchantById: Database.Statement<[string]>;
   private readonly stmtDetailIdentifiers: Database.Statement<[string]>;
   private readonly stmtDetailAliases: Database.Statement<[string]>;
@@ -400,13 +501,20 @@ export class MerchantDb {
   private readonly stmtDirectoryEvidence: Database.Statement;
   private readonly stmtEvidenceTranslations: Database.Statement<[string, string]> | null;
   private readonly stmtClaimTranslations: Database.Statement<[string, string]> | null;
+  private readonly stmtBriefTranslations: Database.Statement<[string, string]> | null;
   private directoryProjection: MerchantDirectoryProjection | null = null;
 
   constructor(dbPath: string) {
-    this.db = new Database(dbPath, { readonly: true, fileMustExist: true });
+    const resolvedPath = path.resolve(dbPath);
+    const basename = path.basename(resolvedPath).toLowerCase();
+    if (basename === 'merchant_intelligence.db' || basename.includes('merchant_intelligence')) {
+      throw new Error(
+        `Forbidden database target: cannot open master pipeline database '${dbPath}'. Webapp must only open the frozen read-only snapshot.`,
+      );
+    }
+    this.db = new Database(resolvedPath, { readonly: true, fileMustExist: true });
     // Validate the manifest before preparing any queries — no legacy fallback.
     this.snapshotInfo = validateSnapshotManifest(this.db);
-
     const kindPlaceholders = SEARCHABLE_KINDS.map(() => '?').join(', ');
     this.stmtMerchants = this.db.prepare(
       `SELECT id, canonical_name, category, city, governorate, identity_confidence, state, created_at, updated_at
@@ -419,6 +527,19 @@ export class MerchantDb {
     );
     this.stmtAliases = this.db.prepare(
       'SELECT merchant_id, alias FROM merchant_aliases ORDER BY merchant_id, alias',
+    );
+    this.stmtIndexClaims = this.db.prepare(
+      'SELECT merchant_id, summary FROM claims ORDER BY merchant_id, id',
+    );
+    this.stmtIndexEvidence = this.db.prepare(
+      'SELECT merchant_id, summary, quoted_excerpt FROM evidence WHERE duplicate_of IS NULL ORDER BY merchant_id, id',
+    );
+    const sourcesHasLabel = this.hasColumn('sources', 'source_label');
+    this.stmtIndexSources = this.db.prepare(
+      `SELECT DISTINCT e.merchant_id, s.url, ${sourcesHasLabel ? "COALESCE(s.source_label, '')" : "''"} AS source_label
+       FROM evidence e JOIN sources s ON s.id = e.source_id
+       WHERE e.duplicate_of IS NULL AND s.url != ''
+       ORDER BY e.merchant_id`,
     );
     this.stmtMerchantById = this.db.prepare(
       `SELECT id, canonical_name, category, city, governorate, identity_confidence, state, created_at, updated_at
@@ -447,6 +568,15 @@ export class MerchantDb {
           `SELECT t.record_id AS record_id, t.field_name AS field_name, t.content AS content
            FROM translations t JOIN claims c ON c.id = t.record_id
            WHERE t.table_name = 'claims' AND t.lang = ? AND c.merchant_id = ?`,
+        )
+      : null;
+
+    // merchant_briefs translations key bullets as `<merchant_id>::bullet_<i>`.
+    this.stmtBriefTranslations = hasTranslations
+      ? this.db.prepare(
+          `SELECT t.record_id AS record_id, t.field_name AS field_name, t.content AS content
+           FROM translations t
+           WHERE t.table_name = 'merchant_briefs' AND t.lang = ? AND t.record_id LIKE ? || '::%'`,
         )
       : null;
     this.stmtEvidence = this.db.prepare(
@@ -551,6 +681,9 @@ export class MerchantDb {
   }
 
   private hasColumn(table: string, column: string): boolean {
+    if (!/^[a-zA-Z0-9_]+$/.test(table) || !/^[a-zA-Z0-9_]+$/.test(column)) {
+      throw new Error(`Invalid table or column identifier: ${table}.${column}`);
+    }
     const rows = this.db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
     return rows.some((row) => row.name === column);
   }
@@ -589,10 +722,32 @@ export class MerchantDb {
       merchantId: row.merchant_id,
       alias: row.alias,
     }));
-    return { merchants, identifiers, aliases };
+    const claimRows = this.stmtIndexClaims.all() as { merchant_id: string; summary: string }[];
+    const claims = claimRows.map((r) => ({ merchantId: r.merchant_id, summary: r.summary }));
+    const evidenceRows = this.stmtIndexEvidence.all() as {
+      merchant_id: string;
+      summary: string;
+      quoted_excerpt: string;
+    }[];
+    const evidence = evidenceRows.map((r) => ({
+      merchantId: r.merchant_id,
+      summary: r.summary,
+      quotedExcerpt: r.quoted_excerpt,
+    }));
+    const sourceRows = this.stmtIndexSources.all() as {
+      merchant_id: string;
+      url: string;
+      source_label: string;
+    }[];
+    const sources = sourceRows.map((r) => ({
+      merchantId: r.merchant_id,
+      url: r.url,
+      sourceLabel: r.source_label,
+    }));
+    return { merchants, identifiers, aliases, claims, evidence, sources };
   }
 
-  private getDirectoryProjection(): MerchantDirectoryProjection {
+  getDirectoryProjection(): MerchantDirectoryProjection {
     if (this.directoryProjection !== null) return this.directoryProjection;
     const merchantRows = this.stmtDirectoryMerchants.all() as DirectoryMerchantIdentifierRow[];
     const linkRows = this.stmtDirectoryLinks.all() as DirectoryLinkRow[];
@@ -617,6 +772,7 @@ export class MerchantDb {
   getMerchantDirectoryEntries(): readonly MerchantDirectoryEntry[] {
     return this.getDirectoryProjection().entries;
   }
+
 
   /** Shared paginated selector for server pages and the public list API. */
   getMerchantDirectory(input: MerchantDirectoryQueryInput = {}): MerchantDirectoryResult {
@@ -722,8 +878,8 @@ export class MerchantDb {
       id: row.id,
       claimType: row.claim_type,
       sentiment: row.sentiment,
-      summary: row.summary,
-      quotedExcerpt: row.quoted_excerpt,
+      summary: publicAnalysisText(row.summary),
+      quotedExcerpt: publicAnalysisText(row.quoted_excerpt),
       authorType: row.author_type,
       confidence: row.confidence,
       reliabilityBand: row.reliability_band,
@@ -768,7 +924,7 @@ export class MerchantDb {
       id: row.id,
       claimType: row.claim_type,
       sentiment: row.sentiment,
-      summary: row.summary,
+      summary: publicAnalysisText(row.summary),
       independentSourceCount: row.independent_source_count,
       mentionCount: row.mention_count,
       evidenceIds: evidenceIdsByClaim.get(row.id) ?? [],
@@ -873,16 +1029,41 @@ export class MerchantDb {
       claimTranslations.filter(r => r.field_name === 'summary').map(r => [r.record_id, r.content]),
     );
 
+    const briefTranslations = this.stmtBriefTranslations === null
+      ? []
+      : (this.stmtBriefTranslations.all(locale, id) as
+          { record_id: string; field_name: string; content: string }[]);
+    const briefByBullet: Record<string, string> = Object.fromEntries(
+      briefTranslations
+        .filter(r => r.field_name === 'text')
+        .map(r => [r.record_id.split('::')[1] ?? '', r.content]),
+    );
+    const brief = detail.brief === null ? null : (() => {
+      const payload = detail.brief.payload;
+      if (payload === null || typeof payload !== 'object' || !('bullets' in payload)) return detail.brief;
+      const bullets = (payload as { bullets?: unknown[] }).bullets;
+      if (!Array.isArray(bullets)) return detail.brief;
+      const translated = bullets.map((bullet, i) => {
+        if (typeof bullet !== 'object' || bullet === null) return bullet;
+        const text = briefByBullet[`bullet_${i}`];
+        return text === undefined
+          ? bullet
+          : { ...(bullet as Record<string, unknown>), text: publicAnalysisText(text) };
+      });
+      return { ...detail.brief, payload: { ...payload, bullets: translated } };
+    })();
+
     return {
       ...detail,
       evidence: detail.evidence.map(e => ({
         ...e,
-        summary: evidenceSummaryById[e.id] ?? e.summary,
+        summary: publicAnalysisText(evidenceSummaryById[e.id] ?? e.summary),
       })),
       claims: detail.claims.map(c => ({
         ...c,
-        summary: claimSummaryById[c.id] ?? c.summary,
+        summary: publicAnalysisText(claimSummaryById[c.id] ?? c.summary),
       })),
+      brief,
     };
   }
 }

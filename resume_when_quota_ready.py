@@ -10,9 +10,22 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path("/home/amr/Documents/project")
-MAIN = Path("/tmp/chat-on-steroids-linux-version-/merchant_intelligence/main.py")
-CONFIG = ROOT / "config.yaml"
+REPO_ROOT = Path(__file__).resolve().parent
+ROOT = Path(
+    os.environ.get(
+        "PROJECT_ROOT",
+        os.environ.get("MERCHANT_INTEL_ROOT", REPO_ROOT),
+    )
+)
+_default_main = ROOT / "pipeline" / "main.py"
+_fallback_main = Path("/tmp/chat-on-steroids-linux-version-/merchant_intelligence/main.py")
+MAIN = Path(
+    os.environ.get(
+        "PIPELINE_MAIN",
+        _default_main if _default_main.exists() else _fallback_main,
+    )
+)
+CONFIG = Path(os.environ.get("CONFIG_PATH", ROOT / "config.yaml"))
 LOG = ROOT / "logs" / "quota-supervisor.log"
 POLL_SECONDS = 900
 MAX_POLLS = 200            # hard ceiling on the wait (never poll forever)

@@ -1,0 +1,868 @@
+{
+  "report_type": "data_remediation",
+  "created_at": "2026-10-20T05:51:04.911173+00:00",
+  "database": "/run/media/amrhares/New Volume/دليل التجار/merchant-intelligence/data/merchant_intelligence.db",
+  "fatal_findings_resolved": [
+    "F001",
+    "F002",
+    "F003",
+    "F004",
+    "F005"
+  ],
+  "pre_audit": {
+    "fatal_count": 5,
+    "warning_count": 13
+  },
+  "post_audit": {
+    "fatal_count": 0,
+    "warning_count": 13
+  },
+  "table_counts": {
+    "merchants": 707,
+    "sources": 3794,
+    "evidence": 5507,
+    "claims": 2644,
+    "claim_evidence": 3763,
+    "merchant_analyses": 424,
+    "merchant_identifiers": 3077,
+    "merchant_aliases": 1899,
+    "merchant_links": 88,
+    "schema_version": 1,
+    "source_link_checks": 2134,
+    "merchant_briefs": 334
+  },
+  "state_alignment": {
+    "count": 18,
+    "details": [
+      {
+        "merchant_id": "8dc75d76-bbcf-480b-ad9f-e569f60fd861",
+        "canonical_name": "Matrix Store El Mahalla",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "INSUFFICIENT_DATA",
+        "analysis_id": 220,
+        "round_no": 0
+      },
+      {
+        "merchant_id": "a5097c9c-48ae-46c3-97b7-8786ad6ab9e4",
+        "canonical_name": "Dream Store",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "INSUFFICIENT_DATA",
+        "analysis_id": 258,
+        "round_no": 0
+      },
+      {
+        "merchant_id": "9bba25aa-9247-4627-ae2f-847fa0122199",
+        "canonical_name": "Mac City Store Egypt",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "INSUFFICIENT_DATA",
+        "analysis_id": 241,
+        "round_no": 0
+      },
+      {
+        "merchant_id": "7f8c32c8-d43b-41ad-bd6b-481caece2e99",
+        "canonical_name": "Ideal Service for Import & Export",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "OFFICIAL_WARNING",
+        "analysis_id": 199,
+        "round_no": 0
+      },
+      {
+        "merchant_id": "8433146b-4231-4917-b298-749a38742b25",
+        "canonical_name": "M Store Assiut",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "INSUFFICIENT_DATA",
+        "analysis_id": 210,
+        "round_no": 0
+      },
+      {
+        "merchant_id": "a4a2bccb-1dd3-4420-b3aa-41b50c8efdf8",
+        "canonical_name": "Nasa for Trade & Distribution (شركة ناسا للتوكيلات والتوزيع - الإسكندرية)",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "IDENTITY_UNCERTAIN",
+        "analysis_id": 257,
+        "round_no": 0
+      },
+      {
+        "merchant_id": "a9a856fe-7f67-4041-b815-bf8b7c4db363",
+        "canonical_name": "ميتا بلس تكنولوجي بورسعيد",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "INSUFFICIENT_DATA",
+        "analysis_id": 268,
+        "round_no": 0
+      },
+      {
+        "merchant_id": "7f9fc65c-a14c-41b1-ac3b-376236e97b2a",
+        "canonical_name": "Delta Technology",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "IDENTITY_UNCERTAIN",
+        "analysis_id": 200,
+        "round_no": 0
+      },
+      {
+        "merchant_id": "c6b896bf-2b1b-4abb-ab37-f44aa2000a6d",
+        "canonical_name": "CompuTrend",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "IDENTITY_UNCERTAIN",
+        "analysis_id": 302,
+        "round_no": 0
+      },
+      {
+        "merchant_id": "29330545-3828-4c70-ac58-6e75f4c2a7c1",
+        "canonical_name": "One World Laptop Tanta (وان وورلد لاب توب)",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "INSUFFICIENT_DATA",
+        "analysis_id": 75,
+        "round_no": 0
+      },
+      {
+        "merchant_id": "a6df7841-9245-43b5-8d9a-9a08a7bbc6b7",
+        "canonical_name": "Al Mostafa Laptop (المصطفى لاب توب)",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "INSUFFICIENT_DATA",
+        "analysis_id": 262,
+        "round_no": 0
+      },
+      {
+        "merchant_id": "e6882051-74a2-41e3-87f2-7755c49b8a53",
+        "canonical_name": "AIO for Computers & Security Systems (عملاق الأجهزة الأمنية والحاسبات)",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "INSUFFICIENT_DATA",
+        "analysis_id": 352,
+        "round_no": 0
+      },
+      {
+        "merchant_id": "4ba6cb30-3a78-4f9f-b610-9cd62f2322f9",
+        "canonical_name": "Modern Company for Computer & Laptop (الشركة العصرية للكمبيوتر واللاب توب)",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "INSUFFICIENT_DATA",
+        "analysis_id": 126,
+        "round_no": 0
+      },
+      {
+        "merchant_id": "c8ce3f75-c4b5-48ad-9f76-ff1cb79ce27b",
+        "canonical_name": "Zoka Station (زوكا استيشن)",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "INSUFFICIENT_DATA",
+        "analysis_id": 307,
+        "round_no": 0
+      },
+      {
+        "merchant_id": "27674c46-3a70-4bc4-ab12-0ce4aca3b34f",
+        "canonical_name": "شركة سمارت هوم للأجهزة الكهربائية",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "INSUFFICIENT_DATA",
+        "analysis_id": 398,
+        "round_no": 3
+      },
+      {
+        "merchant_id": "1a40a509-25bf-4e84-9afb-4e6f6e09ddde",
+        "canonical_name": "Roshdy Pharmacies / Care Pharmacies (صيدليات رشدي / صيدليات كير)",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "REQUIRES_MANUAL_REVIEW",
+        "analysis_id": 58,
+        "round_no": 0
+      },
+      {
+        "merchant_id": "14600f81-2caf-4305-971e-3b3369856e16",
+        "canonical_name": "إي جي لابتوب سوهاج",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "IDENTITY_UNCERTAIN",
+        "analysis_id": 50,
+        "round_no": 0
+      },
+      {
+        "merchant_id": "2c0809ec-6873-45c5-8684-18ad193c344b",
+        "canonical_name": "معرض منصور للأجهزة الكهربائية سوهاج",
+        "old_state": "UNVERIFIABLE_FOOTPRINT",
+        "new_state": "INSUFFICIENT_DATA",
+        "analysis_id": 400,
+        "round_no": 3
+      }
+    ]
+  },
+  "reliability_band_updates": {
+    "moderate_to_medium": 690,
+    "high_to_strong": 3,
+    "total": 693
+  },
+  "sentiment_updates": {
+    "evidence_neutral": 60,
+    "evidence_positive": 10,
+    "evidence_negative": 0,
+    "claims_neutral": 0,
+    "claims_positive": 0,
+    "claims_negative": 0,
+    "total": 70
+  },
+  "duplicate_cycle_resolution": {
+    "cycle_components_count": 81,
+    "total_cycle_nodes_resolved": 380,
+    "multihop_canonicalized_count": 271,
+    "components": [
+      {
+        "component_index": 0,
+        "merchant_id": "3ef625c7-8021-4c1e-a26f-779f531129f3",
+        "member_count": 4,
+        "chosen_root_id": "230cb2fa-90f6-4257-a1a6-6bfd24ce1ef0",
+        "captured_at": "2026-08-23T00:00:00+00:00"
+      },
+      {
+        "component_index": 1,
+        "merchant_id": "3c23028e-b8f8-470f-b375-425695cc1c27",
+        "member_count": 8,
+        "chosen_root_id": "81c95151-9010-4bba-8938-039eb41a01cd",
+        "captured_at": "2026-08-23T14:32:00+00:00"
+      },
+      {
+        "component_index": 2,
+        "merchant_id": "cf7cea51-2696-43c9-bc0d-93f13054e96e",
+        "member_count": 8,
+        "chosen_root_id": "3eb70d26-75bd-4155-b825-e4cb865560cf",
+        "captured_at": "2026-08-23T12:00:00+00:00"
+      },
+      {
+        "component_index": 3,
+        "merchant_id": "72fb7b2f-3404-4449-8b31-f6e7845019cc",
+        "member_count": 5,
+        "chosen_root_id": "d4b164a5-4fdb-4079-8b53-a3515bf74a53",
+        "captured_at": "2026-08-23T16:00:00+00:00"
+      },
+      {
+        "component_index": 4,
+        "merchant_id": "3c40e752-bb89-433b-b4b3-92741a0bdf01",
+        "member_count": 11,
+        "chosen_root_id": "e76f431a-f364-4816-a82b-b6458b6eaf6d",
+        "captured_at": "2026-08-23T20:38:00+00:00"
+      },
+      {
+        "component_index": 5,
+        "merchant_id": "3e46c445-540e-4333-bcc2-26a59b838730",
+        "member_count": 6,
+        "chosen_root_id": "92b15156-b64f-40b6-a28c-35ed6081e8dd",
+        "captured_at": "2026-08-23T12:00:00+00:00"
+      },
+      {
+        "component_index": 6,
+        "merchant_id": "8433146b-4231-4917-b298-749a38742b25",
+        "member_count": 6,
+        "chosen_root_id": "88b88def-f10e-4b98-b186-38b337e1f37d",
+        "captured_at": "2026-08-23T10:40:00+00:00"
+      },
+      {
+        "component_index": 7,
+        "merchant_id": "f6468fc1-a6d0-4265-a704-bcbba638b375",
+        "member_count": 4,
+        "chosen_root_id": "51bd7608-84bf-47cb-83ca-f54b2a8a399f",
+        "captured_at": "2026-08-24T12:22:00+00:00"
+      },
+      {
+        "component_index": 8,
+        "merchant_id": "bd24343f-ec89-4091-ba21-3be4b67de14b",
+        "member_count": 6,
+        "chosen_root_id": "07c5864f-eea5-43fd-bf0d-fa1a5b8661e6",
+        "captured_at": "2026-08-25T16:44:44.617864+00:00"
+      },
+      {
+        "component_index": 9,
+        "merchant_id": "df2f0522-591a-465b-8ca1-ef2fe9f4374c",
+        "member_count": 16,
+        "chosen_root_id": "127ad7b9-524b-425f-a6af-d7283b566f08",
+        "captured_at": "2026-08-25T16:44:44.637758+00:00"
+      },
+      {
+        "component_index": 10,
+        "merchant_id": "8439b71e-b3cb-4ca1-950a-c4d8cd9ab250",
+        "member_count": 3,
+        "chosen_root_id": "7803e2cc-b3de-4648-b380-520dad17406b",
+        "captured_at": "2026-08-25T16:59:30.996772+00:00"
+      },
+      {
+        "component_index": 11,
+        "merchant_id": "dc50ea61-a3fd-486b-bb27-a274cb1df799",
+        "member_count": 7,
+        "chosen_root_id": "7dc88835-6394-49e9-b69e-1b446796b1d6",
+        "captured_at": "2026-08-25T16:59:31.053930+00:00"
+      },
+      {
+        "component_index": 12,
+        "merchant_id": "32867b0a-d2ce-49a9-bb3a-04b88fb2f904",
+        "member_count": 7,
+        "chosen_root_id": "30407ecd-534b-48ea-bbaa-82e491f02ad6",
+        "captured_at": "2026-08-25T17:32:14.842667+00:00"
+      },
+      {
+        "component_index": 13,
+        "merchant_id": "f1ff792d-5063-428c-bcb9-b4733a5dbb0f",
+        "member_count": 17,
+        "chosen_root_id": "51af5a07-36d5-47dc-82c7-680bf40decdf",
+        "captured_at": "2026-08-25T22:18:36.630741+00:00"
+      },
+      {
+        "component_index": 14,
+        "merchant_id": "581b8d75-2a03-4fa4-9654-e1a52cdc7ef7",
+        "member_count": 7,
+        "chosen_root_id": "4134a3cf-7692-445a-99ab-ff7c93fbde40",
+        "captured_at": "2026-08-26T08:38:29.217344+00:00"
+      },
+      {
+        "component_index": 15,
+        "merchant_id": "ac96c3de-756f-46a8-99af-8156e79aca81",
+        "member_count": 10,
+        "chosen_root_id": "83d8178a-7335-46f8-a668-c3797ea8e15e",
+        "captured_at": "2026-08-26T08:38:29.462524+00:00"
+      },
+      {
+        "component_index": 16,
+        "merchant_id": "c5622c5f-8399-44fe-9ec4-0aa50d6d92ae",
+        "member_count": 2,
+        "chosen_root_id": "b5a4bb31-964c-4964-8892-f953e4d23693",
+        "captured_at": "2026-08-26T00:00:00+00:00"
+      },
+      {
+        "component_index": 17,
+        "merchant_id": "c39f7ab6-498c-489d-b48e-37c7b78f2dfd",
+        "member_count": 2,
+        "chosen_root_id": "a769899d-ed8f-4b53-bb58-6bdabcd1b4ff",
+        "captured_at": "2026-08-26T12:43:12.637655+00:00"
+      },
+      {
+        "component_index": 18,
+        "merchant_id": "b4b09039-c491-49f2-b14b-f9ebbecf663c",
+        "member_count": 3,
+        "chosen_root_id": "06eb78e4-b40a-4cf1-b389-dc322f74ed3f",
+        "captured_at": "2026-08-26T12:43:12.877242+00:00"
+      },
+      {
+        "component_index": 19,
+        "merchant_id": "72bab21e-5963-40cf-beed-27d52e9e7e54",
+        "member_count": 2,
+        "chosen_root_id": "70393805-49bd-4c68-8a82-34ba583d940c",
+        "captured_at": "2026-08-26T12:43:13.051780+00:00"
+      },
+      {
+        "component_index": 20,
+        "merchant_id": "d59ad8b0-ea8e-4372-a74a-7c2e07023d89",
+        "member_count": 4,
+        "chosen_root_id": "18536b83-75a1-4390-878a-6daed7ef88c9",
+        "captured_at": "2026-08-26T00:00:00+00:00"
+      },
+      {
+        "component_index": 21,
+        "merchant_id": "d59ad8b0-ea8e-4372-a74a-7c2e07023d89",
+        "member_count": 6,
+        "chosen_root_id": "7e99b257-342d-40f2-a4ce-bc193ef03d58",
+        "captured_at": "2026-08-26T00:00:00+00:00"
+      },
+      {
+        "component_index": 22,
+        "merchant_id": "8439b71e-b3cb-4ca1-950a-c4d8cd9ab250",
+        "member_count": 5,
+        "chosen_root_id": "050a4c69-9215-49ff-a562-e713f6463345",
+        "captured_at": "2026-08-26T00:00:00+00:00"
+      },
+      {
+        "component_index": 23,
+        "merchant_id": "c392c598-4f59-4860-afc5-037fa9d24ece",
+        "member_count": 3,
+        "chosen_root_id": "8eb49d30-7a8a-4638-8256-26dea2fe30c2",
+        "captured_at": "2026-08-26T00:00:00+00:00"
+      },
+      {
+        "component_index": 24,
+        "merchant_id": "845be68e-1a2f-4f67-8099-2ae22a1e729d",
+        "member_count": 4,
+        "chosen_root_id": "197a38fa-b921-45f5-b308-082883785c96",
+        "captured_at": "2026-08-26T13:06:00.559681+00:00"
+      },
+      {
+        "component_index": 25,
+        "merchant_id": "845be68e-1a2f-4f67-8099-2ae22a1e729d",
+        "member_count": 4,
+        "chosen_root_id": "fc084281-8f35-4909-8609-5a4062a5adde",
+        "captured_at": "2026-08-26T13:06:00.596546+00:00"
+      },
+      {
+        "component_index": 26,
+        "merchant_id": "d0113e40-1486-467e-89f1-3f188b9eddc1",
+        "member_count": 8,
+        "chosen_root_id": "b8ebd361-f7d4-44ff-9f66-baac2c87e615",
+        "captured_at": "2026-08-26T13:06:00.855590+00:00"
+      },
+      {
+        "component_index": 27,
+        "merchant_id": "d5119fef-5ef0-44e4-8e4b-73cebd08b06c",
+        "member_count": 4,
+        "chosen_root_id": "33db22cf-6731-4b12-a53c-a248e2bbc62f",
+        "captured_at": "2026-08-26T13:06:01.000845+00:00"
+      },
+      {
+        "component_index": 28,
+        "merchant_id": "3c23028e-b8f8-470f-b375-425695cc1c27",
+        "member_count": 5,
+        "chosen_root_id": "cde0fa19-3057-4ecf-b7f3-2f88f370f1df",
+        "captured_at": "2026-08-26T20:41:52.813016+00:00"
+      },
+      {
+        "component_index": 29,
+        "merchant_id": "3c23028e-b8f8-470f-b375-425695cc1c27",
+        "member_count": 3,
+        "chosen_root_id": "ac5defef-7b8c-41be-951f-a28a333af0c3",
+        "captured_at": "2026-08-26T20:41:52.882073+00:00"
+      },
+      {
+        "component_index": 30,
+        "merchant_id": "62ea11ca-a300-41b3-a695-b5b73082d53c",
+        "member_count": 10,
+        "chosen_root_id": "3abce695-0ece-40e0-9098-b452d7dc9c3d",
+        "captured_at": "2026-08-26T20:41:53.430274+00:00"
+      },
+      {
+        "component_index": 31,
+        "merchant_id": "412c5b3d-dbd9-465d-b4ca-3066dd854bb2",
+        "member_count": 17,
+        "chosen_root_id": "5f8a1412-d3fd-4158-a0e8-80026cfd28d3",
+        "captured_at": "2026-08-26T20:43:13.432588+00:00"
+      },
+      {
+        "component_index": 32,
+        "merchant_id": "842ad9fe-ecfc-46f4-b065-e945fb3aaa3d",
+        "member_count": 2,
+        "chosen_root_id": "da28e0cd-4c76-4194-8398-4b1f3f0e91a8",
+        "captured_at": "2026-08-26T20:50:59.209034+00:00"
+      },
+      {
+        "component_index": 33,
+        "merchant_id": "842ad9fe-ecfc-46f4-b065-e945fb3aaa3d",
+        "member_count": 2,
+        "chosen_root_id": "72d1b944-fdf4-4888-9053-999ee2d3c2d2",
+        "captured_at": "2026-08-26T20:50:59.218603+00:00"
+      },
+      {
+        "component_index": 34,
+        "merchant_id": "e49ed811-e1f7-4e55-a65b-013edf377541",
+        "member_count": 2,
+        "chosen_root_id": "523566fc-d543-4649-aa16-21e257bbf542",
+        "captured_at": "2026-08-26T20:50:59.306713+00:00"
+      },
+      {
+        "component_index": 35,
+        "merchant_id": "e49ed811-e1f7-4e55-a65b-013edf377541",
+        "member_count": 2,
+        "chosen_root_id": "ca819fa3-fed8-4e1e-b43c-0118e3440140",
+        "captured_at": "2026-08-26T20:50:59.369903+00:00"
+      },
+      {
+        "component_index": 36,
+        "merchant_id": "3e46c445-540e-4333-bcc2-26a59b838730",
+        "member_count": 3,
+        "chosen_root_id": "5138cb32-c0e4-4dd2-b6fd-e2cce15edbea",
+        "captured_at": "2026-08-26T20:50:59.558933+00:00"
+      },
+      {
+        "component_index": 37,
+        "merchant_id": "3e46c445-540e-4333-bcc2-26a59b838730",
+        "member_count": 2,
+        "chosen_root_id": "876b6abd-b01b-44df-aeae-a291a08075ce",
+        "captured_at": "2026-08-26T20:50:59.586057+00:00"
+      },
+      {
+        "component_index": 38,
+        "merchant_id": "13e91e3c-9b97-4f0d-8764-da818600660c",
+        "member_count": 2,
+        "chosen_root_id": "1dd3a44d-8922-44c6-a932-7d8b365f6b3d",
+        "captured_at": "2026-08-26T20:50:59.719470+00:00"
+      },
+      {
+        "component_index": 39,
+        "merchant_id": "13e91e3c-9b97-4f0d-8764-da818600660c",
+        "member_count": 2,
+        "chosen_root_id": "e7b9bb2e-0868-4979-ac98-cb36d2f13ea6",
+        "captured_at": "2026-08-26T20:50:59.737118+00:00"
+      },
+      {
+        "component_index": 40,
+        "merchant_id": "3af4b233-ad29-4155-b436-3573576e1daf",
+        "member_count": 2,
+        "chosen_root_id": "6d4f4640-1cc9-41d0-ad45-0528eebfc046",
+        "captured_at": "2026-08-26T20:50:59.757428+00:00"
+      },
+      {
+        "component_index": 41,
+        "merchant_id": "90ee355e-acb4-463d-9de6-90775266a642",
+        "member_count": 2,
+        "chosen_root_id": "a9114d77-7497-4fbe-b2d2-5acfcd28ac24",
+        "captured_at": "2026-08-26T20:54:28.038065+00:00"
+      },
+      {
+        "component_index": 42,
+        "merchant_id": "90ee355e-acb4-463d-9de6-90775266a642",
+        "member_count": 2,
+        "chosen_root_id": "2b2d7408-9d94-4d66-8ef0-bfc73692de62",
+        "captured_at": "2026-08-26T20:54:28.046610+00:00"
+      },
+      {
+        "component_index": 43,
+        "merchant_id": "83663166-e7bd-4cea-a8d4-8fc97bec6260",
+        "member_count": 3,
+        "chosen_root_id": "1142cdd8-4dc7-4a77-ad66-7961cdd0fbad",
+        "captured_at": "2026-08-26T20:54:28.084483+00:00"
+      },
+      {
+        "component_index": 44,
+        "merchant_id": "83663166-e7bd-4cea-a8d4-8fc97bec6260",
+        "member_count": 2,
+        "chosen_root_id": "35830eb6-e418-4486-9e87-05b8c24f8def",
+        "captured_at": "2026-08-26T20:54:28.264594+00:00"
+      },
+      {
+        "component_index": 45,
+        "merchant_id": "82a1a93a-e22a-4de7-a6f5-d9e02e5d6455",
+        "member_count": 2,
+        "chosen_root_id": "e3e375bb-ff4e-46d8-8d4f-c309e5ecd320",
+        "captured_at": "2026-08-26T20:54:28.307205+00:00"
+      },
+      {
+        "component_index": 46,
+        "merchant_id": "5107855d-6a9a-4f66-9ce6-3cc30e407077",
+        "member_count": 5,
+        "chosen_root_id": "6af0764e-395b-4b67-a775-2e985af5ad5f",
+        "captured_at": "2026-08-26T20:58:29.261202+00:00"
+      },
+      {
+        "component_index": 47,
+        "merchant_id": "b08b8b97-922f-4063-bdee-eaa06a534f7e",
+        "member_count": 2,
+        "chosen_root_id": "0a2a3404-e106-4954-a580-9e1ef91787e5",
+        "captured_at": "2026-08-27T04:39:59.192662+00:00"
+      },
+      {
+        "component_index": 48,
+        "merchant_id": "b4867408-48ff-45b2-be03-170b34f847fb",
+        "member_count": 3,
+        "chosen_root_id": "1ec18f22-3804-4bef-a220-e9786f996068",
+        "captured_at": "2026-08-28T13:59:30.851719+00:00"
+      },
+      {
+        "component_index": 49,
+        "merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+        "member_count": 2,
+        "chosen_root_id": "aa215029-8c9a-4a5b-846e-8bfaeba386fb",
+        "captured_at": "2026-08-28T14:28:15.469759+00:00"
+      },
+      {
+        "component_index": 50,
+        "merchant_id": "e6c3d479-b106-4cdb-a700-15e752033255",
+        "member_count": 3,
+        "chosen_root_id": "5a523662-680f-4596-bf83-12d007a5c42c",
+        "captured_at": "2026-08-28T14:28:15.492032+00:00"
+      },
+      {
+        "component_index": 51,
+        "merchant_id": "52302796-4355-47a4-9f9f-eae06521e8e1",
+        "member_count": 8,
+        "chosen_root_id": "148c6e19-b9b9-49fd-9483-4912b64c70ba",
+        "captured_at": "2026-08-28T00:00:00+00:00"
+      },
+      {
+        "component_index": 52,
+        "merchant_id": "3e6fdf78-1eea-44f9-9812-9d465f7cc049",
+        "member_count": 3,
+        "chosen_root_id": "b757f311-23bb-40ea-bbbe-e01215cd60ba",
+        "captured_at": "2026-08-28T15:06:35.677529+00:00"
+      },
+      {
+        "component_index": 53,
+        "merchant_id": "3e6fdf78-1eea-44f9-9812-9d465f7cc049",
+        "member_count": 2,
+        "chosen_root_id": "4a1db75d-d279-4c6c-bc94-611e6aecfeb2",
+        "captured_at": "2026-08-28T15:06:35.705769+00:00"
+      },
+      {
+        "component_index": 54,
+        "merchant_id": "83818a2b-dbf0-4083-a272-e4ad395886b5",
+        "member_count": 5,
+        "chosen_root_id": "9d9a2dad-471d-422c-9a6f-ae0ba09e1b01",
+        "captured_at": "2026-08-28T15:06:36.347019+00:00"
+      },
+      {
+        "component_index": 55,
+        "merchant_id": "ef4213dd-f5e4-45a6-a914-4f127424672e",
+        "member_count": 6,
+        "chosen_root_id": "8fe71ce1-bef8-45c5-a70d-30d6162799a0",
+        "captured_at": "2026-08-28T15:31:17.656750+00:00"
+      },
+      {
+        "component_index": 56,
+        "merchant_id": "ef4213dd-f5e4-45a6-a914-4f127424672e",
+        "member_count": 2,
+        "chosen_root_id": "1c8c5f87-0e72-46c5-bf3f-2189fd09a8a7",
+        "captured_at": "2026-08-28T15:31:17.664785+00:00"
+      },
+      {
+        "component_index": 57,
+        "merchant_id": "3f719c59-b57b-4315-8873-e486a33246ee",
+        "member_count": 2,
+        "chosen_root_id": "ef284d8b-73b0-4748-937c-9c3502f2fcab",
+        "captured_at": "2026-08-28T15:31:17.719521+00:00"
+      },
+      {
+        "component_index": 58,
+        "merchant_id": "e0a2d837-6062-48be-92b4-71a363b5e1a0",
+        "member_count": 2,
+        "chosen_root_id": "4c367828-ba11-43f9-9c03-83a602eba69b",
+        "captured_at": "2026-08-28T15:31:17.734311+00:00"
+      },
+      {
+        "component_index": 59,
+        "merchant_id": "e0a2d837-6062-48be-92b4-71a363b5e1a0",
+        "member_count": 2,
+        "chosen_root_id": "8b3263c2-60d2-4101-8ee0-20c3aa7edca2",
+        "captured_at": "2026-08-28T15:31:17.742272+00:00"
+      },
+      {
+        "component_index": 60,
+        "merchant_id": "d1b72c04-9f27-4ae6-9f70-2b147c4b51ad",
+        "member_count": 4,
+        "chosen_root_id": "5aa5cbfa-e6e0-4e9d-bfe4-b8e26a29a5e1",
+        "captured_at": "2026-08-28T16:36:59.784071+00:00"
+      },
+      {
+        "component_index": 61,
+        "merchant_id": "c25a5a60-e885-4916-85aa-9618d9097d18",
+        "member_count": 3,
+        "chosen_root_id": "a3e55020-bf7a-48d0-bc2d-46bda34f5eb8",
+        "captured_at": "2026-08-28T16:36:59.832804+00:00"
+      },
+      {
+        "component_index": 62,
+        "merchant_id": "c25a5a60-e885-4916-85aa-9618d9097d18",
+        "member_count": 3,
+        "chosen_root_id": "d1357a33-dede-4135-8d4a-af84be36aceb",
+        "captured_at": "2026-08-28T16:36:59.853432+00:00"
+      },
+      {
+        "component_index": 63,
+        "merchant_id": "c25a5a60-e885-4916-85aa-9618d9097d18",
+        "member_count": 3,
+        "chosen_root_id": "8ab496a5-82a7-4952-9af3-443a9729b300",
+        "captured_at": "2026-08-28T16:36:59.863365+00:00"
+      },
+      {
+        "component_index": 64,
+        "merchant_id": "c25a5a60-e885-4916-85aa-9618d9097d18",
+        "member_count": 3,
+        "chosen_root_id": "af2454bf-6495-4e48-a2b4-0a8dc9b22262",
+        "captured_at": "2026-08-28T16:36:59.896040+00:00"
+      },
+      {
+        "component_index": 65,
+        "merchant_id": "e756323c-cc6d-49b4-aa5d-7a33dfe1e124",
+        "member_count": 6,
+        "chosen_root_id": "98d1b8df-74b9-4a9e-b075-1106620f42f8",
+        "captured_at": "2026-08-28T16:37:00.486299+00:00"
+      },
+      {
+        "component_index": 66,
+        "merchant_id": "e756323c-cc6d-49b4-aa5d-7a33dfe1e124",
+        "member_count": 11,
+        "chosen_root_id": "bcfc0252-e883-477d-ac36-13a103835558",
+        "captured_at": "2026-08-28T16:37:00.512134+00:00"
+      },
+      {
+        "component_index": 67,
+        "merchant_id": "e85c4c0c-100b-4feb-af9c-059b0bc5037e",
+        "member_count": 2,
+        "chosen_root_id": "8d795e50-1fd9-4782-a4b2-7fb16d525c48",
+        "captured_at": "2026-08-28T16:37:05.231096+00:00"
+      },
+      {
+        "component_index": 68,
+        "merchant_id": "e85c4c0c-100b-4feb-af9c-059b0bc5037e",
+        "member_count": 2,
+        "chosen_root_id": "4c2acc34-9a03-40b2-ac27-cb7ffa4066c2",
+        "captured_at": "2026-08-28T16:37:06.147904+00:00"
+      },
+      {
+        "component_index": 69,
+        "merchant_id": "7451c1b6-f764-4aa8-a797-642a5e2e1a06",
+        "member_count": 3,
+        "chosen_root_id": "2f981b52-9647-40bb-8cf8-d0554b8eca34",
+        "captured_at": "2026-08-28T17:11:58.811540+00:00"
+      },
+      {
+        "component_index": 70,
+        "merchant_id": "a78b2342-eace-44e7-89a9-8a4d20757a44",
+        "member_count": 3,
+        "chosen_root_id": "629e13b5-ede8-4e4f-8d5f-46ee851bd997",
+        "captured_at": "2026-08-28T17:50:53.594338+00:00"
+      },
+      {
+        "component_index": 71,
+        "merchant_id": "a986684c-8b29-49fd-81c4-945df7d37244",
+        "member_count": 2,
+        "chosen_root_id": "b080cc56-5c14-414f-8ddc-c266437343ce",
+        "captured_at": "2026-08-28T17:51:00.826596+00:00"
+      },
+      {
+        "component_index": 72,
+        "merchant_id": "75f631be-6854-413f-8768-46df85a48579",
+        "member_count": 3,
+        "chosen_root_id": "1fa223b8-0b8d-4584-8649-0f3b77a7c628",
+        "captured_at": "2026-08-28T17:51:00.971915+00:00"
+      },
+      {
+        "component_index": 73,
+        "merchant_id": "75f631be-6854-413f-8768-46df85a48579",
+        "member_count": 2,
+        "chosen_root_id": "62a43401-f685-4ea7-a87e-577d915511c4",
+        "captured_at": "2026-08-28T17:51:00.989464+00:00"
+      },
+      {
+        "component_index": 74,
+        "merchant_id": "ec9846d1-3cbe-4998-b857-78b5c3c75672",
+        "member_count": 12,
+        "chosen_root_id": "ec524c27-e711-4e0b-a75a-9510330639ae",
+        "captured_at": "2026-08-28T18:28:01.890471+00:00"
+      },
+      {
+        "component_index": 75,
+        "merchant_id": "9bba25aa-9247-4627-ae2f-847fa0122199",
+        "member_count": 9,
+        "chosen_root_id": "fa1ffd91-7cf2-480e-95f1-da1df9d2d85f",
+        "captured_at": "2026-08-28T18:28:02.240577+00:00"
+      },
+      {
+        "component_index": 76,
+        "merchant_id": "fffe0314-bb9d-491c-9fcd-16795f42765b",
+        "member_count": 8,
+        "chosen_root_id": "24976984-027f-4d25-87d8-5625c3ab3038",
+        "captured_at": "2026-08-28T18:28:02.297208+00:00"
+      },
+      {
+        "component_index": 77,
+        "merchant_id": "01d5a9f8-1efb-44a4-9a77-14bb62d93bd0",
+        "member_count": 4,
+        "chosen_root_id": "c061abcb-e24f-4fa8-b973-3cc450565ea5",
+        "captured_at": "2026-08-28T19:51:13.782237+00:00"
+      },
+      {
+        "component_index": 78,
+        "merchant_id": "a78b2342-eace-44e7-89a9-8a4d20757a44",
+        "member_count": 2,
+        "chosen_root_id": "0645836a-f06d-4a0e-8be5-4f560b1db128",
+        "captured_at": "2026-08-28T21:37:20.944955+00:00"
+      },
+      {
+        "component_index": 79,
+        "merchant_id": "758d80ec-fb19-4b77-8f5b-91738074f3a2",
+        "member_count": 5,
+        "chosen_root_id": "ce616b9a-b74a-4b0f-9a3c-8a5862e43b31",
+        "captured_at": "2026-08-28T21:37:21.014333+00:00"
+      },
+      {
+        "component_index": 80,
+        "merchant_id": "75adf054-b1bf-43f2-8cb7-d96d3e1144b9",
+        "member_count": 6,
+        "chosen_root_id": "957a18cf-2ddb-4bbc-af01-f782980de7a6",
+        "captured_at": "2026-08-28T22:10:03.091743+00:00"
+      }
+    ]
+  },
+  "invariants": {
+    "cross_seller_duplicate_roots": 0,
+    "duplicate_chains_remain": 0,
+    "self_duplicates": 0,
+    "dangling_duplicates": 0,
+    "state_analysis_mismatch": 0,
+    "unknown_state": 0,
+    "unknown_reliability_band": 0,
+    "unknown_sentiment": 0
+  },
+  "followup_remediation": {
+    "duplicate_sentiment_updates": 5,
+    "adverse_claim_type_updates": 7,
+    "deleted_orphan_translations": 6,
+    "scrubbed_evidence_rows": 73,
+    "scrubbed_samples": [
+      {
+        "id": "d6aa370b-3ac6-4905-b2df-b5b3119f5aa0",
+        "is_groups": true,
+        "before_summary": "Delta Technology operates inside El Bostan Commercial Mall in Downtown Cairo, selling personal computers, laptops, surveillance systems, and PC accessories with direct WhatsApp customer service.",
+        "after_summary": "Delta Technology operates inside El Bostan Commercial Mall in Downtown Cairo, selling personal computers, laptops, surveillance systems, and PC accessories with direct WhatsApp customer service.",
+        "before_quoted_excerpt": "دلتا تكنولوجي داخل مركز البستان التجاري بالدور الأرضي والأول، أجهزة كمبيوتر ولاب توب وشبكات مراقبة، والتواصل واتساب 01024004004.",
+        "after_quoted_excerpt": "دلتا تكنولوجي داخل مركز البستان التجاري بالدور الأرضي والأول، أجهزة كمبيوتر ولاب توب وشبكات مراقبة، والتواصل واتساب ."
+      },
+      {
+        "id": "af9b4704-671f-4137-a5bb-159f8fefd2b2",
+        "is_groups": false,
+        "before_summary": "Source cited without a model-supplied summary.",
+        "after_summary": "Source cited without a model-supplied summary.",
+        "before_quoted_excerpt": "Emerald Plaza, Cairo... Emerald Plaza is a food & retail complex in First Settlement in New Cairo (fb://profile/100064359144558)",
+        "after_quoted_excerpt": "Emerald Plaza, Cairo... Emerald Plaza is a food & retail complex in First Settlement in New Cairo"
+      },
+      {
+        "id": "24151583-391b-4bb8-9dbf-1f97708e6134",
+        "is_groups": false,
+        "before_summary": "Source cited without a model-supplied summary.",
+        "after_summary": "Source cited without a model-supplied summary.",
+        "before_quoted_excerpt": "InmiFix | Cairo. 31,400 likes · 1 talking about this · 1 was here. We will be ready to fix your iPhone / iPad. More than 10 years of experience in global Apple products. (og:title/og:description; android-app meta embeds fb://profile/100070039761958)",
+        "after_quoted_excerpt": "InmiFix | Cairo. 31,400 likes · 1 talking about this · 1 was here. We will be ready to fix your iPhone / iPad. More than 10 years of experience in global Apple products. (og:title/og:description; android-app meta embeds )"
+      },
+      {
+        "id": "dce85559-7352-473a-823b-aff401d673ba",
+        "is_groups": false,
+        "before_summary": "Source cited without a model-supplied summary.",
+        "after_summary": "Source cited without a model-supplied summary.",
+        "before_quoted_excerpt": "InmiFix | Cairo ... fix your iPhone / iPad ... More than 10 years of experience in global Apple products (page id fb://profile/100070039761958)",
+        "after_quoted_excerpt": "InmiFix | Cairo ... fix your iPhone / iPad ... More than 10 years of experience in global Apple products (page id )"
+      },
+      {
+        "id": "7e99b257-342d-40f2-a4ce-bc193ef03d58",
+        "is_groups": false,
+        "before_summary": "Source cited without a model-supplied summary.",
+        "after_summary": "Source cited without a model-supplied summary.",
+        "before_quoted_excerpt": "og:title 'LORD laptop | Mansoura'; og:description 'LORD laptop, Mansoura. 24,406 likes · 772 talking about this · 254 were here. https://lordlaptop.com/'; al:android:url fb://profile/100063684146067",
+        "after_quoted_excerpt": "og:title 'LORD laptop | Mansoura'; og:description 'LORD laptop, Mansoura. 24,406 likes · 772 talking about this · 254 were here. https://lordlaptop.com/'; al:android:url"
+      }
+    ]
+  },
+  "pass2_scrape_dump_markers_scrub": {
+    "rows_changed": 55,
+    "markers_cleared": {
+      "meta_keys": 22,
+      "og_keys": 39,
+      "al_android_url": 12,
+      "twitter_keys": 0,
+      "fb_keys": 0,
+      "rows_with_meta_or_og_before": 51,
+      "rows_with_meta_or_og_after": 0
+    },
+    "samples": [
+      {
+        "id": "24151583-391b-4bb8-9dbf-1f97708e6134",
+        "before_quoted_excerpt": "InmiFix | Cairo. 31,400 likes · 1 talking about this · 1 was here. We will be ready to fix your iPhone / iPad. More than 10 years of experience in global Apple products. (og:title/og:description; android-app meta embeds )",
+        "after_quoted_excerpt": "InmiFix | Cairo. 31,400 likes · 1 talking about this · 1 was here. We will be ready to fix your iPhone / iPad. More than 10 years of experience in global Apple products. (; android-app meta embeds )"
+      },
+      {
+        "id": "7e99b257-342d-40f2-a4ce-bc193ef03d58",
+        "before_quoted_excerpt": "og:title 'LORD laptop | Mansoura'; og:description 'LORD laptop, Mansoura. 24,406 likes · 772 talking about this · 254 were here. https://lordlaptop.com/'; al:android:url",
+        "after_quoted_excerpt": "'LORD laptop | Mansoura'; 'LORD laptop, Mansoura. 24,406 likes · 772 talking about this · 254 were here. https://lordlaptop.com/'"
+      },
+      {
+        "id": "d946e9ad-c3d0-4031-a4a8-ccda6699fb7d",
+        "before_quoted_excerpt": "og:title 'phone store | Asyut'; og:description 'phone store , Asyut. 4,406 likes · 1 talking about this. بدل فونك القديم بفون جديد 📱'; al:android:url",
+        "after_quoted_excerpt": "'phone store | Asyut'; 'phone store , Asyut. 4,406 likes · 1 talking about this. بدل فونك القديم بفون جديد 📱'"
+      },
+      {
+        "id": "8bfc9cbf-ea62-4333-b51a-e5af6eddb145",
+        "before_quoted_excerpt": "'(tel:19987) 19987' ... 'online.support@rizkalla-co.com' (mailto:support@riz.shop) ... footer link https://m.me/rizkallaco; og:site_name 'Rizkalla'",
+        "after_quoted_excerpt": "'(tel:19987) 19987' ... 'online.support@rizkalla-co.com' (mailto:support@riz.shop) ... footer link https://m.me/rizkallaco; 'Rizkalla'"
+      },
+      {
+        "id": "6fd64915-7679-47f0-a1c8-39fddd12c301",
+        "before_quoted_excerpt": "og:title 'Masr Comp Franca'; og:description '... مصر فرنسا للكمبيوتر واللاب توب كبري شركات مستوردي لابتوب ( طنطا -مدينه نصر )01009300643';",
+        "after_quoted_excerpt": "'Masr Comp Franca'; '... مصر فرنسا للكمبيوتر واللاب توب كبري شركات مستوردي لابتوب ( طنطا -مدينه نصر )01009300643'"
+      }
+    ]
+  }
+}

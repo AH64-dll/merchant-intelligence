@@ -1,33 +1,138 @@
-import Link from 'next/link';
+'use client';
 
-/** Primary navigation: search, the seller directory, and the evidence view. */
-export function SiteHeader() {
+import type { JSX } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { ChevronLeft, ChevronRight, Fingerprint, Home, Menu, ScanLine, X } from 'lucide-react';
+
+import { t, type Locale } from '@/lib/i18n';
+import { LanguageSwitcher } from './LanguageSwitcher';
+
+export interface SiteHeaderProps {
+  locale: Locale;
+  menuOpen?: boolean;
+  onToggleMenu?: () => void;
+  pathname?: string;
+}
+
+/**
+ * Shared Brand mark: ScanLine frame + Fingerprint overlay + brand-copy.
+ * Used in both sidebar (.sidebar-brand) and mobile topbar (.mobile-brand).
+ */
+export function Brand({
+  locale,
+  onClick,
+}: {
+  locale: Locale;
+  onClick?: () => void;
+}): JSX.Element {
+  const strings = t(locale);
+  const brandName = strings.siteName;
+  const brandLatin = strings.brandLatin;
+  const brandDescription = strings.brandDescription;
+
   return (
-    <header className="border-b border-black pb-4 mb-8">
-      <nav aria-label="التنقل الرئيسي">
-        <Link href="/" className="text-xl font-bold underline underline-offset-2">
-          ميزان التاجر
-        </Link>
-        <ul className="mt-2 flex flex-wrap items-center gap-3 text-sm">
-          <li>
-            <Link
-              href="/merchants"
-              className="inline-block min-h-[44px] px-1 py-2 underline underline-offset-2"
-            >
-              جميع البائعين
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/merchants/positive-evidence"
-              className="inline-block min-h-[44px] px-1 py-2 underline underline-offset-2"
-            >
-              البائعون ذوو أقوى الأدلة الإيجابية
-            </Link>
-          </li>
-        </ul>
-      </nav>
-      <p className="mt-1 text-sm">بحث عن هوية التجار والأدلة العامة المرتبطة بهم</p>
+    <Link
+      href={`/${locale}`}
+      className="brand"
+      aria-label={brandName}
+      onClick={onClick}
+    >
+      <span className="brand-mark">
+        <ScanLine size={34} aria-hidden="true" />
+        <Fingerprint className="brand-fingerprint" size={19} aria-hidden="true" />
+      </span>
+      <span className="brand-copy">
+        <span className="brand-name">
+          {brandName}
+          <span className="brand-latin">{brandLatin}</span>
+        </span>
+        <span className="brand-description">{brandDescription}</span>
+      </span>
+    </Link>
+  );
+}
+
+function getBreadcrumbInfo(
+  pathname: string,
+  locale: Locale,
+): { isHome: boolean; title: string } {
+  const strings = t(locale);
+  const clean = pathname.replace(/\/$/, '') || `/${locale}`;
+
+  if (clean === `/${locale}`) {
+    return { isHome: true, title: strings.home };
+  }
+  if (clean.startsWith(`/${locale}/merchants/positive-evidence`)) {
+    return { isHome: false, title: strings.positiveEvidenceNav };
+  }
+  if (clean.startsWith(`/${locale}/merchants`)) {
+    return { isHome: false, title: strings.allMerchants };
+  }
+  if (clean.startsWith(`/${locale}/merchant/`)) {
+    return { isHome: false, title: strings.briefSection };
+  }
+  if (clean.startsWith(`/${locale}/search`)) {
+    return { isHome: false, title: strings.search };
+  }
+  if (clean.startsWith(`/${locale}/privacy`)) {
+    return { isHome: false, title: strings.privacy };
+  }
+  return { isHome: false, title: strings.home };
+}
+
+/**
+ * Bayyna topbar: mobile brand, breadcrumb (desktop), independent label,
+ * language switcher, and mobile menu trigger.
+ */
+export function SiteHeader({
+  locale,
+  menuOpen = false,
+  onToggleMenu,
+  pathname,
+}: SiteHeaderProps): JSX.Element {
+  const clientPathname = usePathname();
+  const effectivePath = pathname ?? clientPathname ?? `/${locale}`;
+  const strings = t(locale);
+  const { isHome, title } = getBreadcrumbInfo(effectivePath, locale);
+
+  return (
+    <header className="topbar">
+      <div className="mobile-brand">
+        <Brand locale={locale} />
+      </div>
+
+      <div className="breadcrumb">
+        <Home size={15} aria-hidden="true" />
+        {!isHome && (
+          <>
+            <Link href={`/${locale}`}>{strings.home}</Link>
+            {locale === 'ar' ? (
+              <ChevronLeft size={13} aria-hidden="true" />
+            ) : (
+              <ChevronRight size={13} aria-hidden="true" />
+            )}
+          </>
+        )}
+        <span>{title}</span>
+      </div>
+
+      <div className="topbar-actions">
+        <span className="independent-label">
+          <span className="tiny-dot" aria-hidden="true" />
+          {strings.independent}
+        </span>
+        <LanguageSwitcher locale={locale} />
+        <button
+          className="mobile-menu-button"
+          onClick={onToggleMenu}
+          aria-label={menuOpen ? strings.close : strings.menu}
+          aria-expanded={menuOpen}
+          type="button"
+        >
+          {menuOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
+        </button>
+      </div>
     </header>
   );
 }

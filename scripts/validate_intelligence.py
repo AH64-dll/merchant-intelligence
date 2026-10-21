@@ -89,27 +89,44 @@ def main() -> int:
         failures.append("schema_errors")
 
     # ---------- Gate 3: merchants below evidence quota ----------
-    # Merchants whose online footprint is verifiably too small are marked
-    # state='UNVERIFIABLE_FOOTPRINT' and excluded from the quota gate
-    # (they cannot ever reach 3 sources, so they are not actionable).
-    below_quota_rows = cur.execute(
-        """
-        SELECT m.id, m.canonical_name, COUNT(DISTINCT e.source_id) AS src
-        FROM merchants m
-        LEFT JOIN evidence e ON e.merchant_id = m.id AND e.independent = 1
-        WHERE m.state != 'UNVERIFIABLE_FOOTPRINT'
-        GROUP BY m.id
-        HAVING src < ?
-        """
-        ,
-        (MIN_SOURCES_PER_MERCHANT,),
-    ).fetchall()
+    # Merchants whose online footprint is verifiably too small are listed in
+    # exhausted_merchants.txt and marked state='INSUFFICIENT_DATA'; they are
+    # excluded from the quota gate (they cannot reach 3 sources).
+    exhausted_file = ROOT / "data" / "orchestrator" / "state" / "exhausted_merchants.txt"
+    exhausted_ids: set[str] = set()
+    if exhausted_file.exists():
+        exhausted_ids = {
+            line.strip()
+            for line in exhausted_file.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        }
+    if exhausted_ids:
+        placeholders = ",".join("?" for _ in exhausted_ids)
+        below_quota_rows = cur.execute(
+            f"""
+            SELECT m.id, m.canonical_name, COUNT(DISTINCT e.source_id) AS src
+            FROM merchants m
+            LEFT JOIN evidence e ON e.merchant_id = m.id AND e.independent = 1
+            WHERE m.id NOT IN ({placeholders})
+            GROUP BY m.id
+            HAVING src < ?
+            """,
+            list(exhausted_ids) + [MIN_SOURCES_PER_MERCHANT],
+        ).fetchall()
+        print(f"        (note: {len(exhausted_ids)} exhausted merchants excluded from quota gate)")
+    else:
+        below_quota_rows = cur.execute(
+            """
+            SELECT m.id, m.canonical_name, COUNT(DISTINCT e.source_id) AS src
+            FROM merchants m
+            LEFT JOIN evidence e ON e.merchant_id = m.id AND e.independent = 1
+            WHERE m.state != 'INSUFFICIENT_DATA'
+            GROUP BY m.id
+            HAVING src < ?
+            """,
+            (MIN_SOURCES_PER_MERCHANT,),
+        ).fetchall()
     below_quota = len(below_quota_rows)
-    unverifiable = cur.execute(
-        "SELECT COUNT(*) FROM merchants WHERE state='UNVERIFIABLE_FOOTPRINT'"
-    ).fetchone()[0]
-    if unverifiable:
-        print(f"        (note: {unverifiable} merchants marked UNVERIFIABLE_FOOTPRINT excluded)")
     if below_quota == 0:
         ok(f"merchants_below_evidence_quota=0 (all have >= {MIN_SOURCES_PER_MERCHANT} sources)")
     else:

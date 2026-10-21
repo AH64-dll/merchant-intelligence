@@ -323,7 +323,9 @@ class OmpClient:
             argv.extend(["--thinking", self.omp.thinking])
         if self.omp.approve and caps.supports_auto_approve:
             argv.append("--auto-approve")
-        if self.omp.no_tools and caps.supports_no_tools:
+        extraction_roles = {"analyst", "verifier", "discovery", "luna"}
+        enforce_no_tools = self.omp.no_tools or (request.role in extraction_roles)
+        if enforce_no_tools and caps.supports_no_tools:
             argv.append("--no-tools")
         elif self.omp.exclude_tools and caps.supports_exclude_tools:
             argv.extend(["--exclude-tools", ",".join(self.omp.exclude_tools)])

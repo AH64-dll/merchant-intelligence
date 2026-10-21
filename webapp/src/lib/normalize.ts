@@ -10,9 +10,12 @@ const EXTERNAL_REFERENCE_HOSTS: Record<string, true> = {
   'support.apple.com': true,
 };
 
-/** Chars mapped to spaces before tokenizing: dot, underscore, dash, slash, comma, parens, pipe. */
-const NAME_PUNCTUATION = /[._\-/,()|]/g;
-/** Arabic diacritics (fatha..sukun) plus dagger alif; removed in every stage. */
+/** Chars mapped to spaces before tokenizing: dot, underscore, dash, slash, comma, parens, pipe, quotes, hostile symbols. */
+const NAME_PUNCTUATION = /[._\-/,()|'"`;%*+<>=?!~@#$^&[\]{}]/g;
+/** RTL marks, directional formatting, zero-width, and ASCII/Unicode control characters. */
+const CONTROL_AND_BIDI = /[\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff\u200b]/gu;
+/** Emoji and pictographic symbols treated as word delimiters. */
+const EMOJI = /\p{Extended_Pictographic}|\p{Emoji_Presentation}/gu;
 const ARABIC_DIACRITICS = /[\u064B-\u0652\u0670]/g;
 /** Tatweel (kashida) — a stretching glyph, never meaning-bearing: removed in every stage. */
 const TATWEEL = /\u0640/g;
@@ -28,12 +31,14 @@ export function foldDigits(input: string): string {
 }
 
 function stageCommon(input: string): string {
-  return input
+  return foldDigits(input.normalize('NFC'))
     .toLowerCase()
+    .replace(CONTROL_AND_BIDI, ' ')
+    .replace(EMOJI, ' ')
     .replace(NAME_PUNCTUATION, ' ')
     .replace(ARABIC_DIACRITICS, '')
     .replace(TATWEEL, '')
-    .replace(/[\u0623\u0625\u0622]/g, '\u0627')
+    .replace(/[\u0622\u0623\u0625\u0671]/g, '\u0627')
     .replace(/\u0649/g, '\u064A');
 }
 

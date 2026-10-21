@@ -334,6 +334,30 @@ describe('normalizeNameStrict', () => {
   it('keeps النور تك and نور تك DISTINCT (no loose collision on exact maps)', () => {
     expect(normalizeNameStrict('النور تك')).not.toBe(normalizeNameStrict('نور تك'));
   });
+
+  it('folds Arabic-Indic and Persian digits symmetrically to ASCII', () => {
+    expect(normalizeNameStrict('دريم ٢٠٠٠')).toBe('دريم 2000');
+    expect(normalizeNameStrict('بي تك ۰۱۲۳')).toBe('بي تك 0123');
+  });
+
+  it('unifies alef wasla U+0671', () => {
+    expect(normalizeNameStrict('ٱسم الشركة')).toBe('اسم الشركة');
+  });
+
+  it('normalizes decomposed Unicode (NFC)', () => {
+    const decomposed = 'ا\u064Eحمد'; // alef + fatha
+    expect(normalizeNameStrict(decomposed)).toBe('احمد');
+  });
+
+  it('strips RTL/LTR marks and control chars without corrupting tokens', () => {
+    expect(normalizeNameStrict('\u200E\u200Fبي تك\u202A\u202C')).toBe('بي تك');
+    expect(normalizeNameStrict('B.TECH\u0000\u001F')).toBe('b tech');
+  });
+
+  it('safely handles hostile SQL-like characters and quotes', () => {
+    expect(normalizeNameStrict("B.TECH' OR '1'='1;--")).toBe('b tech or 1 1');
+    expect(normalizeNameStrict('store%_name;')).toBe('store name');
+  });
 });
 
 describe('normalizeNameLoose', () => {

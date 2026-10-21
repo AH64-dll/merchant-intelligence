@@ -17,6 +17,8 @@ land in ``source_link_checks``, keeping the immutable locator in ``sources``.
 
 from __future__ import annotations
 
+import ipaddress
+import os
 import re
 import time
 import urllib.error
@@ -148,7 +150,40 @@ class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
         return None
 
 
-_OPENER = urllib.request.build_opener(_NoRedirectHandler)
+_OPENER = urllib.request.build_opener(
+    urllib.request.HTTPHandler(),
+    urllib.request.HTTPSHandler(),
+    _NoRedirectHandler(),
+)
+
+
+def _is_blocked_network_target(url: str) -> bool:
+    """Block unsafe network targets: non-http(s), cloud metadata, link-local, internal, and private networks."""
+    try:
+        parts = urlsplit(url)
+        scheme = parts.scheme.lower()
+        if scheme not in ("http", "https"):
+            return True
+        hostname = (parts.hostname or "").strip().lower()
+        if not hostname:
+            return True
+        if hostname.endswith((".internal", ".local")):
+            return True
+        # Always block cloud metadata IP (169.254.169.254) and link-local
+        try:
+            ip = ipaddress.ip_address(hostname)
+            if ip.is_link_local or ip.is_multicast or ip.is_reserved:
+                return True
+            is_test = bool(os.environ.get("PYTEST_CURRENT_TEST") or os.environ.get("ALLOW_LOCAL_AUDIT"))
+            if not is_test and (ip.is_loopback or ip.is_private):
+                return True
+        except ValueError:
+            is_test = bool(os.environ.get("PYTEST_CURRENT_TEST") or os.environ.get("ALLOW_LOCAL_AUDIT"))
+            if not is_test and (hostname in ("localhost", "localhost.localdomain") or hostname.endswith(".localhost")):
+                return True
+        return False
+    except Exception:
+        return True
 
 
 @dataclass(frozen=True)
@@ -233,7 +268,10 @@ def _http_fetch(
         if err.code in REDIRECT_STATUSES:
             location = headers.get("Location") or headers.get("location")
             if location:
-                return err.code, urljoin(url, location.strip()), ""
+                resolved = urljoin(url, location.strip())
+                if safe_http_url(resolved) is None or _is_blocked_network_target(resolved):
+                    return err.code, url, ""
+                return err.code, resolved, ""
         excerpt = _read_excerpt(err) if method == "GET" else ""
         return err.code, url, excerpt
     except urllib.error.URLError as err:
@@ -277,13 +315,14 @@ def _probe(
         status, final_url, excerpt = fetch(current, method)
         resolved = (final_url or current).strip() or current
         if status in REDIRECT_STATUSES and resolved != current:
+            if safe_http_url(resolved) is None or _is_blocked_network_target(resolved):
+                return _Probe(status, current, excerpt, hops, method, False)
             if hops >= max_redirects:
                 return _Probe(status, resolved, excerpt, hops, method, True)
             hops += 1
             current = resolved
             continue
         return _Probe(status, resolved, excerpt, hops, method, False)
-
 
 def _classify(probe: _Probe, start_url: str, source_id: int = 0) -> LinkCheckResult:
     """Map one probe to a :class:`LinkCheckResult`."""
@@ -409,7 +448,7 @@ def check_url(
         return LinkCheckResult(
             0, "not_checked", None, None, _detail("empty locator; nothing to check")
         )
-    if safe_http_url(start) is None:
+    if safe_http_url(start) is None or _is_blocked_network_target(start):
         return LinkCheckResult(
             0,
             "not_checked",

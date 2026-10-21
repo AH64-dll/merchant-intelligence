@@ -15,46 +15,100 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DB = ROOT / "data" / "merchant_intelligence.db"
 
-
-def main() -> int:
-    con = sqlite3.connect(DB)
+def dedupe_evidence_in_db(db_path: Path | str) -> int:
+    con = sqlite3.connect(db_path)
     cur = con.cursor()
 
     groups = cur.execute(
         """
-        SELECT e.merchant_id, s.canonical_url, e.source_id, COUNT(*) AS c
+        SELECT e.merchant_id, s.canonical_url, COUNT(*) AS c
         FROM evidence e JOIN sources s ON e.source_id = s.id
+        WHERE s.canonical_url IS NOT NULL AND trim(s.canonical_url) != ''
         GROUP BY e.merchant_id, s.canonical_url
         HAVING c > 1
         """
     ).fetchall()
 
     fixed = 0
-    for merchant_id, canonical_url, source_id, count in groups:
-        # pick keeper: highest confidence, then earliest captured
-        keeper = cur.execute(
+    for merchant_id, canonical_url, count in groups:
+        rows = cur.execute(
             """
-            SELECT id FROM evidence
-            WHERE merchant_id=? AND source_id=?
-            ORDER BY confidence DESC, captured_at ASC
-            LIMIT 1
+            SELECT e.id, e.confidence, e.captured_at, e.independent, e.duplicate_of
+            FROM evidence e JOIN sources s ON e.source_id = s.id
+            WHERE e.merchant_id = ? AND s.canonical_url = ?
+            ORDER BY e.independent DESC, e.confidence DESC, e.captured_at ASC, e.id ASC
             """,
-            (merchant_id, source_id),
-        ).fetchone()[0]
-        # mark rest as duplicates of keeper (non-independent)
+            (merchant_id, canonical_url),
+        ).fetchall()
+
+        if len(rows) <= 1:
+            continue
+
+        keeper = rows[0][0]
+
+        # Explicitly ensure keeper is root
         cur.execute(
-            """
-            UPDATE evidence SET duplicate_of=?, independent=0
-            WHERE merchant_id=? AND source_id=? AND id != ?
-            """,
-            (keeper, merchant_id, source_id, keeper),
+            "UPDATE evidence SET duplicate_of = NULL, independent = 1 WHERE id = ?",
+            (keeper,),
         )
-        fixed += cur.rowcount
+
+        other_ids = [r[0] for r in rows[1:]]
+        placeholders = ",".join("?" for _ in other_ids)
+        cur.execute(
+            f"UPDATE evidence SET duplicate_of = ?, independent = 0 WHERE id IN ({placeholders})",
+            [keeper] + other_ids,
+        )
+        fixed += len(other_ids)
+
+    # Global cycle detection, chain-flattening, and cross-merchant / dangling pointer cleanup
+    dup_rows = cur.execute(
+        "SELECT id, merchant_id, duplicate_of FROM evidence WHERE duplicate_of IS NOT NULL"
+    ).fetchall()
+    parent_map = {r[0]: r[2] for r in dup_rows}
+    merchant_map = dict(cur.execute("SELECT id, merchant_id FROM evidence").fetchall())
+
+    updates: list[tuple[str, str]] = []
+    for child_id, parent_id in list(parent_map.items()):
+        seen = {child_id}
+        curr = parent_id
+        cycle_detected = False
+        while curr in parent_map:
+            if curr in seen:
+                cycle_detected = True
+                break
+            seen.add(curr)
+            curr = parent_map[curr]
+
+        if cycle_detected:
+            # Break cycle immediately: reset child to independent root
+            cur.execute(
+                "UPDATE evidence SET duplicate_of = NULL, independent = 1 WHERE id = ?",
+                (child_id,),
+            )
+            del parent_map[child_id]
+        elif curr not in merchant_map or merchant_map.get(curr) != merchant_map.get(child_id):
+            # Missing parent or cross-merchant root: clear pointer
+            cur.execute(
+                "UPDATE evidence SET duplicate_of = NULL, independent = 1 WHERE id = ?",
+                (child_id,),
+            )
+            del parent_map[child_id]
+        elif curr != parent_id:
+            # Multi-hop duplicate: flatten directly to root
+            updates.append((curr, child_id))
+
+    if updates:
+        cur.executemany("UPDATE evidence SET duplicate_of = ? WHERE id = ?", updates)
 
     con.commit()
-    print(f"flagged {fixed} duplicate evidence rows across {len(groups)} (merchant,url) groups")
-    return 0
+    con.close()
+    return fixed
 
+
+def main() -> int:
+    fixed = dedupe_evidence_in_db(DB)
+    print(f"flagged {fixed} duplicate evidence rows")
+    return 0
 
 if __name__ == "__main__":
     sys.exit(main())

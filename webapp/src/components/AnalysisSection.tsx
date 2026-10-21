@@ -1,15 +1,16 @@
 import type { JSX } from 'react';
+import { FileSearch, FileText } from 'lucide-react';
 
 import type { AnalysisPayload } from '@/lib/types';
-
+import { t, type Locale } from '@/lib/i18n';
 function SignalList({ title, items }: { title: string; items: string[] }) {
   if (items.length === 0) return null;
   return (
-    <section>
-      <h3>{title}</h3>
-      <ul>
-        {items.map((item, i) => (
-          <li key={i} dir="auto">
+    <section className="bg-[#fdfcf9] border border-[#e4e3de] rounded p-4 space-y-1.5">
+      <h3 className="font-semibold text-xs text-[#2a3441] border-b border-[#e4e3de] pb-1.5">{title}</h3>
+      <ul className="mt-2 list-disc list-inside space-y-1 text-xs text-[#56606a]">
+        {items.map((item, index) => (
+          <li key={index} dir="auto">
             {item}
           </li>
         ))}
@@ -22,50 +23,64 @@ function SignalList({ title, items }: { title: string; items: string[] }) {
  * The stored automated analysis, framed as model output to verify — never as
  * a verdict, and never with confidence percentages.
  */
-export function AnalysisSection({ analysis }: { analysis: AnalysisPayload | null }): JSX.Element {
+export function AnalysisSection({
+  analysis,
+  locale = 'ar',
+}: {
+  analysis: AnalysisPayload | null;
+  locale?: Locale;
+}): JSX.Element {
+  const strings = t(locale);
+
   if (analysis === null) {
-    return <p>لا يوجد تحليل كافٍ لهذا التاجر بعد.</p>;
+    return (
+      <div className="report-unavailable">
+        <FileText size={19} aria-hidden="true" />
+        <p>{strings.noAnalysisYet}</p>
+        <span>—</span>
+      </div>
+    );
   }
 
   const hasClaims = analysis.verifiedClaims.length > 0 || analysis.unverifiedClaims.length > 0;
 
   return (
-    <section aria-labelledby="analysis-heading">
-      <div className="flex flex-wrap items-center gap-2">
-        <h2 id="analysis-heading">ما يشير إليه التحليل الآلي</h2>
-        {analysis.requiresMoreResearch && <span>[يتطلب بحثًا إضافيًا]</span>}
-      </div>
-      <p className="text-sm">
-        ما يلي مخرجات تحليل آلي لقائمة الأدلة، وليست حكمًا نهائيًا — راجع الأدلة والمصادر بنفسك.
+    <section id="analysis" aria-labelledby="analysis-heading" className="report-section space-y-4">
+      <h2>
+        <FileSearch size={21} aria-hidden="true" />
+        <span id="analysis-heading">{locale === 'en' ? 'Automated Analysis' : 'تحليل آلي'}</span>
+      </h2>
+      <p className="section-note">
+        {strings.automatedAnalysisNotice}
       </p>
-
       {analysis.evidenceSummary.trim().length > 0 && (
         <section>
-          <h3>ملخص الأدلة</h3>
-          <p dir="auto">{analysis.evidenceSummary}</p>
+          <h3 className="font-bold text-sm">{strings.evidenceSummaryHeading}</h3>
+          <p dir="auto" className="mt-1 text-sm">{analysis.evidenceSummary}</p>
         </section>
       )}
 
       {hasClaims && (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {analysis.verifiedClaims.length > 0 && (
-            <section>
-              <h3>ادعاءات موثقة</h3>
-              <ul>
-                {analysis.verifiedClaims.map((claim, i) => (
-                  <li key={i} dir="auto">
+            <section className="bg-[#fdfcf9] border border-[#e4e3de] rounded p-4 space-y-1.5">
+              <h3 className="font-semibold text-xs text-[#2a3441] border-b border-[#e4e3de] pb-1.5">{strings.verifiedClaims}</h3>
+              <ul className="mt-2 list-disc list-inside space-y-1 text-xs text-[#56606a]">
+                {analysis.verifiedClaims.map((claim, index) => (
+                  <li key={index} dir="auto">
                     {claim}
                   </li>
                 ))}
               </ul>
             </section>
           )}
+
           {analysis.unverifiedClaims.length > 0 && (
-            <section>
-              <h3>ادعاءات غير موثقة</h3>
-              <ul>
-                {analysis.unverifiedClaims.map((claim, i) => (
-                  <li key={i} dir="auto">
+            <section className="bg-[#fdfcf9] border border-[#e4e3de] rounded p-4 space-y-1.5">
+              <h3 className="font-semibold text-xs text-[#2a3441] border-b border-[#e4e3de] pb-1.5">{strings.unverifiedClaims}</h3>
+              <ul className="mt-2 list-disc list-inside space-y-1 text-xs text-[#56606a]">
+                {analysis.unverifiedClaims.map((claim, index) => (
+                  <li key={index} dir="auto">
                     {claim}
                   </li>
                 ))}
@@ -74,24 +89,25 @@ export function AnalysisSection({ analysis }: { analysis: AnalysisPayload | null
           )}
         </div>
       )}
-      <SignalList title="إشارات تتطلب تحققًا" items={analysis.riskSignals} />
-      <SignalList title="إشارات إيجابية" items={analysis.positiveSignals} />
-      <SignalList title="تناقضات" items={analysis.contradictions} />
-      <SignalList title="معلومات ناقصة" items={analysis.missingInformation} />
+
+      <SignalList title={strings.signalsRequiringVerification} items={analysis.riskSignals} />
+      <SignalList title={strings.positiveSignals} items={analysis.positiveSignals} />
+      <SignalList title={strings.contradictions} items={analysis.contradictions} />
+      <SignalList title={strings.missingInformation} items={analysis.missingInformation} />
 
       {(
         [
-          { title: 'ملاحظات السمعة', note: analysis.reputationNotes },
-          { title: 'ملاحظات المخاطر', note: analysis.fraudRiskNotes },
-          { title: 'ملاحظات رضا المستهلكين', note: analysis.consumerSatisfactionNotes },
+          { title: strings.reputationNotesHeading, note: analysis.reputationNotes },
+          { title: strings.fraudRiskNotesHeading, note: analysis.fraudRiskNotes },
+          { title: strings.consumerSatisfactionNotesHeading, note: analysis.consumerSatisfactionNotes },
         ] as const
       ).map(({ title, note }) => {
-        const text = note.trim();
-        if (text.length === 0) return null;
+        if (!note || note.trim().length === 0) return null;
         return (
-          <p key={title} dir="auto">
-            <strong>{title}:</strong> {text}
-          </p>
+          <section key={title} className="bg-[#fafaf6] border border-[#e4e3de] rounded p-4 space-y-1">
+            <h3 className="font-semibold text-xs text-[#2a3441]">{title}</h3>
+            <p dir="auto" className="mt-1 text-xs text-[#56606a] leading-relaxed">{note}</p>
+          </section>
         );
       })}
     </section>

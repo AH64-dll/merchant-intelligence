@@ -1,11 +1,15 @@
 import type { JSX } from 'react';
+import { Database, FileText, Scale } from 'lucide-react';
 
 import {
   assessEvidenceCoverage,
   assessReputation,
   type ReputationAssessment,
 } from '@/lib/assessment';
-import { COVERAGE_LEVEL_LABELS, SENTIMENT_LABELS } from '@/lib/labels';
+import {
+  coverageLevelLabel,
+  sentimentLabel,
+} from '@/lib/labels';
 import type {
   EvidenceItem,
   Identifier,
@@ -14,14 +18,16 @@ import type {
   SentimentCounts,
 } from '@/lib/types';
 import type { SourceCategory } from '@/lib/taxonomy';
-import { formatDateAr, sourceCategoryLabel } from './display';
+import { t, type Locale } from '@/lib/i18n';
+import { displaySummary, formatDate, sourceCategoryLabel } from './display';
 
-interface MerchantEvidenceOverviewProps {
+export interface MerchantEvidenceOverviewProps {
   state: MerchantState;
   identifiers: Identifier[];
   evidence: EvidenceItem[];
   sentiment: SentimentCounts;
   snapshotGeneratedAt: string;
+  locale?: Locale;
 }
 
 const MAX_HIGHLIGHTS = 3;
@@ -102,16 +108,24 @@ export function selectDecisionEvidence(
   return selected;
 }
 
-function DateValue({ value, empty }: { value: string | null; empty: string }): JSX.Element {
+function DateValue({
+  value,
+  empty,
+  locale = 'ar',
+}: {
+  value: string | null;
+  empty: string;
+  locale?: Locale;
+}): JSX.Element {
   if (value === null) return <>{empty}</>;
   return (
     <time dateTime={value.slice(0, 10)} dir="ltr">
-      {formatDateAr(value)}
+      {formatDate(value, locale)}
     </time>
   );
 }
 
-function locationRecordText(identifiers: Identifier[]): JSX.Element {
+function locationRecordText(identifiers: Identifier[], locale: Locale = 'ar'): JSX.Element {
   const addressRecords = new Set(
     identifiers
       .filter((identifier) => identifier.displayable && identifier.kind === 'address')
@@ -120,12 +134,24 @@ function locationRecordText(identifiers: Identifier[]): JSX.Element {
   );
 
   if (addressRecords.size === 0) {
-    return <>لا توجد سجلات عناوين قابلة للعرض ضمن هذه اللقطة.</>;
+    return locale === 'en' ? (
+      <>No displayable address records in this snapshot.</>
+    ) : (
+      <>لا توجد سجلات عناوين قابلة للعرض ضمن هذه اللقطة.</>
+    );
   }
   if (addressRecords.size === 1) {
-    return <>يوجد سجل موقع واحد ضمن هذه اللقطة.</>;
+    return locale === 'en' ? (
+      <>Single location record in this snapshot.</>
+    ) : (
+      <>يوجد سجل موقع واحد ضمن هذه اللقطة.</>
+    );
   }
-  return (
+  return locale === 'en' ? (
+    <>
+      Multiple recorded locations: <span dir="ltr">{addressRecords.size}</span> distinct address records in the snapshot. Some records may represent variant spellings of the same location.
+    </>
+  ) : (
     <>
       توجد عدة مواقع مسجلة: <span dir="ltr">{addressRecords.size}</span> سجلات عناوين مختلفة في
       اللقطة. قد تمثل بعض السجلات صيغًا مختلفة للموقع نفسه.
@@ -139,9 +165,11 @@ export function MerchantEvidenceOverview({
   evidence,
   sentiment,
   snapshotGeneratedAt,
+  locale = 'ar',
 }: MerchantEvidenceOverviewProps): JSX.Element {
+  const strings = t(locale);
   const coverage = assessEvidenceCoverage(evidence);
-  const reputation = assessReputation(state, evidence);
+  const reputation = assessReputation(state, evidence, locale);
   const highlights = selectDecisionEvidence(evidence, reputation);
   const sourceCounts = new Map<SourceCategory, number>();
   for (const item of evidence) {
@@ -150,128 +178,192 @@ export function MerchantEvidenceOverview({
   }
   const sourceBreakdown = [...sourceCounts.entries()].sort(
     ([categoryA, countA], [categoryB, countB]) =>
-      countB - countA || sourceCategoryLabel(categoryA).localeCompare(sourceCategoryLabel(categoryB), 'ar'),
+      countB - countA || sourceCategoryLabel(categoryA, locale).localeCompare(sourceCategoryLabel(categoryB, locale), locale),
   );
 
   return (
-    <section aria-labelledby="evidence-overview-heading" className="border border-black p-4 space-y-5">
-      <div>
-        <h2 id="evidence-overview-heading">نظرة عامة على أدلة البائع</h2>
-        <p>{locationRecordText(identifiers)}</p>
+    <section aria-labelledby="evidence-overview-heading" className="space-y-6">
+      <div className="border-b border-[#e4e3de] pb-4">
+        <h2 id="evidence-overview-heading" className="text-lg font-semibold text-[#2a3441] flex items-center gap-2">
+          <Scale size={20} className="text-[#4a7c7e]" aria-hidden="true" />
+          <span>{locale === 'en' ? 'Vendor Evidence Overview' : 'نظرة عامة على أدلة البائع'}</span>
+        </h2>
+        <p className="text-xs text-[#7a8085] mt-1">{locationRecordText(identifiers, locale)}</p>
       </div>
 
-      <div>
-        <h3 className="font-bold">{COVERAGE_LEVEL_LABELS[coverage.level]}</h3>
-        <dl className="grid gap-2 sm:grid-cols-3">
-          <div>
-            <dt className="font-bold">إجمالي الأدلة</dt>
+      <div className="stance-guide">
+        <h3 className="font-semibold text-base text-[#2a3441] flex items-center gap-2">
+          <Database size={18} className="text-[#4a7c7e]" aria-hidden="true" />
+          <span>{coverageLevelLabel(coverage.level, locale)}</span>
+        </h3>
+        <dl className="stance-grid">
+          <div className="bg-[#fdfcf9] border border-[#e4e3de] rounded p-3">
+            <dt className="font-bold">{strings.totalEvidence}</dt>
             <dd dir="ltr">{coverage.total}</dd>
           </div>
-          <div>
-            <dt className="font-bold">أدلة غير مكررة</dt>
+          <div className="bg-[#fdfcf9] border border-[#e4e3de] rounded p-3">
+            <dt className="font-bold">{strings.nonDuplicateEvidence}</dt>
             <dd dir="ltr">{coverage.nonDuplicate}</dd>
           </div>
-          <div>
-            <dt className="font-bold">مصادر مختلفة غير مكررة</dt>
+          <div className="bg-[#fdfcf9] border border-[#e4e3de] rounded p-3">
+            <dt className="font-bold">{strings.distinctNonDuplicateSources}</dt>
             <dd dir="ltr">{coverage.distinctSources}</dd>
           </div>
         </dl>
-        <p className="text-sm">
-          استُبعدت الأدلة المكررة من أعداد الاتجاهات والمصادر
-          {coverage.duplicateCount > 0 ? (
+        <p className="text-xs text-[#7a8085] mt-3">
+          {locale === 'en' ? (
             <>
-              {' '}— وعددها <span dir="ltr">{coverage.duplicateCount}</span>
+              Duplicate evidence was excluded from direction and source counts
+              {coverage.duplicateCount > 0 ? (
+                <>
+                  {' '}— totaling <span dir="ltr">{coverage.duplicateCount}</span>
+                </>
+              ) : (
+                ' — with no duplicate evidence excluded'
+              )}
+              .
             </>
           ) : (
-            ' — ولا توجد أدلة مكررة مستثناة'
+            <>
+              استُبعدت الأدلة المكررة من أعداد الاتجاهات والمصادر
+              {coverage.duplicateCount > 0 ? (
+                <>
+                  {' '}— وعددها <span dir="ltr">{coverage.duplicateCount}</span>
+                </>
+              ) : (
+                ' — ولا توجد أدلة مكررة مستثناة'
+              )}
+              .
+            </>
           )}
-          .
         </p>
       </div>
 
-      <div>
-        <h3 className="font-bold">اتجاه الأدلة غير المكررة</h3>
-        <dl className="flex flex-wrap gap-x-6 gap-y-1">
-          <div>
-            <dt className="inline font-bold">{SENTIMENT_LABELS.positive}: </dt>
+      <div className="bg-[#fdfcf9] border border-[#e4e3de] rounded p-4 space-y-3">
+        <h3 className="font-semibold text-sm text-[#2a3441]">
+          {locale === 'en' ? 'Direction of non-duplicate evidence' : 'اتجاه الأدلة غير المكررة'}
+        </h3>
+        <dl className="flex flex-wrap gap-3">
+          <div className="stance supporting inline-flex items-center gap-1.5 whitespace-nowrap">
+            <span className="stance-dot shrink-0" aria-hidden="true" />
+            <dt className="inline font-bold">{sentimentLabel('positive', locale)}: </dt>
             <dd className="inline" dir="ltr">{sentiment.positive}</dd>
           </div>
-          <div>
-            <dt className="inline font-bold">{SENTIMENT_LABELS.negative}: </dt>
+          <div className="stance negative inline-flex items-center gap-1.5 whitespace-nowrap">
+            <span className="stance-dot shrink-0" aria-hidden="true" />
+            <dt className="inline font-bold">{sentimentLabel('negative', locale)}: </dt>
             <dd className="inline" dir="ltr">{sentiment.negative}</dd>
           </div>
-          <div>
-            <dt className="inline font-bold">{SENTIMENT_LABELS.neutral}: </dt>
+          <div className="stance mixed inline-flex items-center gap-1.5 whitespace-nowrap">
+            <span className="stance-dot shrink-0" aria-hidden="true" />
+            <dt className="inline font-bold">{sentimentLabel('neutral', locale)}: </dt>
             <dd className="inline" dir="ltr">{sentiment.neutral}</dd>
           </div>
         </dl>
       </div>
 
-      <div>
-        <h3 className="font-bold">حداثة الأدلة واللقطة</h3>
-        <dl className="space-y-1">
-          <div>
-            <dt className="inline font-bold">أحدث نشر معروف: </dt>
-            <dd className="inline">
-              <DateValue value={coverage.latestPublishedAt} empty="غير معروف" />
-            </dd>
-          </div>
-          <div>
-            <dt className="inline font-bold">آخر التقاط: </dt>
-            <dd className="inline">
-              <DateValue value={coverage.lastCapturedAt} empty="غير معروف" />
-            </dd>
-          </div>
-          <div>
-            <dt className="inline font-bold">تاريخ توليد اللقطة: </dt>
-            <dd className="inline">
-              <DateValue value={snapshotGeneratedAt} empty="غير معروف" />
-            </dd>
-          </div>
-        </dl>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-[#fdfcf9] border border-[#e4e3de] rounded p-4 space-y-2">
+          <h3 className="font-semibold text-sm text-[#2a3441]">
+            {locale === 'en' ? 'Evidence and snapshot freshness' : 'حداثة الأدلة واللقطة'}
+          </h3>
+          <dl className="space-y-1.5 text-xs text-[#56606a]">
+            <div>
+              <dt className="inline font-bold">{strings.latestKnownPublication}: </dt>
+              <dd className="inline">
+                <DateValue value={coverage.latestPublishedAt} empty={strings.unknownDate} locale={locale} />
+              </dd>
+            </div>
+            <div>
+              <dt className="inline font-bold">{strings.latestCaptureLabel}: </dt>
+              <dd className="inline">
+                <DateValue value={coverage.lastCapturedAt} empty={strings.unknownDate} locale={locale} />
+              </dd>
+            </div>
+            <div>
+              <dt className="inline font-bold">{strings.snapshotGeneratedDateLabel}: </dt>
+              <dd className="inline">
+                <DateValue value={snapshotGeneratedAt} empty={strings.unknownDate} locale={locale} />
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <div className="bg-[#fdfcf9] border border-[#e4e3de] rounded p-4 space-y-2">
+          <h3 className="font-semibold text-sm text-[#2a3441]">
+            {locale === 'en' ? 'Source categories of non-duplicate evidence' : 'فئات مصادر الأدلة غير المكررة'}
+          </h3>
+          {sourceBreakdown.length > 0 ? (
+            <ul className="flex flex-wrap gap-2 text-xs list-none p-0 m-0">
+              {sourceBreakdown.map(([category, count]) => (
+                <li key={category} className="bg-white border border-[#e4e3de] px-2.5 py-1 rounded text-[#2a3441]">
+                  {sourceCategoryLabel(category, locale)}: <span dir="ltr">{count}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-[#7a8085]">{locale === 'en' ? 'No non-duplicate sources to display.' : 'لا توجد مصادر غير مكررة لعرضها.'}</p>
+          )}
+        </div>
       </div>
 
-      <div>
-        <h3 className="font-bold">فئات مصادر الأدلة غير المكررة</h3>
-        {sourceBreakdown.length > 0 ? (
-          <ul className="flex flex-wrap gap-x-6 gap-y-1">
-            {sourceBreakdown.map(([category, count]) => (
-              <li key={category}>
-                {sourceCategoryLabel(category)}: <span dir="ltr">{count}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>لا توجد مصادر غير مكررة لعرضها.</p>
-        )}
-      </div>
-
-      <div aria-labelledby="reputation-heading">
-        <h3 id="reputation-heading" className="font-bold">{reputation.headline}</h3>
-        <p dir="auto">{reputation.explanation}</p>
-        {reputation.caveat !== null ? <p dir="auto">تنبيه: {reputation.caveat}</p> : null}
+      <div aria-labelledby="reputation-heading" className="bg-[#fafaf6] border border-[#e4e3de] rounded p-4 space-y-2">
+        <h3 id="reputation-heading" className="font-semibold text-sm text-[#2a3441]">{reputation.headline}</h3>
+        <p dir="auto" className="text-sm text-[#56606a] leading-relaxed">{reputation.explanation}</p>
+        {reputation.caveat !== null ? (
+          <p dir="auto" className="text-xs text-[#a65d57] font-medium">{locale === 'en' ? 'Notice: ' : 'تنبيه: '}{reputation.caveat}</p>
+        ) : null}
       </div>
 
       {highlights.length > 0 ? (
-        <div>
-          <h3 className="font-bold">أدلة بارزة للمراجعة قبل القرار</h3>
-          <p className="text-sm">اختيار مختصر لا يستبدل قائمة الأدلة الكاملة أدناه.</p>
-          <ul className="mt-2 space-y-2">
-            {highlights.map((item) => (
-              <li key={item.id}>
-                <a
-                  href={`#evidence-${item.id}`}
-                  className="inline-flex min-h-[44px] items-center underline"
-                  dir="auto"
-                >
-                  {item.summary}
-                </a>
-                <span className="text-sm">
-                  {' '}— {SENTIMENT_LABELS[item.sentiment]} · {sourceCategoryLabel(item.sourceCategory)}
-                </span>
-              </li>
-            ))}
-          </ul>
+        <div className="space-y-3">
+          <div>
+            <h3 className="font-semibold text-base text-[#2a3441]">
+              {locale === 'en' ? 'Key evidence highlights for review before decision' : 'أدلة بارزة للمراجعة قبل القرار'}
+            </h3>
+            <p className="text-xs text-[#7a8085] mt-0.5">
+              {locale === 'en'
+                ? 'A concise selection that does not replace the full evidence list below.'
+                : 'اختيار مختصر لا يستبدل قائمة الأدلة الكاملة أدناه.'}
+            </p>
+          </div>
+          <div className="method-list">
+            {highlights.map((item, index) => {
+              const stanceClass =
+                item.sentiment === 'positive'
+                  ? 'supporting'
+                  : item.sentiment === 'negative'
+                    ? 'negative'
+                    : 'mixed';
+              return (
+                <div key={item.id} className="method-item">
+                  <span className="method-number">{String(index + 1).padStart(2, '0')}</span>
+                  <div className="method-icon" aria-hidden="true">
+                    <FileText size={20} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1.5">
+                      <span className={`stance ${stanceClass} inline-flex items-center gap-1.5 whitespace-nowrap`}>
+                        <span className="stance-dot shrink-0" aria-hidden="true" />
+                        <span>{sentimentLabel(item.sentiment, locale)}</span>
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs text-[#56606a]">
+                        <span className="text-[#7a8085]" aria-hidden="true">·</span>
+                        <span>{sourceCategoryLabel(item.sourceCategory, locale)}</span>
+                      </span>
+                    </div>
+                    <a
+                      href={`#evidence-${item.id}`}
+                      className="inline-flex min-h-[44px] items-center text-sm font-medium text-[#2a3441] hover:text-[#4a7c7e] underline underline-offset-2"
+                      dir="auto"
+                    >
+                      {displaySummary(item.summary, locale)}
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       ) : null}
     </section>
