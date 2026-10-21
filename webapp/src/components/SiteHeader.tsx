@@ -3,7 +3,8 @@
 import type { JSX } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Fingerprint, Home, Menu, ScanLine, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Home, Menu, X } from 'lucide-react';
+import { BrandMark } from './BrandMark';
 
 import { t, type Locale } from '@/lib/i18n';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -39,8 +40,7 @@ export function Brand({
       onClick={onClick}
     >
       <span className="brand-mark">
-        <ScanLine size={34} aria-hidden="true" />
-        <Fingerprint className="brand-fingerprint" size={19} aria-hidden="true" />
+        <BrandMark size={40} />
       </span>
       <span className="brand-copy">
         <span className="brand-name">
